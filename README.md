@@ -1,6 +1,8 @@
 # WCDO
-Wikipedia Cultural Diversity Observatory (WCDO) uses WikiData and Wikipedia to select Cultural Context Content for each Wikipedia language edition
+Wikipedia Cultural Diversity Observatory (WCDO) uses Wikipedia and WikiData to select Cultural Context Content for each Wikipedia language edition.
 
-Basic installation and configuration steps needed to run a copy of the tool under another Toolforge shared account.
+Soon in this description there will be:
 
-How to obtain a copy of any required custom databases and/or data files.
+* Basic installation and configuration steps needed to run a copy of the tool under another Toolforge shared account.
+
+* How to obtain a copy of any required custom databases and/or data files.
