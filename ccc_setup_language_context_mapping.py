@@ -1,382 +1,601 @@
+# -*- coding: utf-8 -*-
+# This is the ROSETTA STONE of the project.
+
 import time
 import os
-import MySQLdb as mdb
 import sys
 import codecs
-import datetime
-import urllib
-import numpy
-import copy
-import re
-import gc
+import pycountry
 import requests
+import babel.languages
+from babel import Locale
 import pandas as pd
+from lxml import html
 
 
-if sys.stdout.encoding is None:
-    sys.stdout = codecs.open("/dev/stdout", "w", 'utf-8')
-
+if sys.stdout.encoding is None: sys.stdout = codecs.open("/dev/stdout", "w", 'utf-8')
+#sys.stdout=open("test.txt","w")
 startTime = time.time()
 data_dir = 'data_folder/'
 
+# INSTRUCTIONS: ****************************************************************************************************************
+# First time: use it without arguments to create the language list.
+# Second time: use it with the argument 'territories' to create the language territories mapping from the language list.
+# Third and other times: use it without arguments to verify the language list is updated and create new files in case it is not.
+# MAIN
 def main():
-
-	# a la primera vegada, fer-ho amb arguments per anar llançant cada funció.
-	# si no hi ha arguments. faria la verificació. enviaria el mail.
-	# treuria els tres arxius amb un _added.
-
-    if len(sys.argv):
-		for sys.argv[0] == 'languages':
-			extract_wikipedia_languages()
-		for sys.argv[0] == 'territories':
-			extract_territories()
-		for sys.argv[0] == 'territories_rich':
-			languageterritoriesmapping_rich()
-	else: 
-
-
-		verify_updated_mapping_file() 
-
-
+	
+	if sys.argv[1] == 'territories': extract_language_territories_unicode([]) # territories
+	else: # languages and verify updates
+		newlanguages = extract_wikipedia_languages(); 
+		if len(newlanguages)>0: extract_language_territories_unicode(newlanguages)
 
 # FIRST: LANGUAGES
-# SOURCE: WIKIDATA
-
-def extract_wikipedia_languages(): # no arguments
-	# extracció arxiu json
-	# verificació qualitativa de que tot sigui correcta i complementació
-
+# Obtain all languages with a Wikipedia language edition and their characteristics.
+# Main Source: WIKIDATA.
+# Additional sources: Pycountry and Babel libraries for countries and their languages. Source: UNICODE: unicode.org/cldr/charts/latest/supplemental/language_territory_information.html
+def extract_wikipedia_languages():
 
 	query = '''PREFIX wikibase: <http://wikiba.se/ontology#>
 	PREFIX wd: <http://www.wikidata.org/entity/>
 	PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 	PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-	SELECT ?item ?itemLabel ?Wikimedialanguagecode ?language ?languageLabel ?nativelabel ?languageISO ?languageISO3 ?officialwebsite ?bbddwp 
-	WHERE 
-	{
+	SELECT DISTINCT ?itemLabel ?language ?languageLabel ?alias ?nativeLabel ?languageISO ?languageISO3 ?languageISO5 ?languagelink ?Wikimedialanguagecode WHERE {
 	  ?item wdt:P31 wd:Q10876391.
 	  ?item wdt:P407 ?language.
 	  
-	  OPTIONAL{?language wdt:P1705 ?nativelabel.}
+	  OPTIONAL{?language wdt:P1705 ?nativeLabel.}
 	  
-	  
-	  ?item wdt:P856 ?officialwebsite.
-	  ?item wdt:P1800 ?bbddwp.
+#	  ?item wdt:P856 ?officialwebsite.
+#	  ?item wdt:P1800 ?bbddwp.
 	  ?item wdt:P424 ?Wikimedialanguagecode.
+
+	  OPTIONAL {?language skos:altLabel ?alias FILTER (LANG (?alias) = ?Wikimedialanguagecode).}
 	  
 	  OPTIONAL{?language wdt:P218 ?languageISO .}
 	  OPTIONAL{?language wdt:P220 ?languageISO3 .}
+	  OPTIONAL{?language wdt:P1798 ?languageISO5 .}
 	  
+      OPTIONAL{
+      ?languagelink schema:about ?language.
+      ?languagelink schema:inLanguage "en". 
+      ?languagelink schema:isPartOf <https://en.wikipedia.org/>
+      }
+      
 	  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 	}
+	ORDER BY ?Wikimedialanguagecode'''
+
+	
+	url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
+	data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+	#print (data)
+
+	languages = []
+	wikimedialanguagecode = ''
+
+	Qitem = []; languagename = []; nativeLabel = []; languageISO = []; languageISO3 = []; languageISO5 = []; wikipedia = []; wikipedialanguagecode = [];
+	print ('COMENÇA')
+	for item in data['results']['bindings']:
+		
+		print (item)
+		#input('tell me')
+
+		if wikimedialanguagecode != item['Wikimedialanguagecode']['value'] and wikimedialanguagecode!='':
+
+			result = get_language_spread_unicode(languageISO, languageISO3, languageISO5)
+			try:
+				currentLanguagename=Locale.parse(wikimedialanguagecode).get_display_name(wikimedialanguagecode).lower()
+				if currentLanguagename not in nativeLabel:
+					print ('YAHOO')
+					nativeLabel.append(currentLanguagename)
+					print(currentLanguagename)
+			except:
+				pass
+
+			languages.append({
+	        'Qitem': ";".join(Qitem),
+	        'languagename': ";".join(languagename),
+	        'nativeLabel': ";".join(nativeLabel),
+	        'languageISO': ";".join(languageISO),
+	        'languageISO3': ";".join(languageISO3),
+	        'languageISO5': ";".join(languageISO5),
+	        'numbercountriesOfficialorRegional': result[0],
+	        'languageofficialnational': ";".join(result[1]),
+	        'languageofficialregional': ";".join(result[2]),
+	        'languageofficialsinglecountry': result[3],
+	        'WikipedialanguagearticleEnglish': englisharticle,
+	        'Wikipedia':wikipedia,
+	        'WikimediaLanguagecode': wikimedialanguagecode
+	        })
+			#print (languages)
+			#input('common')
+			Qitem = []; languagename = []; nativeLabel = []; languageISO = []; languageISO3 = []; languageISO5 = []; wikipedia = []; wikipedialanguagecode = [];
+
+		Qitemcurrent = item['language']['value'].replace("http://www.wikidata.org/entity/","")
+		if Qitemcurrent not in Qitem:
+			Qitem.append(Qitemcurrent)
+
+		languagenamecurrent = item['languageLabel']['value']
+		if languagenamecurrent not in languagename:
+			languagename.append(languagenamecurrent)
+
+		try:
+			nativeLabelcurrent = item['nativeLabel']['value'].lower()
+			if nativeLabelcurrent not in nativeLabel:
+				nativeLabel.append(nativeLabelcurrent)
+		except:
+			pass
+
+		try: 
+			aliascurrent = item['alias']['value'].lower()
+			print (aliascurrent)
+			if aliascurrent not in nativeLabel and len(aliascurrent)>3:
+				nativeLabel.append(aliascurrent)
+		except:
+			pass
+
+		try: 
+			languageISOcurrent = item['languageISO']['value']
+			if languageISOcurrent not in languageISO:
+				languageISO.append(languageISOcurrent)
+		except:
+			pass
+
+		try:
+			languageISO3current = item['languageISO3']['value']
+			if languageISO3current not in languageISO3:
+				languageISO3.append(languageISO3current)
+		except:
+			pass
+
+		try:
+			languageISO5current = item['languageISO5']['value']
+			if languageISO5current not in languageISO5:
+				languageISO5.append(languageISO5current)
+		except:
+			pass
+
+		try: englisharticle = item['languagelink']['value'] 
+		except: englisharticle = 'no link'
+	
+		wikimedialanguagecode = item['Wikimedialanguagecode']['value'] # si 
+		wikipedia = item['itemLabel']['value']
+
+		#print (result)
+
+	df = pd.DataFrame(languages)
+	df = df.set_index(['languagename'])
+	filename= 'Wikipedia_language_editions'
+	newlanguages = []
+
+	if os.path.isfile(filename+'.csv'): # FILE EXISTS: CREATE IT WITH THE NEW LANGUAGES IN THE FILENAME
+		languages = pd.read_csv(filename+'.csv',sep='\t')
+		languages=languages[['WikimediaLanguagecode']]
+		languages = languages.set_index(['WikimediaLanguagecode'])
+
+		languagelist = list(languages.index.values); languagelist.append('nan') # for the problem with the 'nan' code taken as a float
+		languagelistcurrent = list(df['WikimediaLanguagecode'])
+
+		newlanguages = list(set(languagelistcurrent) - set(languagelist))
+		print ('These are the new languages:')
+		print (newlanguages)
+
+		filename="_".join(newlanguages)+'_'+filename
+		if len(newlanguages)>0: df.to_csv(filename+'.csv',sep='\t')
+
+	else: # FILE DOES NOT EXIST: CREATE IT WITH THE WHOLE NAME
+		df.to_csv(filename+'.csv',sep='\t')
+
+	return newlanguages
+
+
+def get_language_spread_unicode(languageISO, languageISO3, languageISO5):
+	numbercountries=0
+	languageofficialnational=[]
+	languageofficialregional=[]
+	languageofficialsinglecountry='no'
+
+	if len(languageISO)>0 and languageISO[0]!='': languageCode=languageISO[0]
+	elif len(languageISO3)>0 and languageISO3[0]!='': languageCode=languageISO3[0]
+	elif len(languageISO5)>0 and languageISO5[0]!='': languageCode=languageISO5[0]
+	else: languageCode=''
+
+	#print (languageCode)
+
+	for country in pycountry.countries:
+#		for language in babel.languages.get_territory_language_info(country.alpha_2): # languages in the world countries
+		#print (country)
+		#print (languagesincountry)
+
+		#countrylanguages=len(babel.languages.get_territory_language_info(country.alpha_2))
+		languagesincountry=babel.languages.get_territory_language_info(country.alpha_2)
+		languages={}
+
+		for language in languagesincountry:
+			position=language.find('_')
+			if position != -1: newlanguage=language[0:position] 
+			else: newlanguage=language
+			languages[newlanguage]=languagesincountry[language]
+
+		if languageCode in languages:
+			if languages[languageCode]['official_status']=='official_regional':
+				languageofficialregional.append(country.alpha_2)
+				numbercountries=numbercountries+1
+			if languages[languageCode]['official_status']=='official': 
+				languageofficialnational.append(country.alpha_2)
+				numbercountries=numbercountries+1
+
+	if numbercountries==1 and languageofficialnational!='': languageofficialsinglecountry='yes' 
+	numbercountries=str(numbercountries)
+
+	return (numbercountries,languageofficialnational,languageofficialregional,languageofficialsinglecountry)
+
+
+# SECOND: TERRITORIES
+# Obtain a list the territories where the language is OFFICIAL (regional or national) or INDIGENOUS. 
+# MAIN SOURCE: UNICODE (Babel) and WikiData.
+# Around half of the Wikipedias' languages are no official at national or regional level in any country. (!)
+# Territories are either countries (ISO 3166) or countrysubdivisions of countries (ISO 3166-2).
+def extract_language_territories_unicode(languagelist):
+
+	languages = pd.read_csv('Wikipedia_language_editions.csv',sep='\t')
+	languages=languages[['WikimediaLanguagecode', 'languageISO', 'languageISO3', 'languagesISO5', 'Qitem']]
+	languages = languages.set_index(['WikimediaLanguagecode'])
+
+	if len(languagelist)==0:
+		print ('No language list is passed. So all languages from the file are going to be used.')
+		languagelist = list(languages.index.values)
+
+	print (languagelist)
+
+	# let's create the final Dataframe
+	df = pd.DataFrame(columns=('WikimediaLanguagecode', 'languageISO', 'QitemTerritory', 'territoryname', 'territorynameNative', 'demonym', 'demonymNative', 'ISO3166', 'ISO31662', 'region','country', 'indigenous', 'officialnationalorregional','singlelanguageofficialcountry'))
+	print (df)
+	df = df.set_index(['territoryname'])
+
+	# FIRST: GROUNDTRUTH. UNICODE.
+	for language in languagelist:
+
+		#print (language)
+		#input('')
+
+		languageISO = languages.loc[language,'languageISO']
+		languageISO3 = languages.loc[language,'languageISO3']
+		languageISO5 = languages.loc[language,'languageISO5']
+		QitemLanguage = languages.loc[language,'Qitem']
+
+		if languageISO != '': languageCode=languageISO 
+		else: languageCode=languageISO3
+
+#		input('tell me, baby')
+		for country in pycountry.countries:
+			#print (country)
+			languagesincountry=babel.languages.get_territory_language_info(country.alpha_2)
+			languagesnomisspellings={}
+
+			for countrylanguage in languagesincountry: # for misspellings
+				position=countrylanguage.find('_')
+				if position != -1: newlanguage=countrylanguage[0:position]
+				else: newlanguage=countrylanguage
+				languagesnomisspellings[newlanguage]=languagesincountry[countrylanguage]
+
+			if languageCode in languagesnomisspellings:
+				#print (languagesnomisspellings)
+				#print (languageCode)
+				#print (('és dins al país ')+country.alpha_2)
+
+				# PENDING FROM THE TWO IFS OR FROM OTHER SOURCES
+				territoryname=''
+				territorynameNative=''
+				ISO3166=country.alpha_2
+				ISO31662=''
+				region=''
+				countryname = Locale('EN').territories[country.alpha_2] # in English
+				officialnationalorregional='no'
+				singlelanguageofficialcountry='no'
+
+				if languagesnomisspellings[languageCode]['official_status']=='official_regional': 
+					territoryname = 'unknown'
+					territorynameNative = 'unknown'
+					region='unknown' # if it is official regionally, there is a region we do not know.
+					officialnationalorregional='regional'
+					ISO3166=country.alpha_2
+					ISO31662='unknown'
+
+				if languagesnomisspellings[languageCode]['official_status']=='official': 
+					territoryname = Locale('EN').territories[country.alpha_2] # using babel
+					try: territorynameNative = Locale(languageCode).territories[country.alpha_2]
+					except: territorynameNative = ''
+					region='' # if it is official nationally, there is no region.
+					officialnationalorregional='national'
+					count=0
+					for x in languagesnomisspellings:
+						if languagesnomisspellings[x]['official_status']=='official': count=count+1
+					if count==1: singlelanguageofficialcountry='yes'
+					ISO3166=country.alpha_2
+					ISO31662='' # if it is official nationally, there is no region.
+
+				# PENDING ALWAYS FROM OTHER SOURCES
+				demonym = 'unknown' # WikiData
+				demonymNative = 'unknown' # WikiData
+				QitemTerritory='' # WikiData
+				indigenous='' # WikiData/Ethnologue
+
+				rowdataframe = pd.DataFrame([[language, languageISO, languageISO3, languageISO5, QitemLanguage, QitemTerritory, territoryname, territorynameNative, demonym, demonymNative, ISO3166, ISO31662, region, countryname, indigenous, officialnationalorregional, singlelanguageofficialcountry]], columns = ['WikimediaLanguagecode', 'languageISO', 'languageISO3', 'QitemLanguage', 'QitemTerritory', 'territoryname', 'territorynameNative', 'demonym', 'demonymNative', 'ISO3166', 'ISO31662', 'region','country', 'indigenous', 'officialnationalorregional','singlelanguageofficialcountry'])
+				rowdataframe = rowdataframe.set_index(['territorynameNative'])
+				print (rowdataframe)
+				df = df.append(rowdataframe)
+				#input('tell me, baby')
+
+	df.to_csv('Wikipedia_language_territories_mapping.csv',sep='\t') # TO FILE
+	# this file has the name: Wikipedia_language_territories_mapping.csv and needs to be verified and converted to Wikipedia_language_territories_mapping_quality.csv
+
+
+
+# This gets the territories from a sentence using WikiData and pycountry databases.
+def identify_territories_from_location_sentence(sentence,wikidatacountrysubdivisions,ISO3166):
+#	print (sentence)
+#	print (ISO3166)
+
+#	input(' a ')
+	subdivisionsintext=[]
+	sentence=sentence.strip()
+	if sentence=='': return subdivisionsintext
+
+	# PYCOUNTRY
+	typeslist=[]
+	subdivisions=list(pycountry.subdivisions)
+	for subdivision in subdivisions:
+		if subdivision.type not in typeslist: typeslist.append(subdivision.type)
+
+	for subdivision in list(pycountry.subdivisions.get(country_code=ISO3166)):
+		name=subdivision.name
+#		print (name)
+
+		if name in sentence:
+#			print ('BINGO: PYCOUNTRY')
+#			print (sentence)
+#			print (name)
+#			print (subdivision)
+			subdivisionsintext.append({
+				'Qitem': '',
+			    'territoryname': name,
+			    'territorynameNative': '',
+			    'demonym': '',
+			    'demonymNative': '',
+			    'ISO3166': ISO3166,
+			    'ISO31662': subdivision.code,
+			    'region':'yes',
+			    'parentcode':subdivision.parent_code,
+			    'type':subdivision.type,
+			    'locationtext': sentence,
+				})
+#	print (subdivisionsintext)
+
+	# WIKIDATA
+	for subdivision in wikidatacountrysubdivisions:
+		name=subdivision['itemlabelen']
+		nameNative=subdivision['itemlabelNative']
+
+#		print (nameNative)
+#		print (name)
+
+		for type in typeslist:
+			name=name.replace(type,'').rstrip()
+			nameNative=nameNative.replace(type,'').rstrip()
+
+		if (name != '' and name in sentence) or (nameNative !='' and nameNative in sentence):
+#			print ('BINGO 2: WIKIDATA')
+#			print (sentence)
+#			print (name)
+#			print (nameNative)
+#			print (subdivision)
+			if subdivision['ISO31662']!='':	region='yes'
+			else: region='no'
+			subdivisionsintext.append({
+			    'Qitem': subdivision['Qitem'],
+			    'territoryname': name,
+			    'territorynameNative': nameNative,
+			    'demonym': subdivision['demonymen'],
+			    'demonymNative': subdivision['demonymNative'],
+			    'ISO3166': ISO3166,
+			    'ISO31662': subdivision['ISO31662'],
+			    'region':region,
+			    'locationtext': sentence
+				})
+#	print (subdivisionsintext)
+
+#	unite pycountry + WikiData info.
+	for subdivision in subdivisionsintext:
+		ISO31662 = subdivision['ISO31662']
+		for secondsubdivision in subdivisionsintext:
+			if secondsubdivision['ISO31662']==ISO31662 and secondsubdivision['Qitem']=='' and subdivision['Qitem']!='':
+				subdivision['parentcode']=secondsubdivision['parentcode']
+				subdivision['type']=secondsubdivision['type']
+				subdivisionsintext.remove(secondsubdivision)
+#	print (subdivisionsintext)
+#	input(' b ')
+
+	if len(subdivisionsintext)==0:
+		print (('WARNING: We could not identify any territory in this sentence: ')+sentence+'\n')		
+		subdivisionsintext.append({
+	    'Qitem': '',
+	    'territoryname': '',
+	    'territorynameNative': '',
+	    'demonym': '',
+	    'demonymNative': '',
+	    'ISO3166': ISO3166,
+	    'ISO31662': '',
+	    'region': 'yes',
+	    'locationtext': sentence
+		})
+
+	return subdivisionsintext
+
+
+# This obtains the WikiData on a country subdivisions in a particular language.
+def get_wikidata_wikidata_country_subdivisions(language,ISO3166):
+	wikidatacountrysubdivisions = []
+
+	# FIRST THE COUNTRY SUBDIVISIONS
+	query = '''PREFIX wikibase: <http://wikiba.se/ontology#>
+	PREFIX wd: <http://www.wikidata.org/entity/>
+	PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+	PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+	SELECT ?item ?ISO31662 ?itemlabelen ?itemlabelNative ?demonymNative ?demonymen
+	WHERE
+	{
+      ?country wdt:P31 wd:Q6256. 
+      ?country wdt:P297 ?ISO3166.
+      FILTER (?ISO3166 = "countrycode")
+      
+      ?item wdt:P17 ?country.
+	  ?item wdt:P300 ?ISO31662.
+
+	  OPTIONAL { ?item rdfs:label ?itemlabelen filter (lang(?itemlabelen) = "en"). }
+	  OPTIONAL { ?item rdfs:label ?itemlabelNative filter (lang(?itemlabelNative) = "language"). }
+
+	  OPTIONAL { ?item wdt:P1549 ?demonymNative;
+	        FILTER(LANG(?demonymNative) = "language") }
+	  OPTIONAL { ?item wdt:P1549 ?demonymen;
+	        FILTER(LANG(?demonymen) = "en") }
 	}'''
+
+	query = query.replace('language',language)
+	query = query.replace('countrycode',ISO3166)
+
+	#print (query)
+	url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
+	data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+
+	#print (data)
+	Qitem = ''; itemlabelNative = ''; itemlabelen = ''
+	demonymen = []; demonymNative = [];
+
+	#print ('COMENÇA SUBDIVISIONS')
+	for item in data['results']['bindings']:	
+		#print (item)
+		#input('tell me')
+
+		if Qitem != item['item']['value'] and Qitem!='':
+			wikidatacountrysubdivisions.append({
+	        'Qitem': Qitem,
+	        'ISO3166': ISO3166,
+	        'ISO31662': ISO31662,
+	        'itemlabelen': itemlabelen,
+	        'itemlabelNative': itemlabelNative,
+	        'demonymNative': ";".join(demonymNative),
+	        'demonymen': ";".join(demonymen),
+	        })
+			demonymen = []; demonymNative = [];
+			itemlabelNative = ''
+			itemlabelen = ''
+
+			#print (wikidatacountrysubdivisions)
+
+		Qitem = item['item']['value'].replace("http://www.wikidata.org/entity/","")
+		ISO31662 = item['ISO31662']['value']
+
+		try: itemlabelen = item['itemlabelen']['value']
+		except: pass
+
+		try: itemlabelNative = item['itemlabelNative']['value']
+		except: pass
+
+		try:
+			demonymencurrent = item['demonymen']['value']
+			demonymencurrent = demonymencurrent.replace(',',';')
+			if demonymencurrent not in demonymen:
+				demonymen.append(demonymencurrent)
+		except:
+			pass
+
+		try:
+			demonymNativecurrent = item['demonymNative']['value']
+			demonymNativecurrent = demonymNativecurrent.replace(',',';')
+			if demonymNativecurrent not in demonymNative:
+				demonymNative.append(demonymNativecurrent)
+		except:
+			pass
+
+	#print (wikidatacountrysubdivisions)
+	#input('')
+
+	# NOW THE COUNTRY
+	query = '''PREFIX wikibase: <http://wikiba.se/ontology#>
+	PREFIX wd: <http://www.wikidata.org/entity/>
+	PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+	PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+	SELECT ?item ?itemlabelen ?itemlabelNative ?demonymen ?demonymNative
+	WHERE
+	{
+	  ?item wdt:P31 wd:Q6256. 
+	  ?item wdt:P297 ?ISO3166.
+	  FILTER (?ISO3166 = "countrycode")
+
+	  OPTIONAL { ?item rdfs:label ?itemlabelen filter (lang(?itemlabelen) = "en"). }
+	  OPTIONAL { ?item rdfs:label ?itemlabelNative filter (lang(?itemlabelNative) = "language"). }
+	  OPTIONAL { ?item wdt:P1549 ?demonymen filter (lang(?demonymen) = "en"). }
+	  OPTIONAL { ?item wdt:P1549 ?demonymNative filter (lang(?demonymNative) = "language"). }
+	  
+	}'''
+
+	query = query.replace('language',language)
+	query = query.replace('countrycode',ISO3166)
+	#print (query)
 
 	url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
 	data = requests.get(url, params={'query': query, 'format': 'json'}).json()
 
-	presidents = []
-	for item in data['results']['bindings']:
-	    presidents.append({
-	        'name': item['president']['value'],
-	        'cause of death': item['cause']['value'],
-	        'date of birth': item['dob']['value'],
-	        'date of death': item['dod']['value']})
-
-	df = pd.DataFrame(presidents)
-
-	df.head()
-
-	df.dtypes
-	df['date of birth'] = pd.to_datetime(df['date of birth'])
-	df['date of death'] = pd.to_datetime(df['date of death'])
-	df.sort(['date of birth', 'date of death'])
-	df = df[df['date of birth'] != '1743-04-02']
-
-
-# una llengua ha de tenir: Q, nom en anglès, nom en natiu, ISO 639, nom de Viquipèdia, web de Viquipèdia, base de dades de WP, Wikimedia language code.
-
-# si no té nom en natiu, podem utilitzar babel.
-                    #locale = babel.Locale.parse(langucode)
-                    #languagename = locale.get_display_name()
-
-# si no tingués nom en anglès, podríem utilitzar pycountry.languages.get(ISO639_1_code=langucode).name
-
-
-	# OUTPUT: languageterritoriesmapping_rich_languages.json -> languages rich
-
-"""
-per tenir el nom de la llengua en natiu
-babel
-utilitzar el label en la pròpia llengua i els 'also known as'.
-http://babel.pocoo.org/en/latest/api/core.html#basic-interfacehttp://babel.pocoo.org/en/latest/
-http://babel.pocoo.org/en/latest/
-https://github.com/mledoze/countries
-
-
-
-language status
-un paràmetre per llengua:
-és oficial_en_un_país.
-és single_territory
-
-és com un flag d'alerta.
-
-
-
-
-més paràametres d'una llengua:
-- ISO
-- noms en original
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-
-	return # torna una llista de llengües
-
-
-
-# SECOND: TERRITORIES
-# Obtain a list the territories where the language is indigenous to or official. Searches for the language names and territories associated to each Wikipedia language edition and creates a rich dataset.
-def extract_territories():
-	# extracció dels territoris de l'arxiu anterior
-	# creació json per verificació qualitativa
-
-	# llista de subregions per cada llengua (amb el countries.json de https://github.com/mledoze/countries)
-
-	# http://www.unicode.org/cldr/charts/latest/supplemental/territory_language_information.html
-
-	# OUTPUT: languageterritoriesmapping_rich_territories.json -> territories
-	return
-
-"""
-els territoris on és oficial o on és indigena.
-
-Ethnologue
-el territori on la llengua tingui: 
-status offici == 1 OR
-other comments != 'non-indigenous'
-
-
-
-
-
-
-
-
-territoris - llengües
-
-països
-first-level administrative country subdivision
-
-podem buscar:
-
-- relació de territoris (subdivisions) en els quals la llengua consta (P37) com a oficial / funciona amb el català però en d'altres no perquè no és llengua oficial de l'estat sencer
-  ?item wdt:P31/wdt:P279* wd:Q10864048.
-  ?item wdt:P37 wd:Q7026.
-
-- relació de territoris on es troba "located in the administrative territorial entity" (P131) la llengua. / funciona amb el català però amb d'altres llengües no perquè no hi consten els territoris a la seva pàgina de wikidata
-   wd:Q7026 wdt:P131 ?item .
-
-- relació de països (P17) que consten dins de la pàgina de llengua. / no funciona amb el rus, p.e., que diu que és als Estats Units o Canadà... no és això.
-   wd:Q7737 wdt:P17 ?item .
-
-- relació de països (o subclasses) en els quals la llengua consta (P37) com a oficial / aquest és un exemple amb el rus. 
-  ?item wdt:P31/wdt:P279* wd:Q6256.
-  ?item wdt:P37 wd:Q7737.
-
-el Tarantino no apareix ni com a llengua als items de Puglia, Basilicata, etc. ni en l'item del Tarantino hi apareix on es parla.
-
-sembla que ho hauré de fer manualment i basar-me en el "location map image" P242 o la pàgina de la pròpia llengua en la llengua nativa.
-
-treure-ho tot en arxius diferents i utilitzar-ho per fer la taula qualitativa. 
-
-
-
-	SELECT ?item ?language ?languageLabel ?territoris ?territorisLabel
-    WHERE 
-	{
-	  ?item wdt:P31 wd:Q10876391.
-	  ?item wdt:P407 ?language.
-      
-      ?territoris wdt:P37 ?language.
-#      ?territoris wdt:P31 wd:Q3624078.
-	 	  
-	 	  
-	  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-	}
-
-de political territorial entity que té com a llengua oficial...
-
-
-"""
-
-
-
-
-"""
-            string = 'afwiki,NA,ZA\n' \
-                     'arwiki,DZ,BH,TD,KM,DJ,EG,ER,IQ,IL,JO,KW,LB,LY,MR,MA,OM,QA,PS,SA,SO,SD,SY,TN,AE,YE,EH\n' \
-                     'cawiki,ES-CT,ES-IB,AD,ES-VC\n' \
-                     'cebwiki,PH-CEB,PH-BOH,PH-NEC,PH-MAS,PH-BIL,PH-EAS,PH-LEY,PH-NSA,PH-WSA,PH-GUI,PH-CAM,PH-MAD,PH-SLU,PH-TAW\n' \
-                     'cswiki,CZ\n' \
-                     'dawiki,DK,FO\n' \
-                     'dewiki,DE,AT,LI,LU,CH-AG,CH-AR,CH-AI,CH-BL,CH-BS,CH-GL,CH-LU,CH-NW,CH-OW,CH-SH,CH-SZ,CH-SO,CH-SG,CH-TG,CH-UR,CH-ZG,CH-ZH,CH-BE,CH-FR,CH-VS\n' \
-                     'elwiki,GR,CY\n' \
-                     'enwiki,GB,AU,US,NZ,CA,IN,IE,SZ,ZM,VU,TO,TV,TZ,SD,SS,ZA,SB,SL,SC,WS,LC,RW,PH,PG,PW,NU,NR,MU,MH,MT,MW,LR,KI,GM,FJ,FM,ER,CM,BW,PK,ZW,UG,TT,VC,KN,NG,NA,LS,KE,JM,GY,GD,GH,DM,CK,BZ,BB,BS,AG,MY,BN,BD,PR,TK,CC,SH,MS,GG,IO,AS,AI,BM,VG,KY,CX,FK,GI,GU,HK,IM,JE,MP,NF,SX,MP,PN,VI,TC\n' \
-                     'eswiki,ES,VE,UY,PE,PY,PA,NI,HN,GT,GQ,SV,EC,DO,CL,CU,CR,CO,BO,AR,MX\n' \
-                     'etwiki,EE\n' \
-                     'euwiki,ES-PV,ES-NC\n' \
-                     'fawiki,IR,AF,TJ\n' \
-                     'fiwiki,FI\n' \
-                     'frwiki,FR,BE-WAL,BE-BRU,BJ,BF,BI,CM,CA-QC,CA-ON,CA-NB,CA-MB,CF,TD,KM,CI,CD,DJ,GQ,GA,GN,HT,LU,MG,ML,MC,NE,CG,RW,SN,SC,VU,TG,CH-GE,CH-VD,CH-NE,CH-JU,CH-BE,CH-FR,CH-VS\n' \
-                     'gnwiki,BO,AR-W,PY,BR\n' \
-                     'hewiki,IL\n' \
-                     'huwiki,HU,RS-VO\n' \
-                     'idwiki,ID\n' \
-                     'iswiki,IS\n' \
-                     'itwiki,IT,CH-TI,VA,SM\n' \
-                     'jawiki,JP\n' \
-                     'kowiki,KR,KP\n' \
-                     'mkwiki,MK\n' \
-                     'mswiki,MY,BN,SG,CC,CC,ID\n' \
-                     'newiki,NP\n' \
-                     'nlwiki,NL,BE-BRU,BE-VLG,SR,SX,CW,AW\n' \
-                     'nowiki,NO\n' \
-                     'plwiki,PL\n' \
-                     'ptwiki,PT,AO,BR,CV,TL,GW,GQ,MZ,ST\n' \
-                     'rowiki,RO,MD,RS-VO\n' \
-                     'ruwiki,RU,BY,KZ,KG,GE-AB,UA-43\n' \
-                     'srwiki,RS,BA,XK\n' \
-                     'svwiki,SE,FI-01\n' \
-                     'swwiki,TZ,KE,UG\n' \
-                     'trwiki,TR,CY\n' \
-                     'ukwiki,UA\n' \
-                     'viwiki,VN\n' \
-                     'warwiki,PH-EAS,PH-NSA,PH-WSA,PH-BIL,PH-LEY,PH-MAS,PH-SOR\n' \
-                     'zhwiki,CN,MO,HK,TW,SG\n'
-
-"""
-
-
-
-# THIRD PHASE: TERRITORIES RICH
-# Create a dataset .json file named "Language-Context Mapping” with the equivalences of keywords (demonym, territory name), Wikidata Items (Q) and ISO codes per language and territory.
-# SOURCE: 
-
-"""
-a l'inici del mètode cal definir les quatre sources d'information:
-
-territories official language status
-a) babel/unicode
-http://www.unicode.org/cldr/charts/latest/supplemental/language_territory_information.html
-
-territories 'regional'
-* ethnologue https://en.wikipedia.org/wiki/Ethnologue
-* wikipedia language pages
-* unesco
-http://www.unesco.org/languages-atlas/index.php# no és complert pels territoris
-* wikidata: a nivell temptatiu.
-
-
-territories rich: iso, demonym
-* wikidata
-* countries subdivisions (iso)
-https://gist.github.com/mindplay-dk/4755200
-https://pypi.python.org/pypi/pycountry
-https://github.com/olahol/iso-3166-2.js/blob/master/data.csv
-
-* countries: https://github.com/mledoze/countries
-
-
-"""
-
-
-
-
-
-
-
-
-def languageterritoriesmapping_rich():
-# extracció json final 
-
-# Aquí el què falta és la relació de territoris amb ISO, nom original, nom en anglès i demonym.
-# El demonym s'ha de treure de WikiData (preguntar al país). 
-# El demonym es pot treure d'aquí en anglès i després traduïr-lo amb WikiData: https://github.com/mledoze/countries
-
-# 2 files
-# languages file
-# language_territories file
-
-#	* pycountry ens permet anar de ISO 3166-2 a nom de subdivisió en natiu.
-#	* pycountry (arxiu countries.csv) ens permet anar d'ISO 3166 a nom de país en natiu.
-
-# territory:
-# english_name.
-# native_name.
-# iso.
-# demonyms
-# status = official/not official.
-# indigenous = yes/no.
-# area = country/region
-
- 
-
-	# OUTPUT: languageterritoriesmapping_rich.json -> final.
-	# [cawiki;Qcode,langname1,lang_ISO_639;Qcode,territori1name,territori1_ISO_3166-2,territori1_demonym1,territori1_demonim2;territori2name,territori2_ISO_3166-2,territory2_demonym;...] 
-	# En el cas de la catalana és 639-1, en el cas de la veneciana és 639-3. La prioritat és el 639-1, si no hi és, tirar pel següent.
-	return
-
-
-
-
-
-# Checks whether there is a new Wikipedia language edition that is not in the dataset and includes it.
-def verify_new_languages():
-	# crida les funcions amb el paràmetre (verify) que fa que treguin l'arxiu amb _added. 
-	# la primera funció (extract_wikipedia_languages) hauria de fer la comprovació de l'arxiu existent languageterritoriesmapping_rich.json i el resultat de la consulta WikiData.
-
-	extract_wikipedia_languages()
-	extract_territories()
-	languageterritoriesmapping_rich()
-
-	# fa cerca a wikidata de llengües i comprova si n'hi ha de noves. si n'hi ha de noves: m'envia un e-mail.
-	
-	# treuria els tres arxius només per les llengües noves i amb un _added.
-
-
-
-	return
-
-
-
-def create_mysql_connection(lang):
-    try:
-        mysql_cur.execute(query,args)
-    except:
-#        mysql_con = mdb.connect(lang + '.labsdb', 'p50380g50517', 'aiyiangahthiefay', lang + '_p')
-        mysql_con = mdb.connect(host=".labsdb",db=lang + '_p',read_default_file="~/.my.cnf")
-        mysql_cur = mysql_con.cursor()
-#        print 'reconnect.'
-        mysql_cur.execute(query,args)
-#        print 'queried reconnected.'
-    return mysql_cur
-
-
-
-if __name__ == '__main__':	
+	Qitem = ''
+	demonymen = []; demonymNative = []; itemlabelen = ''; itemlabelNative = '';
+
+	#print ('ARA EL PAÍS')
+	for item in data['results']['bindings']:	
+		#print (item)
+		#input('tell me')
+
+		Qitem = item['item']['value'].replace("http://www.wikidata.org/entity/","")
+
+		try: itemlabelen = item['itemlabelen']['value']
+		except: pass
+
+		try: itemlabelNative = item['itemlabelNative']['value']
+		except: pass
+
+		try:
+			demonymencurrent = item['demonymen']['value']
+			demonymencurrent = demonymencurrent.replace(',',';')
+			if demonymencurrent not in demonymen:
+				demonymen.append(demonymencurrent)
+		except:
+			pass
+
+		try:
+			demonymNativecurrent = item['demonymNative']['value']
+			demonymNativecurrent = demonymNativecurrent.replace(',',';')
+			if demonymNativecurrent not in demonymNative:
+				demonymNative.append(demonymNativecurrent)
+		except:
+			pass
+
+	wikidatacountrysubdivisions.append({
+    'Qitem': Qitem,
+    'ISO3166': ISO3166,
+    'ISO31662': '',
+    'itemlabelen': itemlabelen,
+    'itemlabelNative': itemlabelNative,
+    'demonymNative': ";".join(demonymNative),
+    'demonymen': ";".join(demonymen),
+    })
+
+	return (wikidatacountrysubdivisions)
+
+if __name__ == '__main__':
 	main()
-	
 	end = time.time()
-	print 'job completed after: ' + str(end - startTime)
+	print ('job completed after: ' + str(end - startTime))
