@@ -6,10 +6,9 @@ import datetime
 # system
 import os
 import sys
+import shutil
 import re
 import random
-import operator
-from IPython.display import HTML
 # databases
 import MySQLdb as mdb, MySQLdb.cursors as mdb_cursors
 import sqlite3
@@ -19,7 +18,7 @@ import bz2
 import json
 import csv
 import codecs
-# requests
+# requests and others
 import requests
 import urllib
 import webbrowser
@@ -30,24 +29,11 @@ import pandas as pd
 # classifier
 from sklearn import svm, linear_model
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-# bokeh
-import bokeh
-from bokeh.plotting import figure, show, output_file
-from bokeh.core.properties import value
-from bokeh.io import show, output_file
-from bokeh.models import ColumnDataSource, HoverTool, NumeralTickFormatter, LogColorMapper
-# pywikibot
-import pywikibot, pywikibot.pagegenerators as pg
-from pywikibot.bot import suggest_help
-from pywikibot.specialbots import UploadRobot
-from pywikibot import Category
-PYWIKIBOT2_DIR = '/srv/wcdo/user-config.py'
-
 
 class Logger(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("ccc_selection_temp.out", "w")
+        self.log = open("ccc_selectionaaa.out", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -57,62 +43,12 @@ class Logger(object): # this prints both the output to a file and to the termina
 def main():
 
 
-    # Obtaining CCC for all WP
-    for languagecode in wikilanguagecodes:
-        print ('\n### language '+str(wikilanguagecodes.index(languagecode)+1)+'/'+str(len(wikilanguagecodes))+': \t'+languages.loc[languagecode]['languagename']+' '+languagecode+' \t| '+languages.loc[languagecode]['region']+'\t'+languages.loc[languagecode]['subregion']+'\t'+languages.loc[languagecode]['intermediateregion']+' | '+languages.loc[languagecode]['languageofficialnational']+' '+languages.loc[languagecode]['languageofficialregional'])
-
-        (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(languagecode)
-
-
-        extend_articles_editors(languagecode,page_titles_qitems,page_titles_page_ids)
-
-        return
-
-        wiki_path = ''
-
-        # EDITORS - 1000
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # EDITORS - 100
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.999,'num_inlinks_from_CCC': 0.001}, 'positive', 100, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-
-        # FEATURED
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'featured_article': 0.9,'num_inlinks_from_CCC': 0.05, 'num_retrieval_strategies':0.05}, 'positive', 100, 'minimum', ['featured_article','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # GL MOST INLINKED FROM CCC
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['gl'], '', '', {'num_inlinks_from_CCC': 0.9, 'num_retrieval_strategies': 0.1}, 'positive', 100, 'minimum', ['num_inlinks_from_CCC','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # KEYWORDS ON TITLE WITH MOST BYTES
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['kw'], '', '', {'num_bytes': 0.9,'num_inlinks_from_CCC': 0.05, 'num_retrieval_strategies': 0.05}, 'positive', 100, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','featured_article','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # MOST EDITED DURING FIRST THREE YEARS
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', 'first_three_years', {'num_edits': 0.999,'num_inlinks_from_CCC': 0.001}, 'positive', 100, 'minimum', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # MOST EDITED DURING LAST THREE MONTHS
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', 'last_three_months', {'num_edits': 0.999,'num_inlinks_from_CCC': 0.001}, 'positive', 100, 'minimum', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        
-        # MOST EDITED WOMEN BIOGRAPHY
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc','female'], '', '', {'num_edits': 0.8,'num_inlinks_from_CCC': 0.1,'num_retrieval_strategies':0.1}, 'positive', 100, 'minimum', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # MOST EDITED MEN BIOGRAPHY
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc','male'], '', '', {'num_edits': 0.8,'num_inlinks_from_CCC': 0.1,'num_retrieval_strategies':0.1}, 'positive', 100, 'minimum', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # MOST SEEN (PAGEVIEWS) DURING LAST MONTH
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_pageviews': 0.999,'num_inlinks_from_CCC': 0.001}, 'positive', 100, 'minimum', ['num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-        # MOST DISCUSSED (EDITS DISCUSSIONS)
-        generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_discussions': 0.999,'num_inlinks_from_CCC': 0.001}, 'positive', 100, 'minimum', ['num_discussions','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-
-
-        return
-        publish_wcdo_updates()
-
+    print ('new')
 
 
 """
 # MAIN
-######################## WCDO SCRIPT ######################## 
+######################## CCC SELECTION SCRIPT ######################## 
 
 # (A) -> RAW DATA PHASE
     # CREATE THE WIKIDATA DB
@@ -150,33 +86,32 @@ def main():
         # DATA STRATEGIES:
         # B1. RETRIEVE AND SET ARTICLES AS CCC:
         # * retrieve direct
-        get_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_geolocation_wd');
-        get_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_geolocated_reverse_geocoding');
-        get_ccc_articles_country_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_country_wd');
-        get_ccc_articles_location_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_location_wd');
-        get_ccc_articles_language_strong_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_language_strong_wd');
-        get_ccc_articles_keywords(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_keywords');
+        get_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_geolocation_wd');
+        get_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_geolocated_reverse_geocoding');
+        get_ccc_articles_country_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_country_wd');
+        get_ccc_articles_location_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_location_wd');
+        get_ccc_articles_language_strong_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_language_strong_wd');
+        get_ccc_articles_keywords(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_keywords');
         # * retrieve indirect
-        get_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_created_by_properties_wd');
-        get_ccc_articles_part_of_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_ccc_articles_part_of_properties_wd');
+        get_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_created_by_properties_wd');
+        get_ccc_articles_part_of_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_part_of_properties_wd');
         get_ccc_articles_from_community_vital_list(languagecode)
 
         # B2. RETRIEVE (POTENTIAL) CCC ARTICLES THAT RELATE TO CCC:
         # * retrieve direct
-        get_articles_geolocated_geo_tags(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_articles_geolocated_geo_tags');
-        get_articles_category_crawling(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_articles_category_crawling');
-        get_articles_language_weak_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_articles_language_weak_wd');
-        get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_articles_with_inlinks');
-        get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_articles_with_outlinks');
-        get_articles_affiliation_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_articles_affiliation_properties_wd');
-        get_articles_has_part_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' get_articles_has_part_properties_wd');
+        get_articles_geolocated_geo_tags(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_geolocated_geo_tags');
+        get_articles_category_crawling(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_category_crawling');
+        get_articles_language_weak_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_language_weak_wd');
+        get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_inlinks');
+        get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_outlinks');
+        get_articles_affiliation_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_affiliation_properties_wd');
+        get_articles_has_part_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_has_part_properties_wd');
 
         # B3. FILTERING AND CREATING THE DEFINITIVE CCC
         filter_articles_geolocated_elsewhere(languagecode)
-        calculate_articles_ccc_binary_classifier(languagecode,'RandomForest',page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_database.txt', languagecode+' calculate_articles_ccc_binary_classifier');
+        calculate_articles_ccc_binary_classifier(languagecode,'RandomForest',page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' calculate_articles_ccc_binary_classifier');
         calculate_articles_ccc_main_territory(languagecode)
         calculate_articles_ccc_retrieval_strategies(languagecode)
-        calculate_articles_ccc_algorithm_vital_list(languagecode)
 
     # EXTRACT CCC DATASETS INTO CSV AND CLEAN OLD DATABASES
     extract_ccc_tables_to_files()
@@ -184,33 +119,23 @@ def main():
     delete_pageviews_db()
     delete_latest_wikidata_dump()
     delete_latest_pageviews_dump()
-    rename_and_drop_ccc_db()
+    backup_ccc_current_db()
 
-# (C) -> STATS DATA PHASE / CREATE CCC OUTPUT DATA FOR DISSEMINATION -> idea: these phases could be split into another file.
-    create_table_ccc_allwiki()
-    create_table_ccc_extent_by_language()
-    create_table_ccc_extent_by_qitem()
-    create_table_ccc_gaps()
-    create_table_ccc_bridging_last15days()
-    create_table_ccc_topical_coverage()
 
-# (D) -> PUBLISHING FORMATTED DATA PHASE (TABLES AND GRAPHS)
-    publish_wcdo_updates()
-
-# (E) -> NOTIFICATION:
-    send_email_toolaccount('CCC created successfuly', '')
 """
 
 
 # DATABASE AND DATASETS MAINTENANCE FUNCTIONS (CCC AND WIKIDATA)
 ################################################################
 
-# Loads Wikipedia_language_territories_mapping_quality.csv file
+# Loads language_territories_mapping_quality.csv file
 def load_languageterritories_mapping():
 # READ FROM STORED FILE:
-    territories = pd.read_csv('Wikipedia_language_territories_mapping_quality.csv',sep='\t',na_filter = False)
-    territories = territories[['territoryname','territorynameNative','QitemTerritory','languagenameEnglishethnologue','WikimediaLanguagecode','demonym','demonymNative','ISO3166','ISO31662','regional','country','indigenous','languagestatuscountry','officialnationalorregional']]
+    territories = pd.read_csv('language_territories_mapping_quality.csv',sep='\t',na_filter = False)
+    territories = territories[['WikimediaLanguagecode','languagenameEnglishethnologue','territoryname','territorynameNative','QitemTerritory','demonym','demonymNative','ISO3166','ISO31662','regional','country','indigenous','languagestatuscountry','officialnationalorregional']]
+
     territories = territories.set_index(['WikimediaLanguagecode'])
+#    territories.to_csv('language_territories_mapping_quality_beta.csv',sep='\t')
 
     territorylanguagecodes = territories.index.tolist()
     for n, i in enumerate(territorylanguagecodes): territorylanguagecodes[n]=i.replace('-','_')
@@ -218,8 +143,9 @@ def load_languageterritories_mapping():
     territories=territories.rename(index={'be_tarask': 'be_x_old'})
     territories=territories.rename(index={'nan': 'zh_min_nan'})
 
+    # add regions
     ISO3166=territories['ISO3166'].tolist()
-    regions = pd.read_csv('Wikipedia_country_regions.csv',sep=',',na_filter = False)
+    regions = pd.read_csv('wikipedia_country_regions.csv',sep=',',na_filter = False)
     regions = regions[['alpha-2','region','sub-region','intermediate-region']]
     regions = regions.set_index(['alpha-2'])
     region=[]; subregion=[]; intermediateregion=[]
@@ -250,12 +176,12 @@ def load_languageterritories_mapping():
 
 
 
-# Loads Wikipedia_language_editions.csv file
+# Loads wikipedia_language_editions.csv file
 def load_wiki_projects_information():
     # in case of extending the project to other WMF sister projects, it would be necessary to revise these columns and create a new file where a column would specify whether it is a language edition, a wikictionary, etc.
 
 # READ FROM STORED FILE:
-    languages = pd.read_csv('Wikipedia_language_editions.csv',sep='\t',na_filter = False)
+    languages = pd.read_csv('wikipedia_language_editions.csv',sep='\t',na_filter = False)
     languages=languages[['languagename','Qitem','WikimediaLanguagecode','Wikipedia','WikipedialanguagearticleEnglish','languageISO','languageISO3','languageISO5','languageofficialnational','languageofficialregional','languageofficialsinglecountry','nativeLabel','numbercountriesOfficialorRegional']]
     languages = languages.set_index(['WikimediaLanguagecode'])
 #    print (list(languages.columns.values))
@@ -266,6 +192,7 @@ def load_wiki_projects_information():
     languages=languages.rename(index={'be_tarask': 'be_x_old'})
     languages=languages.rename(index={'nan': 'zh_min_nan'})
 
+    # add regions
     language_region={}; language_subregion={}; language_intermediateregion={}
     regions=territories[['region','subregion','intermediateregion']]
     for index, row in territories.iterrows():
@@ -309,6 +236,8 @@ def load_wiki_projects_information():
 
 def load_wikipedia_language_editions_numberofarticles():
     wikipedialanguage_numberarticles = {}
+
+    if not os.path.isfile('ccc_current.db'): return
     conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
 
     # Obtaining CCC for all WP
@@ -320,16 +249,6 @@ def load_wikipedia_language_editions_numberofarticles():
     return wikipedialanguage_numberarticles
 
 
-def generate_print_language_territories_mapping_table():
-    site = pywikibot.Site("meta", '')
-    # get the text from the html created for the Nikola website.
-    text = ''
-    page = pywikibot.Page(site, "Language Territories Mapping")
-    page.save(summary="Updating Table", watch=None, minor=False,
-                    botflag=False, force=False, async=False, callback=None,
-                    apply_cosmetic_changes=None, text=text)
-# publicar la taula de territoris a meta.
-
 def read_meta_language_territories_mapping_table():
     site = pywikibot.Site("meta", '')
     # get the text from the meta page and see any editor had changed it. send an e-mail with changes.
@@ -339,12 +258,32 @@ def read_meta_language_territories_mapping_table():
     # https://meta.wikimedia.org/w/index.php?title=List_of_Wikipedias/Table&action=edit
     print ('')
 
+
 def read_community_generated_article_lists():
 # this gets the links from each language edition version page with the list of articles.
 # 1.3 publicar una taula amb els encarregats de tirar endavant el projecte en cada llengua.
 # publicar una taula amb els links a les llistes d'articles col·locats per les comunitats en cada llengua. lectura d'aquesta taula amb links de 1.5. 
 # 1.5 lectura pàgina de llista d'articles 'List of articles from X Wikipedia Cultural Contexts that every other should have' en cada llengua.
     print ('')
+
+
+# It returns a list of languages based on the region preference introduced.
+def obtain_region_wikipedia_language_list(region, subregion, intermediateregion):
+# use as: wikilanguagecodes = obtain_region_wikipedia_language_list('Asia', '', '').index.tolist()
+#    print('* This is the list of continents combinations: '+' | '.join(languages.region.unique())+'\n')
+#    print('* This is the list of subregions (in-continents) combinations: '+' | '.join(languages.subregion.unique())+'\n')
+#    print('* This is the list of intermediate regions (in continents and regions) combinations: '+' | '.join(languages.intermediateregion.unique())+'\n')
+#    print (languages)
+    if region!='':
+        languages_region = languages.loc[languages['region'] == region]
+
+    if subregion!='':
+        languages_region = languages[languages['subregion'].str.contains(subregion)]
+
+    if intermediateregion!='':
+        languages_region = languages[languages['intermediateregion'].str.contains(intermediateregion)]
+
+    return languages_region
 
 
 # Additional sources: Pycountry and Babel libraries for countries and their languages.
@@ -518,11 +457,12 @@ def establish_mysql_connection_write():
 def create_wikipedia_ccc_db():
     functionstartTime = time.time()
     print ('* create_wikipedia_ccc_db')
+
     # Removes current CCC database (just for code debugging)
-#    try:
-#        os.remove("ccc_current.db"); print ('ccc_current.db deleted.');
-#    except:
-#        pass
+    try:
+        os.remove("ccc_current.db"); print ('ccc_current.db deleted.');
+    except:
+        pass
 
     # Creates the current CCC database.
     conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor(); print ('ccc_current.db created.');
@@ -546,7 +486,7 @@ def create_wikipedia_ccc_db():
         'qitem text, '+
         'page_id integer, '+
         'page_title text, '+
-        'date_created text, '+
+        'date_created integer, '+
 
         # calculations:
         'ccc_binary integer, '+
@@ -587,8 +527,6 @@ def create_wikipedia_ccc_db():
         'featured_article integer, '+
 
         # top 100 rank position
-#        'vital100_algorithm integer, '+
-        'vital100_community integer, '+
         'PRIMARY KEY (qitem,page_id));')
 
         try:
@@ -603,9 +541,8 @@ def create_wikipedia_ccc_db():
 
 
 # Drop the CCC database.
-def rename_and_drop_ccc_db(): # ara això s'hauria de pensar amb uns altres noms.
-    os.remove("ccc.db")
-    os.rename("ccc_current.db","ccc.db")
+def backup_ccc_current_db():
+    shutil.copyfile("ccc_current.db","ccc_old.db")
 
 
 # Creates a dataset from the CCC database for a list of languages.
@@ -614,7 +551,7 @@ def extract_ccc_tables_to_files():
     conn = sqlite3.connect('ccc.db'); cursor = conn.cursor()
 
     for languagecode in wikilanguagecodes:
-        superfolder = './datasets'
+        superfolder = './datasets/'+year_month
         languagefolder = superfolder+'/'+languagecode+'wiki/'
         latestfolder = superfolder+'/latest/'
 
@@ -663,14 +600,20 @@ def extract_ccc_tables_to_files():
 
 def extract_ccc_count(languagecode, filename, message):
     conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'
+    cursor.execute(query)
+    row = cursor.fetchone()
+    if row: row1 = str(row[0]);
+
     query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki;'
     cursor.execute(query)
     row = cursor.fetchone()
-    if row: row = str(row[0]);
+    if row: row2 = str(row[0]);
+
     languagename = languages.loc[languagecode]['languagename']
 
     with open(filename, 'a') as f:
-        f.write(languagename+'\t'+message+'\t'+row+'\n')
+        f.write(languagename+'\t'+message+'\t'+row1+'\t'+row2+'\n')
 
 
 def load_dicts_page_ids_qitems(languagecode):
@@ -890,6 +833,7 @@ def wd_dump_iterator():
     conn.commit()
     conn.close()
     print ('DONE with the JSON.')
+    print ('It has this number of lines: '+str(iter))
     print ('* wd_dump_iterator Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
@@ -1019,9 +963,8 @@ def wd_sitelinks_insert_db(cursor, qitem, wd_sitelinks):
         if code in wikilanguagecodeswiki:
             values=[qitem,code,title['title']]
 #            print (values)
-            cursor.execute("INSERT INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",values)
-
-
+            try: cursor.execute("INSERT INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",values)
+            except: print ('This Q is already in: '+qitem)
 
 
 
@@ -1066,6 +1009,8 @@ def wd_geolocated_update_db():
 # Checks all the databses and updates the database.
 def insert_page_ids_page_titles_qitems_ccc_db():
     functionstartTime = time.time()
+
+    print ('* insert_page_ids_page_titles_qitems_ccc_db')
     conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
     conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
 
@@ -1079,6 +1024,7 @@ def insert_page_ids_page_titles_qitems_ccc_db():
             page_titles_qitems[page_title]=row[1]
         print (len(page_titles_qitems))
         print ('qitems obtained.')
+        # IMPORTANT: not all articles (page_namespace=0 and page_is_redirect=0) from every Wikipedia have a Qitem related, as sometimes the link is not created. This is relevant for small Wikipedias.
 
         mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
         query = 'SELECT page_title, page_id FROM page WHERE page_namespace=0 AND page_is_redirect=0;'
@@ -1117,7 +1063,6 @@ def extend_articles_timestamp(languagecode, page_titles_qitems):
     page_ids_timestamps = []
 
     try:
-        i=1/0
         print ('Trying to run the entire query.')
         mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
         mysql_cur_read.execute("SELECT MIN(rev_timestamp),rev_page,page_title FROM revision INNER JOIN page ON rev_page=page_id WHERE page_namespace=0 AND page_is_redirect=0 GROUP by rev_page")
@@ -1144,7 +1089,7 @@ def extend_articles_timestamp(languagecode, page_titles_qitems):
             mysql_cur_read.execute(query)
             rows = mysql_cur_read.fetchall()
             for row in rows: 
-                try: page_ids_timestamps.append((row[0],row[1],page_titles_qitems[str(row[2].decode('utf-8'))]))
+                try: page_ids_timestamps.append((str(row[0].decode('utf-8')),row[1],page_titles_qitems[str(row[2].decode('utf-8'))]))
                 except: continue
             print (len(page_ids_timestamps))
             print (str(datetime.timedelta(seconds=time.time() - last_period_time))+' seconds.')
@@ -1170,7 +1115,6 @@ def extend_articles_editors(languagecode, page_titles_qitems, page_titles_page_i
     conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
 
     try:
-        i=1/0
         print ('Trying to run the entire query.')
         mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
         mysql_cur_read.execute('SELECT COUNT(DISTINCT rev_user_text),page_id,page_title FROM revision INNER JOIN page ON rev_page = page_id WHERE page_namespace=0 AND page_is_redirect=0 GROUP BY page_id')
@@ -1484,9 +1428,12 @@ def extend_articles_featured(languagecode, page_titles_qitems):
 #    print (featuredarticleslanguages)
 #    input('')
 
+    if languagecode in featuredarticleslanguages: featuredtitle=featuredarticleslanguages[languagecode+'wiki']
+    else: print ('no featured articles for language: '+languagecode); return
+
     featuredarticles=[]
     mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
-    mysql_cur_read.execute('SELECT page_title, page_id FROM categorylinks INNER JOIN page on cl_from=page_id WHERE CONVERT(cl_to USING utf8mb4) COLLATE utf8mb4_general_ci LIKE %s', (featuredarticleslanguages[languagecode+'wiki'],)) # Extreure
+    mysql_cur_read.execute('SELECT page_title, page_id FROM categorylinks INNER JOIN page on cl_from=page_id WHERE CONVERT(cl_to USING utf8mb4) COLLATE utf8mb4_general_ci LIKE %s', (featuredtitle,)) # Extreure
     rows = mysql_cur_read.fetchall()
     for row in rows: 
         page_title=str(row[0].decode('utf-8'))
@@ -2158,7 +2105,7 @@ def get_ccc_articles_from_community_vital_list(languagecode):
     # update to calculate the ccc_gaps later.
 
     read_community_generated_article_lists()
-    print ('vital100_community integer')
+#    print ('vital100_community integer')
 
     
 
@@ -2393,56 +2340,6 @@ def get_articles_category_crawling(languagecode,page_titles_qitems):
     print ('* get_articles_category_crawling Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
-# Obtain the articles with a "weak" language property that is associated the language. This is considered potential CCC.
-def get_articles_language_weak_wd(languagecode,page_titles_page_ids):
-    functionstartTime = time.time()
-    print ('\n* Getting articles with Wikidata from items with "language" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
-
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
-
-    # language qitems
-    qitemresult = languages.loc[languagecode]['Qitem']
-    if ';' in qitemresult: qitemresult = qitemresult.split(';')
-    else: qitemresult = [qitemresult];
-
-    # get articles
-    qitem_properties = {}
-    qitem_page_titles = {}
-    ccc_language_items = []
-    query = 'SELECT language_weak_properties.qitem, language_weak_properties.property, language_weak_properties.qitem2, sitelinks.page_title FROM language_weak_properties INNER JOIN sitelinks ON sitelinks.qitem = language_weak_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
-    for row in cursor.execute(query):
-        qitem = row[0]
-        wdproperty = row[1]
-        qitem2 = row[2]
-        page_title = row[3].replace(' ','_')
-        if qitem2 not in qitemresult: continue
-
-#        print ((qitem, wdproperty, language_properties_weak[wdproperty], page_title))
-        # Put the items into a dictionary
-        value = wdproperty+':'+qitem2
-        if qitem not in qitem_properties: qitem_properties[qitem]=value
-        else: qitem_properties[qitem]=qitem_properties[qitem]+';'+value
-        qitem_page_titles[qitem]=page_title
-
-#    print (len(qitem_page_titles))
-#    input('ja hem acabat')
-#    return
-
-    # Get the tuple ready to insert.
-    for qitem, values in qitem_properties.items():
-        try: 
-            page_id=page_titles_page_ids[qitem_page_titles[qitem]]
-            ccc_language_items.append((values,qitem_page_titles[qitem],qitem,page_id))
-        except: continue
-
-    # Insert to the corresponding CCC database.
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
-    query = 'UPDATE ccc_'+languagecode+'wiki SET (language_weak_wd) = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor2.executemany(query,ccc_language_items)
-    conn2.commit()
-    print (str(len(ccc_language_items))+' language related articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
-    print ('The number of inserted articles account for a '+str(100*len(ccc_language_items)/wikipedialanguage_numberarticles[languagecode])+'% of the entire Wikipedia.')
-    print ('* get_articles_wd_language Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
 # Get the articles table with the number of inlinks.
@@ -2699,6 +2596,59 @@ def get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qit
         print ('* get_articles_with_outlinks_ccc Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
+
+# Obtain the articles with a "weak" language property that is associated the language. This is considered potential CCC.
+def get_articles_language_weak_wd(languagecode,page_titles_page_ids):
+    functionstartTime = time.time()
+    print ('\n* Getting articles with Wikidata from items with "language" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
+
+    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+
+    # language qitems
+    qitemresult = languages.loc[languagecode]['Qitem']
+    if ';' in qitemresult: qitemresult = qitemresult.split(';')
+    else: qitemresult = [qitemresult];
+
+    # get articles
+    qitem_properties = {}
+    qitem_page_titles = {}
+    ccc_language_items = []
+    query = 'SELECT language_weak_properties.qitem, language_weak_properties.property, language_weak_properties.qitem2, sitelinks.page_title FROM language_weak_properties INNER JOIN sitelinks ON sitelinks.qitem = language_weak_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
+    for row in cursor.execute(query):
+        qitem = row[0]
+        wdproperty = row[1]
+        qitem2 = row[2]
+        page_title = row[3].replace(' ','_')
+        if qitem2 not in qitemresult: continue
+
+#        print ((qitem, wdproperty, language_properties_weak[wdproperty], page_title))
+        # Put the items into a dictionary
+        value = wdproperty+':'+qitem2
+        if qitem not in qitem_properties: qitem_properties[qitem]=value
+        else: qitem_properties[qitem]=qitem_properties[qitem]+';'+value
+        qitem_page_titles[qitem]=page_title
+
+#    print (len(qitem_page_titles))
+#    input('ja hem acabat')
+#    return
+
+    # Get the tuple ready to insert.
+    for qitem, values in qitem_properties.items():
+        try: 
+            page_id=page_titles_page_ids[qitem_page_titles[qitem]]
+            ccc_language_items.append((values,qitem_page_titles[qitem],qitem,page_id))
+        except: continue
+
+    # Insert to the corresponding CCC database.
+    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    query = 'UPDATE ccc_'+languagecode+'wiki SET (language_weak_wd) = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
+    cursor2.executemany(query,ccc_language_items)
+    conn2.commit()
+    print (str(len(ccc_language_items))+' language related articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
+    print ('The number of inserted articles account for a '+str(100*len(ccc_language_items)/wikipedialanguage_numberarticles[languagecode])+'% of the entire Wikipedia.')
+    print ('* get_articles_wd_language Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
 # Get the articles with the number of affiliation-like properties to other articles already retrieved as CCC.
 def get_articles_affiliation_properties_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
@@ -2861,7 +2811,7 @@ def get_training_data(languagecode):
     ccc_df = ccc_df[['qitem','category_crawling_territories','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC','ccc_binary']]
     ccc_df = ccc_df.set_index(['qitem'])
 #    print (ccc_df.head())
-    if len(ccc_df.index.tolist())==0: print ('It is not possible to classify Wikipedia articles as there is no groundtruth.'); return (0,[],[])
+    if len(ccc_df.index.tolist())==0: print ('It is not possible to classify Wikipedia articles as there is no groundtruth.'); return (0,0,[],[]) # maxlevel,num_articles_ccc,ccc_df_list,binary_list
     ccc_df = ccc_df.fillna(0)
 
     category_crawling_paths=ccc_df['category_crawling_territories'].tolist()
@@ -3009,6 +2959,7 @@ def get_testing_data(languagecode,maxlevel):
         else: has_part_wd[n]=0
     potential_ccc_df = potential_ccc_df.assign(has_part_wd = has_part_wd)
 
+    if len(potential_ccc_df)==0: print ('There are not potential CCC articles, so it returns empty'); return
     potential_ccc_df = potential_ccc_df.sample(frac=1) # randomize the rows order
 
     print ('We selected this number of potential CCC articles: '+str(len(potential_ccc_df)))
@@ -3056,53 +3007,59 @@ def calculate_articles_ccc_binary_classifier(languagecode,classifier,page_titles
     # TEST THE DATA
     print ('Calculating which page is IN or OUT...')
     potential_ccc_df = get_testing_data(languagecode,maxlevel)
+
+    if potential_ccc_df is None: print ('No articles to verify.'); return     
+    if len(potential_ccc_df)==0: print ('No articles to verify.'); return
     page_titles = potential_ccc_df.index.tolist()
     potential = potential_ccc_df.values.tolist()
 
-    testdict = {}
+    visible = 0
 
-    selected=[]
-    result = clf.predict(potential)
-    i = 0
-    for x in result:
-        testdict[page_titles[i]]=(x,potential[i])
-        if x == 1:
-            page_title=page_titles[i]
-            selected.append((page_titles_page_ids[page_title],page_titles_qitems[page_title]))
-        i += 1
 
+    # DO NOT PRINT THE CLASSIFIER RESULTS ARTICLE BY ARTICLE
+    if visible == 0:
+    #    testdict = {}
+        selected=[]
+        result = clf.predict(potential)
+        i = 0
+        for x in result:
+    #        testdict[page_titles[i]]=(x,potential[i])
+            if x == 1:
+                page_title=page_titles[i]
+                selected.append((page_titles_page_ids[page_title],page_titles_qitems[page_title]))
+            i += 1
 #    print (testdict)
-    print (len(selected))
 
 
-#    print (potential)
-    # provisional
-#    input('')
-#    print (potential[:15])
-#    print (page_titles[:15])
+    # PRINT THE CLASSIFIER RESULTS ARTICLE BY ARTICLE
+    else:
+        print (potential)
+        # provisional
+        print (potential[:15])
+        print (page_titles[:15])
 
-#    count_yes=0
-#    count_no=0
-#    for n,i in enumerate(potential):
-#        print (i)
-#        result = clf.predict([i])
-#        page_title=page_titles[n]
-#        if result[0] == 1:
-#            count_yes+=1
-#            print (['category_crawling_paths','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC'])
-#            print(i)
-#            print(clf.predict_proba([i]).tolist())
-#            print (str(count_yes)+'\tIN\t'+page_title+'.\n')
+        count_yes=0
+        count_no=0
+        for n,i in enumerate(potential):
+            print (i)
+            result = clf.predict([i])
+            page_title=page_titles[n]
+            if result[0] == 1:
+                count_yes+=1
+                print (['category_crawling_paths','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC'])
+                print(i)
+                print(clf.predict_proba([i]).tolist())
+                print (str(count_yes)+'\tIN\t'+page_title+'.\n')
 
-#            try: selected.append((page_titles_page_ids[page_title],page_titles_qitems[page_title]))
-#            except: pass
-#        else:
-#            count_no+=1
-#            print (['category_crawling_paths','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC'])
-#            print(i)
-#            print(clf.predict_proba([i]).tolist())
-#            print (str(count_no)+'\tOUT:\t'+page_title+'.\n')
-#        input('')
+                try: selected.append((page_titles_page_ids[page_title],page_titles_qitems[page_title]))
+                except: pass
+            else:
+                count_no+=1
+                print (['category_crawling_paths','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC'])
+                print(i)
+                print(clf.predict_proba([i]).tolist())
+                print (str(count_no)+'\tOUT:\t'+page_title+'.\n')
+    #        input('')
 
 
     print ('Time predicting the testing data: '+str(datetime.timedelta(seconds=time.time() - functionstartTime)))
@@ -3126,7 +3083,8 @@ def calculate_articles_ccc_binary_classifier(languagecode,classifier,page_titles
 def calculate_articles_ccc_main_territory(languagecode):
     functionstartTime = time.time()
 
-    for i in range(1,4):
+    number_iterations = 1
+    for i in range(1,number_iterations):
         print ('* iteration nº: '+str(i))
         # this function verifies the keywords associated territories, category crawling associated territories, and the wikidata associated territories in order to choose one.
         conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
@@ -3291,25 +3249,6 @@ def calculate_articles_ccc_retrieval_strategies(languagecode):
     print ('* calculate_articles_ccc_retrieval_strategies Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
-# Calculates the top 100 vital articles list for each CCC and updates the database with their ranking position.
-def calculate_articles_ccc_algorithm_vital_list(languagecode):
-    functionstartTime = time.time()
-
-    vital_list=ccc_df.index.tolist()
-    parameters=[]
-    pos=0
-    for qitem in vital_list:
-        pos=pos+1
-        parameters.append((pos,qitem,ccc_df.loc[qitem]['page_id']))
-
-    query = 'UPDATE ccc_'+languagecode+'wiki SET vital100_algorithm = ? WHERE qitem = ? AND page_id = ?;'
-    cursor.executemany(query,parameters)
-    conn.commit()
-
-    print ('CCC vital articles list calculated.')
-    print ('* calculate_articles_ccc_algorithm_vital_list Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-
-
 def evaluate_ccc_selection_manual_assessment(languagecode, selected, page_titles_page_ids):
     print("Start the CCC selection manual assessment ")
 
@@ -3427,2289 +3366,6 @@ def evaluate_ccc_selection_manual_assessment(languagecode, selected, page_titles
 
 ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- 
 
-### LISTS
-# It returns three lists with 20 languages according to different criteria.
-def obtain_proximity_wikipedia_languages_lists(languagecode):
-
-    wikipedialanguage_numberarticles_sorted = sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=True)
-
-    top19 = wikipedialanguage_numberarticles_sorted[:19]
-    if languagecode in top19: top19.append(wikipedialanguage_numberarticles_sorted[20])
-    else: top19.append(languagecode)
-
-    i=wikipedialanguage_numberarticles_sorted.index(languagecode)
-    upper9lower10 = wikipedialanguage_numberarticles_sorted[i-9:i]+wikipedialanguage_numberarticles_sorted[i:i+11]
-
-    conn = sqlite3.connect('ccc_data.db'); cursor = conn.cursor()
-    query = "SELECT languagecode_covering, percentage FROM ccc_gaps WHERE languagecode_covered='"+languagecode+"' AND group_type='ccc' AND measurement_date IN (SELECT MAX(measurement_date) FROM ccc_gaps WHERE group_type='ccc') AND reference='gap' ORDER BY percentage DESC";
-
-    closest19 = []
-    i = 1
-    for row in cursor.execute(query):
-#        print (row)
-        closest19.append(row[0])
-        if i==19: break
-        i = i + 1
-
-    wikipedia_proximity_lists = (top19, upper9lower10, closest19)
-    return wikipedia_proximity_lists
-
-
-# It returns a list of languages based on the region preference introduced.
-def obtain_region_wikipedia_language_list(region, subregion, intermediateregion):
-# use as: wikilanguagecodes = obtain_region_wikipedia_language_list('Asia', '', '').index.tolist()
-#    print('* This is the list of continents combinations: '+' | '.join(languages.region.unique())+'\n')
-#    print('* This is the list of subregions (in-continents) combinations: '+' | '.join(languages.subregion.unique())+'\n')
-#    print('* This is the list of intermediate regions (in continents and regions) combinations: '+' | '.join(languages.intermediateregion.unique())+'\n')
-#    print (languages)
-    if region!='':
-        languages_region = languages.loc[languages['region'] == region]
-
-    if subregion!='':
-        languages_region = languages[languages['subregion'].str.contains(subregion)]
-
-    if intermediateregion!='':
-        languages_region = languages[languages['intermediateregion'].str.contains(intermediateregion)]
-
-    return languages_region
-
-
-
-### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- 
-
-
-### OUTPUT DATA TABLES
-
-def create_table_ccc_allwiki():
-    functionstartTime = time.time()
-
-    # create the db
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()   
-    cursor.execute("CREATE TABLE IF NOT EXISTS ccc_allwiki (languagecode text,  qitem text, PRIMARY KEY (languagecode, qitem))")
-    for languagecode in wikilanguagecodes:
-        query = 'INSERT INTO ccc_allwiki SELECT languagecode, qitem FROM ccc_'+languagecode+'wiki;'
-        cursor.execute(query)
-    conn.commit()
-
-    print ('CCC vital articles list calculated.')
-    print ('* calculate_articles_ccc_algorithm_vital_list Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-
-
-# COMMAND LINE: sqlite3 -header -csv ccc_data.db "SELECT * FROM ccc_extent_language;" > ccc_extent_language.csv
-def create_table_ccc_extent_by_language():
-    functionstartTime = time.time()
-    print ('* create_table_ccc_extent_by_language')
-
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_data.db'); cursor2 = conn2.cursor()
-
-    # It creates a table for all languages.
-    query = ('CREATE table if not exists ccc_extent_language ('+
-    'languagecode text , '+
-    'languagename text, '+
-    'wp_number_articles integer, '+
-
-    'ccc_number_articles integer, '+
-    'ccc_percent_wp real, '+
-
-    'geolocated_number_articles integer, '+ 
-    'geolocated_percent_wp real, '+ 
-    'country_wd integer, '+
-    'location_wd integer, '+
-    'language_strong_wd integer, '+
-    'created_by_wd integer, '+
-    'part_of_wd integer, '+
-
-    'keyword_title integer, '+
-    'category_crawling_territories integer, '+
-    'language_weak_wd integer, '+
-    'affiliation_wd integer, '+
-    'has_part_wd integer, '+
-
-    'num_inlinks_from_CCC integer, '+
-    'num_outlinks_to_CCC integer, '+
-    'percent_inlinks_from_CCC real, '+
-    'percent_outlinks_to_CCC real, '+
-
-    'average_num_retrieval_strategies integer, '+
-    'date_created text, '+
-
-    'female integer, '+
-    'male integer, '+
-    'female_ccc integer, '+
-    'male_ccc integer, '+
-    'people_ccc_percent real, '+
-
-    'measurement_date text, '+
-    'PRIMARY KEY (languagecode, measurement_date));')
-#    print (query)
-    cursor2.execute(query)
-    print ('\nTable ccc_extent_language has just been created in case it did not exist.')
-    print ('Filling it with languages:')
-
-    # We fill the database.
-    for languagecode in wikilanguagecodes:
-        print (languagecode)
-        languagename = languages.loc[languagecode]['languagename']
-
-        # wp number articles
-        wpnumberofarticles=wikipedialanguage_numberarticles[languagecode]
-        measurement_date = datetime.datetime.utcnow().strftime("%Y%m%d");
-
-        # Obtaining CCC Qitems
-        qitems = []
-        query = 'SELECT qitem FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'
-        for row in cursor.execute(query): qitems.append(row[0])
-#        print (len(qitems))
-
-        # Obtaining People
-        conn3 = sqlite3.connect('wikidata.db'); cursor3 = conn3.cursor()
-        male=[]
-        query = 'SELECT people_properties.qitem FROM people_properties INNER JOIN sitelinks ON people_properties.qitem=sitelinks.qitem WHERE people_properties.qitem2 = "Q6581097" AND sitelinks.langcode="'+languagecode+'wiki";'
-        for row in cursor3.execute(query):
-            male.append(row[0])
-        malecount=len(male)
-        male = set(male).intersection(set(qitems))
-        ccc_malecount=len(male)
-#        print (malecount,ccc_malecount)
-
-        female=[]
-        query = 'SELECT people_properties.qitem FROM people_properties INNER JOIN sitelinks ON people_properties.qitem=sitelinks.qitem WHERE people_properties.qitem2 = "Q6581072" AND sitelinks.langcode="'+languagecode+'wiki";'
-        for row in cursor3.execute(query): 
-            female.append(row[0])
-        femalecount=len(female)
-        female = set(female).intersection(set(qitems))
-        ccc_femalecount=len(female)
-#        print (femalecount,ccc_femalecount)
-        ccc_peoplecount=ccc_malecount+ccc_femalecount
-        ccc_peoplecount_percent = round(100*ccc_peoplecount/wpnumberofarticles,2)
-
-        # Obtaining CCC
-        query = 'SELECT AVG(date_created), '
-        query = query+'COUNT(ccc_binary), ' # FINAL CCC
-        query = query+'COUNT(geocoordinates), COUNT(country_wd), COUNT(location_wd), COUNT(language_strong_wd), COUNT(created_by_wd), COUNT(part_of_wd), ' # CCC
-        query = query+'COUNT(keyword_title), COUNT(category_crawling_territories), COUNT(language_weak_wd), ' # POTENTIAL CCC
-        query = query+'COUNT(affiliation_wd), COUNT(has_part_wd), AVG(num_inlinks_from_CCC), AVG(num_outlinks_to_CCC), AVG(percent_inlinks_from_CCC), AVG(percent_outlinks_to_CCC), ' # RELATED QUALIFIERS
-        query = query+'AVG(num_retrieval_strategies) '
-        query = query+'FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;';
-#        print (query)
-
-        cursor.execute(query)
-        row = cursor.fetchone()
-
-        try: date_created = datetime.datetime.strptime(str(int(row[0]/1000)),'%Y%m%d%H%M%S').strftime('%Y')
-        except: date_created = ''
-
-        cccnumberofarticles = row[1];
-        cccnumberofarticles_percent = round(100*cccnumberofarticles/wpnumberofarticles,2)
-
-        geocoordinates = row[2]
-        geocoordinates_percent = 100*geocoordinates/wpnumberofarticles
-
-        country_wd = row[3]
-        location_wd = row[4]
-        language_strong_wd = row[5]
-        created_by_wd = row[6]
-        part_of_wd = row[7]
-        keyword_title = row[8]
-        category_crawling_territories = row[9]
-        language_weak_wd = row[10]
-        affiliation_wd = row[11]
-        has_part_wd = row[12]
-
-        num_inlinks_from_CCC = row[13]
-        num_outlinks_to_CCC = row[14]
-        percent_inlinks_from_CCC = row[15]
-        percent_outlinks_to_CCC = row[16]
-        average_num_retrieval_strategies = row[17]
-
-        parameters = (languagecode, languagename, wpnumberofarticles, cccnumberofarticles, cccnumberofarticles_percent, geocoordinates, geocoordinates_percent, country_wd, location_wd, language_strong_wd, created_by_wd, part_of_wd, keyword_title, category_crawling_territories, language_weak_wd, affiliation_wd, has_part_wd, num_inlinks_from_CCC, num_outlinks_to_CCC, percent_inlinks_from_CCC, percent_outlinks_to_CCC, average_num_retrieval_strategies, date_created, femalecount, malecount, ccc_femalecount, ccc_malecount, ccc_peoplecount_percent, measurement_date) #30
-        print (parameters)
-
-        param = 'languagecode, languagename, wp_number_articles, ccc_number_articles, ccc_percent_wp, geolocated_number_articles, geolocated_percent_wp, country_wd, location_wd, language_strong_wd, created_by_wd, part_of_wd, keyword_title, category_crawling_territories, language_weak_wd, affiliation_wd, has_part_wd, num_inlinks_from_CCC, num_outlinks_to_CCC, percent_inlinks_from_CCC, percent_outlinks_to_CCC, average_num_retrieval_strategies, date_created, female, male, female_ccc, male_ccc, people_ccc_percent, measurement_date'
-        query = 'INSERT INTO ccc_extent_language ('+param+') VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
-        cursor2.execute(query,parameters)
-        conn2.commit()
-    print ('* All languages CCC extent have been calculated and inserted.')
-    print ('* create_table_ccc_extent_by_language Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-
-
-# It creates a table to account for the number of articles obtained for each qitem and for each strategy.
-# COMMAND LINE: sqlite3 -header -csv ccc_data.db "SELECT * FROM ccc_extent_qitem;" > ccc_extent_qitem.csv
-def create_table_ccc_extent_by_qitem():
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_data.db'); cursor2 = conn2.cursor()
-
-    # It creates a table for all languages.
-    query = ('CREATE table if not exists ccc_extent_qitem ('+
-    'languagecode text, '+
-    'languagename text, '+
-    'qitem text, '+
-    'territory_name text, '+   
-    'wp_number_articles integer, '+
-
-    'ccc_articles_percent_wp real, '+
-    'ccc_articles_qitem integer, '+
-    'ccc_articles_qitem_percent_ccc real, '+
-
-    'geolocated_number_articles integer, '+ 
-    'geolocated_percent_wp real, '+ 
-    'country_wd integer, '+
-    'location_wd integer, '+
-    'language_strong_wd integer, '+
-    'created_by_wd integer, '+
-    'part_of_wd integer, '+
-
-    'keyword_title integer, '+
-    'category_crawling_territories integer, '+
-    'language_weak_wd real, '+
-    'affiliation_wd real, '+
-    'has_part_wd real, '+
-
-    'num_inlinks_from_CCC integer, '+
-    'num_outlinks_to_CCC integer, '+
-    'percent_inlinks_from_CCC real, '+
-    'percent_outlinks_to_CCC real, '+
-
-    'average_num_retrieval_strategies real, '+
-    'date_created text,'+
-    'measurement_date text, '+
-    'PRIMARY KEY (languagecode, qitem, measurement_date));')
-    print (query)
-    cursor2.execute(query)
-    print ('\nTable ccc_extent_qitem has just been created in case it did not exist.')
-    print ('Now filling it...')
-
-    # We fill the database.
-    for languagecode in wikilanguagecodes:
- 
-        print (languagecode)
-        languagename=languages.loc[languagecode]['languagename']
-         # wp number articles
-        wpnumberofarticles=wikipedialanguage_numberarticles[languagecode]
-        measurementdate = datetime.datetime.utcnow().strftime("%Y%m%d");
-
-        query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'
-        cursor.execute(query)
-        num_ccc_articles = cursor.fetchone()[0]
-        ccc_percent_wp = round(100*num_ccc_articles/wpnumberofarticles,2)
-
-
-        query = 'SELECT AVG(date_created), '
-        query = query+'COUNT(ccc_binary), ' # FINAL CCC
-        query = query+'COUNT(geocoordinates), COUNT(country_wd), COUNT(location_wd), COUNT(language_strong_wd), COUNT(created_by_wd), COUNT(part_of_wd), ' # CCC
-        query = query+'COUNT(keyword_title), COUNT(category_crawling_territories), COUNT(language_weak_wd), ' # POTENTIAL CCC
-        query = query+'COUNT(affiliation_wd), COUNT(has_part_wd), AVG(num_inlinks_from_CCC), AVG(num_outlinks_to_CCC), AVG(percent_inlinks_from_CCC), AVG(percent_outlinks_to_CCC), ' # RELATED QUALIFIERS
-        query = query+'main_territory, AVG(num_retrieval_strategies) '
-        query = query+'FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1 GROUP BY main_territory;';
-#        print (query)
-
-        for row in cursor.execute(query):
-#            print (row)
-#            input('')
-            try: date_created = datetime.datetime.strptime(str(int(row[0]/10000000000)),'%Y').strftime('%Y')
-            except: date_created = ''
-            
-            cccnumberofarticles = row[1]
-            try: cccnumberofarticles_percent = round((100*cccnumberofarticles/num_ccc_articles),2)
-            except: cccnumberofarticles_percent = 0
-
-            qitem = row[17]
-            if qitem != None:
-                try: territory_name = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['territoryname']
-                except: print ('ERROR: There is a Qitem as main territory that is not main territory: '+str(qitem))
-            else:
-                territory_name = 'Unclassified'
-
-            geocoordinates = row[2]
-            geocoordinates_percent = 100*geocoordinates/wpnumberofarticles
-
-            country_wd = row[3]
-            location_wd = row[4]
-            language_strong_wd = row[5]
-            created_by_wd = row[6]
-            part_of_wd = row[7]
-            keyword_title = row[8]
-            category_crawling_territories = row[9]
-            language_weak_wd = row[10]
-            affiliation_wd = row[11]
-            has_part_wd = row[12]
-
-            num_inlinks_from_CCC = row[13];
-            if num_inlinks_from_CCC != None: num_inlinks_from_CCC = round(num_inlinks_from_CCC,2);
-
-            num_outlinks_to_CCC = row[14]; 
-            if num_outlinks_to_CCC != None: num_outlinks_to_CCC = round(num_outlinks_to_CCC,2);
-
-            percent_inlinks_from_CCC = row[15]; 
-            if percent_inlinks_from_CCC != None: percent_inlinks_from_CCC = round(percent_inlinks_from_CCC,2);
-
-            percent_outlinks_to_CCC = row[16];
-            if percent_outlinks_to_CCC != None: percent_outlinks_to_CCC = round(percent_outlinks_to_CCC,2); 
-
-            average_num_retrieval_strategies = row[18]; 
-            if average_num_retrieval_strategies != None: average_num_retrieval_strategies = round(average_num_retrieval_strategies,2)
-
-            parameters = (languagecode, languagename, qitem, territory_name, wpnumberofarticles, ccc_percent_wp, cccnumberofarticles, cccnumberofarticles_percent, geocoordinates, geocoordinates_percent, country_wd, location_wd, language_strong_wd, created_by_wd, part_of_wd, keyword_title, category_crawling_territories, language_weak_wd, affiliation_wd, has_part_wd, num_inlinks_from_CCC, num_outlinks_to_CCC, percent_inlinks_from_CCC, percent_outlinks_to_CCC, average_num_retrieval_strategies,date_created, measurementdate) #27
-
-            param = 'languagecode, languagename, qitem, territory_name, wp_number_articles, ccc_articles_percent_wp, ccc_articles_qitem, ccc_articles_qitem_percent_ccc, geolocated_number_articles, geolocated_percent_wp, country_wd, location_wd, language_strong_wd, created_by_wd, part_of_wd, keyword_title, category_crawling_territories, language_weak_wd, affiliation_wd, has_part_wd, num_inlinks_from_CCC, num_outlinks_to_CCC, percent_inlinks_from_CCC, percent_outlinks_to_CCC, average_num_retrieval_strategies,date_created, measurement_date'
-
-            query = 'INSERT INTO ccc_extent_qitem ('+param+') VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
-            cursor2.execute(query,parameters)
-        conn2.commit()
-
-
-# It creates a table for the culture gap total wp, keywords, geolocated, ccc, etc.
-# COMMAND LINE: sqlite3 -header -csv ccc_data.db "SELECT * FROM ccc_gaps;" > ccc_gaps.csv
-def create_table_ccc_gaps(): # això es podria fer amb Qitems / o amb llengües. -> pensar si guardar el nombre absolut d'articles també.
-
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_data.db'); cursor2 = conn2.cursor()
-
-    # It creates a table for all languages.
-    query = ('CREATE table if not exists ccc_gaps ('+
-    'languagecode_covered text, '+
-    'languagecode_covering text, '+
-    'percentage real, '+
-    'number_articles integer,'+
-    'group_type text,'+
-    'reference text, '+
-    'measurement_date text, '+
-    'PRIMARY KEY (languagecode_covered, languagecode_covering, group_type, reference, measurement_date));')
-    cursor2.execute(query)
-    print ('Table ccc_gaps has been created in case it did not exist.')
-    measurementdate = datetime.datetime.utcnow().strftime("%Y%m%d");
-
-    for languagecode in wikilanguagecodes:
-
-#        languagecode = 'gn'
-        # wp number articles
-        print ('\n* Calculating the gaps for '+languagecode+'wiki.')
-        wpnumberofarticles=wikipedialanguage_numberarticles[languagecode]
-        print ('This language has '+str(wpnumberofarticles)+' articles.')
-
-        groups = ['wp','ccc','gl','kw','vital100_community','vital100_algorithm']
-        for group_type in groups: # WE ARE TESTING. In the final version the tables should be without the _current.
-            if group_type == 'ccc': query = 'SELECT page_id FROM ccc_'+languagecode+'wiki where ccc_binary = 1'
-            if group_type == 'kw': query = 'SELECT page_id FROM ccc_'+languagecode+'wiki where keyword_title IS NOT NULL'
-            if group_type == 'gl': query = 'SELECT page_id FROM ccc_'+languagecode+'wiki where geocoordinates IS NOT NULL'
-            if group_type == 'vital100_community': query = 'SELECT page_id FROM ccc_'+languagecode+'wiki where vital100_community IS NOT NULL'
-            if group_type == 'vital100_algorithm': query = 'SELECT page_id FROM ccc_'+languagecode+'wiki where vital100_algorithm IS NOT NULL'
-            if group_type == 'wp': query = ''
-            mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
-
-            if query == '':
-                mysql_cur_read.execute('SELECT ll_lang, COUNT(*) FROM page INNER JOIN langlinks ON ll_from=page_id WHERE page_is_redirect=0 AND page_namespace=0 GROUP BY 1 ORDER BY 2 DESC;')
-                result = mysql_cur_read.fetchall()
-                total_articles = wpnumberofarticles
-#                print ('wp all articles.')
-
-            if query != '':
-                articles_pageids = []
-                for row in conn.execute(query): 
-                    articles_pageids.append(row[0])
-                if len(articles_pageids)==0: continue
-                total_articles=len(articles_pageids)
-                page_asstring = ','.join( ['%s'] * len( articles_pageids ) )
-                query = 'SELECT ll_lang, COUNT(*) FROM page INNER JOIN langlinks ON ll_from=page_id WHERE page_id IN (%s) AND page_is_redirect=0 AND page_namespace=0 GROUP BY 1 ORDER BY 2 DESC;' % page_asstring;
-                mysql_cur_read.execute(query, (articles_pageids))
-                result = mysql_cur_read.fetchall()
-#                input('')
-
-            parameters_gap = []
-            parameters_share = []
-            uniquelanglist = []
-            for row in result:
-#                print (row)
-                languagecode_covered = languagecode
-
-                languagecode_covering = str(row[0].decode('utf-8'))
-                languagecode_covering = languagecode_covering.replace('-','_')
-                if languagecode_covering == 'be_tarask': languagecode_covering = languagecode_covering.replace('be_tarask','be_x_old')
-                if languagecode_covering == 'nan': languagecode_covering = languagecode_covering.replace('nan','zh_min_nan')
-                if languagecode_covering not in wikipedialanguage_numberarticles: print (languagecode_covering+' language has not been included yet in WCDO or is deprecated.'); continue
-
-                if languagecode_covering not in uniquelanglist: uniquelanglist.append(languagecode_covering);
-                else: continue
-
-                number_articles = row[1]
-                percentage = round(100*number_articles/total_articles,3)
-                parameters_gap.append((languagecode_covering,languagecode_covered,percentage,number_articles,group_type,'gap',measurementdate))
-
-#                print((languagecode_covering,languagecode_covered,percentage,number_articles,group_type,'gap',measurementdate))
-#                cursor2.execute('INSERT INTO ccc_gaps (languagecode_covering,languagecode_covered,percentage,number_articles,group_type,reference,measurement_date) VALUES (?,?,?,?,?,?,?)',(languagecode_covering,languagecode_covered,percentage,number_articles,group_type,'gap',measurementdate))
-
-                percentage = round(100*number_articles/wikipedialanguage_numberarticles[languagecode_covering],3)
-                parameters_share.append((languagecode_covering,languagecode_covered,percentage,number_articles,group_type,'share',measurementdate))
-
-            print ('inserting...'+group_type+'.')
-            cursor2.executemany('INSERT INTO ccc_gaps (languagecode_covering,languagecode_covered,percentage,number_articles,group_type,reference,measurement_date) VALUES (?,?,?,?,?,?,?)', parameters_gap)
-            conn2.commit()
-            cursor2.executemany('INSERT INTO ccc_gaps (languagecode_covering,languagecode_covered,percentage,number_articles,group_type,reference,measurement_date) VALUES (?,?,?,?,?,?,?)', parameters_share)
-            conn2.commit()
-
-    print ('All languages CCC gap have been calculated and inserted.')
-
-
-# It creates a table to account for the number of articles created for each language to bridge other CCC during the last fifteen days (i.e. How much effort do editors dedicate to bridging CCC from other languages?).
-def create_table_ccc_bridging_last15days(languagecode):
-
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('wikidata.db'); cursor2 = conn2.cursor()
-    conn3 = sqlite3.connect('ccc_data.db'); cursor3 = conn3.cursor()
-
-    # It creates a table for all languages.
-    query = ('CREATE table if not exists ccc_bridges ('+
-    'languagecode_covered text, '+
-    'languagecode_covering text, '+
-    'percentage_workload real, '+
-    'number_articles integer,'+
-    'measurement_date text'+
-    'PRIMARY KEY (languagecode_covered, languagecode_covering, measurement_date)')
-    cursor2.execute(query)
-    print ('Table ccc_gaps has been created in case it did not exist.')
-    measurementdate = datetime.datetime.utcnow().strftime("%Y%m%d");
-
-    for language_covering in wikilanguagecodes:
-        parameters = []
-
-        mysql_con_read = establish_mysql_connection_read(language_covering); mysql_cur_read = mysql_con_read.cursor()
-        page_titles=[]
-        query = "SELECT page_title FROM revision INNER JOIN page ON rev_page=page_id WHERE page_namespace=0 AND page_is_redirect=0 AND rev_timestamp < "+ (datetime.date.today() - datetime.timedelta(days=14)).strftime('%Y%m%d%H%M%S') # this is a week ago.
-        result = mysql_cur_read.fetchall()
-        for row in result: page_titles.append(str(row[0].decode('utf-8')).replace('_',' '))
-
-        qitems=[]
-        query = 'SELECT qitem FROM sitelinks WHERE sitelinks.langcode ="'+language_covering+'wiki" AND page_title in (%s)'
-        for row in conn2.execute(query,page_titles): qitems.append(row[1].replace(' ','_'))
-
-        for language_covered in wikilanguagecodes:
-            page_asstring = ','.join( ['?'] * len( qitems ) )
-            query = 'SELECT count(*) FROM ccc_'+language_covered+'wiki where ccc_binary = 1 AND qitem IN (%s) GROUP BY qitem' % page_asstring
-            cursor.execute(query,qitems)
-            number_articles = cursor.fetchone()[0]
-            percentage_workload=round(100*number_articles/len(page_titles),3)
-            parameters.append((language_covering,language_covered,percentage_workload,number_articles,measurementdate))
-
-        cursor3.executemany('INSERT INTO ccc_bridges (languagecode_covering,languagecode_covered,percentage_workload,number_articles,measurement_date) VALUES (?,?,?,?,?)', parameters)
-        conn3.commit()
-    print ('All languages CCC gap have been calculated and inserted.')
-
-
-
-
-# It creates a table for the topical coverage of each Wikipedia language edition.
-# hauria de fer l'alineament de categories disponible i consultar-lo per si algú em pot dir que està malament?
-def create_table_ccc_topical_coverage(lang): # AIXÒ NO HAURIA D'ANAR AQUÍ
-# STEPS
-# 1. llegir de meta la taula de categories per cada llengua / llegir de l'arxiu la taula de categories per cada llengua.
-# 2. loop de llengües per totes les llengües.
-# obrir ccc_current.db.
-# crear taules topics_langcodewiki per posar-hi els articles.
-
-# 3. iterar llengua a llengua per anar assignar les categories a temes i introduïr articles.
-# 4. crear o utilitzar topical.db i crear la taula de resultats per ser utilitzats per bokeh després.
-
-    output_iso_name = data_dir + 'source/cira_topicalcoverage.csv'
-    output_file_iso = codecs.open(output_iso_name, 'w', 'UTF-8')
-    # versió de Kittur topic groups list: “Culture and the arts; People and self; Geography and places; Society and social sciences; History and events; Natural and pysical sciences; Technology and applied sciences; Religion and belief systems; Health and fitness; Mathematics and logic; Philosohpy and thinkinking."
-    # versió del David Laniado ['Agricultura','Biografies','Ciència','Ciències_naturals', 'Ciències_socials','Cultura','Educació','Empresa','Esdeveniments','Esports','Geografia','Història','Humanitats','Matemàtiques','Medi_Ambient','Lleis','Política','Societat','Tecnologia'];
-    if lang=='cawiki': wordlist = ['Agricultura','Biografies','Ciència','Ciències_socials','Cultura','Dret','Educació','Empresa','Esdeveniments','Esports','Geografia','Matemàtiques','Medi_ambient','Política','Religió','Salut_i_benestar_social','Societat','Tecnologia'];
-
-    print ('El número de categories de la llengua base '+ lang +' és de: '+str(len(wordlist))+'\n')
-    output_file_iso.write(lang+'\t')
-    for category in wordlist:
-        output_file_iso.write(category+'\t')
-    output_file_iso.write('\n')
-
-    lang_llista = []
-    input_iso_file = data_dir + 'source/cira_iso3166.csv'
-    input_iso_file = open(input_iso_file, 'r')
-    for line in input_iso_file:
-        page_data = line.strip('\n').split(',')
-        lang_llista.append(page_data[0])
-
-    categorypattern = re.compile(r'(.+:+)(.*)')
-    for llengua in lang_llista:
-        if llengua == lang: continue
-        query = 'SELECT DISTINCT(ll_title) FROM '+lang+'_p.page pa INNER JOIN '+lang+'_p.langlinks la ON pa.page_id=la.ll_from WHERE page_namespace=14 AND pa.page_title IN (%s)'
-        query = query + ' AND ll_lang="'+llengua[0:len(llengua)-4]+'"'
-
-        page_asstring = ','.join( ['%s'] * len( wordlist ) )
-    #                print query
-
-        output_file_iso.write(llengua)
-        mysql_cur.execute(query % page_asstring, tuple(wordlist))
-        result = mysql_cur.fetchall()
-
-        print ('La següent llengua té aquest nombre de categories '+llengua+': '+str(len(result)))
-        for row in result:
-            title = str(row[0])
-            titleC = categorypattern.match(title)
-            titledef = titleC.group(2)
-            titledef = titledef.replace(' ', '_')
-    #                    print titledef
-            output_file_iso.write('\t'+titledef)
-        output_file_iso.write('\n')
-
-        mysql_con = mdb.connect(lang + '.labsdb', 'p50380g50517', 'aiyiangahthiefay', lang + '_p')
-
-    #    mysql_con = mdb.connect(lang + '.labsdb', 'u3532', 'titiangahcieyiph', lang + '_p')
-        mysql_con.set_character_set('utf8')
-        with mysql_con:
-            mysql_cur = mysql_con.cursor()
-
-    #       dataset_name = 'CIRA_articles'
-            dataset_name = 'WP_articles'
-    #       dataset_name = 'CIRA_coords_def'
-
-    # DATASET
-        input_dataset = data_dir + lang +'_'+ dataset_name +'.csv'
-        input_file_for_CIRA_def = open(input_dataset, 'r')
-        page_titles_cira_def = {}
-
-        # fer que si es queda a mitges el topical coverage que revisi l'arxiu creat i faci un pop als que ja s'han fet.
-        # tanqui l'arxiu creat (com a input) i afegeixi a l'arxiu (a) tot allò nou que es generi.
-
-
-        for line in input_file_for_CIRA_def: # dataset
-            page_data = line.strip('\n').split('\t')
-    #        page_data = line.strip('\n').split(',')
-            page_id = str(page_data[1])
-            page_title = page_data[0]
-            page_title = urllib.unquote(page_title).decode('utf8')
-            page_title=str(page_title)
-            page_titles_cira_def[page_title] = page_id
-
-        print ('En aquesta llengua hi tenim tants articles a '+dataset_name+': '+str(len(page_titles_cira_def)))
-
-
-        input_file_name_already = data_dir + lang+'_'+dataset_name+'_articles_topics.csv'
-        if os.path.isfile(input_file_name_already):
-            page_titles_already = []
-            input_file_already = open(input_file_name_already, 'r')
-            input_file_already.readline()
-            for line in input_file_already:
-                page_data = line.strip('\n').split('\t')
-                page_title = page_data[0]
- #                page_title = urllib.unquote(page_title).decode('utf8')
-                page_title=str(page_title)
-                page_titles_already.append(page_title)
-            print ('Tenim tants articles ja amb topics: '+str(len(page_titles_already)))
-
-            for title in page_titles_already:
-                try:
-                    page_titles_cira_def.pop(title)
-                except:
-                    print (title)
-
-            print ('Tenim tants articles per fer encara: '+str(len(page_titles_cira_def)))
-
-
-        output_file_name = data_dir + lang+'_'+dataset_name+'_articles_topics.csv'
-        output_file = codecs.open(output_file_name, 'a', 'UTF-8')
-
-        # CATEGORIES INVISIBLES: TREURE-LES.
-        mysql_cur.execute("SELECT page_title FROM page p, page_props pro WHERE pro.pp_page=p.page_id AND pro.pp_propname LIKE 'hiddencat'")
-        rows = mysql_cur.fetchall()
-        hiddencategorylist = []
-        for row in rows:
-            valor = str(row[0])
-            hiddencategorylist.append(valor)
-
-        input_file_categories = data_dir + '/source/cira_topicalcoverage.csv'
-        input_file_topic = open(input_file_categories, 'r')
-        wordlist = []
-        for line in input_file_topic: # CIRA DEF
-            page_data = line.strip('\n').split('\t')
-            if page_data[0]==lang:
-                for item in page_data:
-                    wordlist.append(item)
-        wordlist.pop(0)
-        print (wordlist)
-
-        mothercategories_finalvalues = {}
-        for i in wordlist: mothercategories_finalvalues[i]=0
-        print (mothercategories_finalvalues)
-
-        numarticle = 0
-        for article_title in page_titles_cira_def.keys():
-            numarticle = numarticle + 1
-            print ("Anem per l'article número: "+str(numarticle)+' amb nom: '+article_title)
-
-            articlecategorieslist = []
-            mysql_cur.execute('SELECT cl_to FROM categorylinks WHERE cl_from=%s',(page_titles_cira_def[article_title],))
-            rows = mysql_cur.fetchall()
-            for row in rows:articlecategorieslist.append(str(row[0]))
-            ocultesperarticle = list(set(articlecategorieslist).intersection(set(hiddencategorylist)))
-            for oculta in ocultesperarticle: articlecategorieslist.remove(oculta)
-            # aquí ja tenim les categories per cada article
-
-            mothercategories_forarticle = {}
-            for i in wordlist: mothercategories_forarticle[i]=0
-#            print '# El nom de l\'article per veure és: '+article_title
-#            print 'Les seves categories són: '
-#            print articlecategorieslist
-
-            #raw_input("\nPress Enter to continue...\n")
-            for categoria in articlecategorieslist: # treballarem amb un arbre de categories a l'article base
-                # print '\nLa categoria per pujar per arbre és: '+categoria
-                categoriesjavistes = []
-                categoriesjavistes = categoriesjavistes + hiddencategorylist
-                current_categories = []
-                current_categories.append(categoria)
-
-                mothercategories_forcategory = {}
-                salts = 0
-                while current_categories: # que quedi alguna categoria a les 'future categories' que no s'hagi buscat abans.
-                    # print '\n\n\n\n\n''ja vistes:'
-                    # print categoriesjavistes
-                    salts = salts + 1
-                    page_asstring = ','.join( ['%s'] * len( current_categories ) )
-
-                    mysql_cur.execute('SELECT cl_to FROM categorylinks INNER JOIN page ON cl_from=page_id WHERE page_namespace=14 AND page_title IN (%s)' % page_asstring, tuple(current_categories))
-                    rows = mysql_cur.fetchall()
-                    current_categories = []
-
-                    for row in rows:
-                        valor = str(row[0])
-                        current_categories.append(valor)
-
-    #               print '\n*** '+str(salts)+' Salt: '+'abans de treure les ja vistes:'
-    #                print current_categories
-                    current_categories = list(set(current_categories))
-
-                    for element in list(set(current_categories).intersection(set(categoriesjavistes))):
-    #                    print 'element coincident amb les ja vistes: '+ element
-                        current_categories.remove(element)
-    #                print 'després de treure les ja vistes:'
-    #                print current_categories
-
-                    # CONDICIONS
-                    coincident = list(set(current_categories).intersection(set(mothercategories_finalvalues.keys())))
-                    for a in coincident:
-                        if a not in mothercategories_forcategory: mothercategories_forcategory[a]=salts # els salts a les categories mare que hem trobat per cada categoria a l'arrel-base de l'article.
-                        # print "BINGOOOOOOO!!! La categoria mare amb la que es relaciona l\'article a partir de la seva categoria: "+categoria+' és: '+a+' amb aquest nombre de salts: '+str(salts)
-                        current_categories.remove(a)
-                    if len(coincident)!=0: break
-
-                    categoriesjavistes = categoriesjavistes + current_categories
-
-#                print 'per aquesta categoria '+categoria+' tenim que vincula amb les següents categories mare:'
-#                print mothercategories_forcategory
-
-    #            raw_input("\nPress Enter to continue...\n")
-
-                if mothercategories_forcategory:
-                    minkey = min(mothercategories_forcategory.iterkeys(), key=lambda k: mothercategories_forcategory[k])
-                    minvalue = mothercategories_forcategory[minkey]
-#                    print str(minkey)+';'+str(minvalue)
-                    assignacions = []
-
-                    for cat in mothercategories_forcategory.keys():
-                        # print cat + ' amb el valor: '+ str(mothercategories_forcategory[cat])
-                        if float(mothercategories_forcategory[cat]) == float(minvalue):
-                            assignacions.append(cat)
-
-                    numassig = len(assignacions)
-#                    print 'el número d\'assignacions és: '+str(numassig)
-                    repartiment=(float(1)/len(articlecategorieslist))/numassig
-#                    print repartiment
-                    for cat in mothercategories_forcategory.keys():
-                        if mothercategories_forcategory[cat]==minvalue:
-                            mothercategories_forarticle[cat]=mothercategories_forarticle[cat]+ repartiment
-#                            print cat+' : '+str(repartiment)
-
-    #            raw_input("\nPress Enter to continue...\n")
-
-#            print 'per aquest article '+article_title+' tenim la següent distribució de valors per categories mare sense normalitzar: '
-#            print mothercategories_forarticle
-
-    #       normalització a nivell d'article
-            totalvalor = sum(mothercategories_forarticle.values())
-#            print 'valor total de l\'article amb categories: '+str(totalvalor)
-            if totalvalor == 0: continue
-            for cat in mothercategories_forarticle.keys():
-                mothercategories_forarticle[cat] = float(mothercategories_forarticle[cat])/totalvalor
-
-#            print 'per aquest article '+article_title+' tenim la següent distribució de valors per categories mare després de normalitzar: '
-#            print mothercategories_forarticle
-
-#            print 'això hauria de sumar 1: '+str(sum(mothercategories_forarticle.values()))
-
-            string = ''
-            for catvalue in wordlist:
-                string = string + '\t'+catvalue+'\t'+str(mothercategories_forarticle[catvalue])
-#            print 'aquest article té els següents valors: '+article_title+string+'\n'
-
-#            raw_input('ESPERA!')
-            output_file.write(article_title+string+'\n')
-
-#            raw_input('ESPERA: SEGÜENT ARTICLE.')
-    #        abocar a mothercategories_finalvalues
-            for cat in mothercategories_forarticle.keys():
-                mothercategories_finalvalues[cat]=mothercategories_finalvalues[cat]+mothercategories_forarticle[cat]
-            # print 'portem un acumulat TOTAL de valors per les categories mare:'
-            # print mothercategories_finalvalues
-
-        output_file.close()
-        sentence = lang +'\t'
-
-    #   traiem els valors finals dels percentatges de les categories mare pel grup d'articles
-        totalvalorgrup = sum(mothercategories_finalvalues.values())
-        for cat in wordlist:
-            mothercategories_finalvalues[cat]=str(100*round(float(mothercategories_finalvalues[cat])/totalvalorgrup,5))
-            sentence = sentence + cat+'\t'+str(mothercategories_finalvalues[cat])+'\t'
-
-        sentence = sentence + '\n'
-        output_stats_file_topic = data_dir + "results/"+'_'+dataset_name+"_topical_coverage.csv"
-        output_stats_topic = codecs.open(output_stats_file_topic, 'a', 'UTF-8')
-        output_stats_topic.write(sentence)
-        print (sentence)
-        output_stats_topic.close()
-
-   
-
-def create_table_ccc_bridging_lists(count_covered_articles, languagecode_covered, languagecode_covering, percentage, list_name):
-
-    # It creates a table for all languages.
-    query = ('CREATE table if not exists vital_articles_lists ('+
-    'languagecode_covered text, '+
-    'languagecode_covering text, '+
-    'percentage real, '+
-    'number_articles integer, '+
-    'measurement_date text, '+
-    'list_name text, '+
-    'PRIMARY KEY (languagecode_covered, languagecode_covering, group_type, reference, measurement_date));')
-    cursor.execute(query)
-    print ('Table vital_articles_lists has been created in case it did not exist.')
-    measurementdate = datetime.datetime.utcnow().strftime("%Y%m%d");
-
-    parameters = (languagecode_covering,languagecode_covered,percentage,count_covered_articles,list_name,measurementdate)
-    print ('inserting...'+list_name+'.')
-    cursor.execute('INSERT INTO ccc_gaps (languagecode_covering,languagecode_covered,percentage,number_articles,list_name,measurement_date) VALUES (?,?,?,?,?,?)', parameters)
-
-
-
-
-### GENERATE TABLES VISUALIZATIONS.
-#   ALL LANGUAGES
-#   QUESTION: What is the extent of cultural context content in each language edition?
-def generate_ccc_extent_all_languages_table(wiki_path):
-
-    print ('* generate_ccc_extent_all_languages_table')
-
-    # OBTAIN THE DATA.
-    print ('obtain the data.')
-    conn = sqlite3.connect('ccc_data.db'); cursor = conn.cursor()
-    query = 'SELECT * FROM ccc_extent_language WHERE measurement_date IN (SELECT MAX(measurement_date) FROM ccc_extent_language) ORDER BY ccc_percent_wp DESC;'
-    print (query)
-    df = pd.read_sql_query(query, conn)
-    df = df.set_index(['languagecode'])
-    measurement_date = df.loc[df.index.values[0]]['measurement_date']
-
-    rank_dict={}
-    i=1
-    for x in list(df.index.values):
-        rank_dict[x]=i
-        i=i+1
-    df['Nº'] = pd.Series(rank_dict)
-
-    df['Region']=languages.region
-    df['Subregion']=languages.subregion
-
-    WPlanguagearticle={}
-    for x in df.index.values:
-        WPlanguagearticle[x]='<a href="'+languages.loc[x]['WikipedialanguagearticleEnglish']+'">'+x+'</a>'
-    df['Wiki'] = pd.Series(WPlanguagearticle)
-
-    languagelink={}
-    for x in df.index.values:
-        languagelink[x]='<a href="https://'+x+'.wikipedia.org/wiki/">'+df.loc[x]['languagename']+'</a>'
-    df['Language'] = pd.Series(languagelink)
-
-    # Renaming the columns
-    columns_dict = {'wp_number_articles':'WP','ccc_number_articles':'CCC','ccc_percent_wp':'CCC %','geolocated_number_articles':'CCC Geolocated','country_wd':'Country WD','location_wd':'Location WD', 'language_strong_wd':'Language Strong WD', 'created_by_wd':'Created by WD', 'part_of_wd':'Part of WD', 'keyword_title':'Keywords Title', 'category_crawling_territories':'Category Crawling Territories', 'language_weak_wd':'Language Weak WD', 'affiliation_wd':'Affiliation WD', 'has_part_wd':'Has Part WD', 'num_inlinks_from_CCC':'Inlinks from CCC','num_outlinks_to_CCC':'Outlinks from CCC','percent_inlinks_from_CCC':'Inlinks from CCC %', 'percent_outlinks_to_CCC':'Outlinks from CCC%', 'average_num_retrieval_strategies':'Avg. Num Retrieval Strategies', 'date_created':'Avg. Date Created', 'female':'Num. Female','male':'Num. Male', 'female_ccc':'Num. Female CCC','male_ccc':'Num. Male CCC','people_ccc_percent':'People CCC %','measurement_date':'Measurement Date'}
-
-#    df = df.set_index(['Nº'])
-    df=df.rename(columns=columns_dict)
-
-#    # Choosing the final columns
-    columns = ['Nº','Language','Wiki','WP','CCC','CCC %','Avg. Date Created','CCC Geolocated','Keywords Title','Num. Male CCC','Num. Female CCC','People CCC %','Subregion','Region']
-    df = df[columns] # selecting the parameters to export
-
-    os.makedirs(current_site_path, exist_ok=True)
-    filename = 'ccc_extent_all_languages_table'+'.html'
-    file_path = current_site_path + wiki_path + filename
-    print (file_path)
-
-    # Exporting to HTML
-    old_width = pd.get_option('display.max_colwidth')
-    pd.set_option('display.max_colwidth', -1)
-
-    html_str=HTML(df.to_html(index=False,escape=False))
-    html = html_str.data
-    with open(file_path, 'w', encoding='utf-8') as f: f.write(html)
-
-    pd.set_option('display.max_colwidth', old_width)
-
-    print ('* dataframe and html file created.\n')
-
-    # PENDING:
-    #    em caldria complementar la funció table_ccc_extent_by_language per posar-hi la mitjana de % de compleció d'altres llengües, és a dir, el culture gap index.
-    #    això ho puc saber mirant tots els articles que tinc que pertanyen a CCC dels altres entre tots els articles de CCC dels altres.
-
-    return wikitext
-
-
-
-#   QUESTION: What is the extent of Cultural Context Content in all language editions?
-def generate_ccc_extent_visualization(languagecode, languagelist, wiki_path):
-    print ('')
-    # http://whgi.wmflabs.org/gender-by-language.html
-    # semblant a aquesta.
-#    gràfic de boles.
-    location_png = '1'
-
-    p.xaxis.axis_label = 'Percentage female biographies'
-    p.yaxis.axis_label = 'Total biographies'
-    p.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
-
-    source = ColumnDataSource(data=cutoff_plot.to_dict(orient='list'))
-    p.circle('fem_per', 'total', size=12, line_color="black", fill_alpha=0.8,
-             source=source)
-
-    # label text showing language name
-    p.text(x="fem_per", y="total", text="index", text_color="#333333",
-           text_align="left", text_font_size="8pt",
-           y_offset=-5, source=source)
-
-    filename='ccc_extent_visualization'+'.png'
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-    # agregació per REGIONS TAMBÉ!!! DOS GRÀFICS.
-
-
-
-#   QUESTION: What is the extent of Cultural Context Content in the articles created during the last month?
-def generate_ccc_creation_visualization_monthly(languageslist, languagelist, wiki_path):
-    print ('')
-
-    file_path = '1'
-
-#    gràfic de boles.
-#    pels grups seleccionats. top 20.
-
-#    An on-going presentation of different visualizations of the CCC creation map in each language edition.
-#    Presentació: De manera temporal (aquesta setmana), el nombre d'articles de CCC creats en absolut i relatiu per cada llengua. Gràfic amb totes les llengües.
-#    Dades: Cal crear scripts que mitjançant els articles creats a cada setmana computin els resultats i els emmagatzemin els resultats en bases de dades.
-#    Gràfic:
-#    Puc utilitzar:     http://whgi.wmflabs.org/gender-by-language.html       https://bokeh.pydata.org/en/latest/docs/gallery/elements.html
-#    Interfície:     Per c caldria pensar en el selector d'idioma.
-
-#    LA LLENGUA EN QÜESTIÓ QUE PASSEM, LA COMPARAREM EN TRES GRÀFICS AMB:
-#        grup de la mateixa mida
-#        proximitat llengües
-#        llengua contra les 20 primeres
-    
-    filename='ccc_extent_visualization'+'.png'
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-#   QUESTION: What is the composition of the entire Wikipedia project in terms of each language Cultural Context Content?
-def generate_ccc_all_languages_composition(wiki_path):
-
-    file_path = '1'
-#    Cultures in Own Language. Formatge.
-#    Calcular a la vegada el què ocupen a la pròpia WP... és a dir... amb la intenció de fer un formatge de com està compost d'altres cultures.
-#    També es podria fer una 'topical coverage de cultures' de TOTES les viquipèdies a la vegada.
-#    formatge/barres. la suma de share de ccc_gaps.
-
-    # també es podria fer un context coverage de wikidata.
-
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-#   QUESTION: How well each language edition covers the CCC of each other language edition?
-def generate_ccc_culture_gap_table(wiki_path):
-    # taula amb les cinc primeres llengües.
-    wikitext=''
-    html=1
-
-    file_path = current_site_path + wiki_path + filename
-    print (file_path)
-
-    return wikitext
-
-
-#   QUESTION: What is the evolution of the Culture Gap Index evolve for each Wikipedia language edition?
-def generate_ccc_culture_gap_index_visualization_monthly(languagecode, languageslist, wiki_path):
-    print ('')
-
-    # DIAGRAMA DE LÍNIES TEMPORAL. EVOLUCIÓ DEL PERCENTATGE.
-
-    output_file("line.html")
-
-    p = figure(plot_width=400, plot_height=400)
-
-    # add a line renderer
-    p.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=2)
-    show(p)
-
-    filename = '1'
-    # diagrama de línies per veure com estan cobrint el culture gap challenge les diferents llengües.
-    # dos diagrames: la comunitat i l'algoritme.
-    """
-    LA LLENGUA EN QÜESTIÓ QUE PASSEM, LA COMPARAREM EN TRES GRÀFICS AMB:
-    grup de la mateixa mida
-    proximitat llengües
-    llengua contra les 20 primeres
-    """
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-#   QUESTION: What is the extent of articles dedicated to bridge the CCC from other language editions from those created during the last month?
-def generate_ccc_bridging_culture_gap_visualization_monthly(languagecode, wiki_path):
-#    % per cada llengua.
-
-    filename = languagecode+'_'+'ccc_bridging_culture_gap_visualization_monthly'+'.png'
-
-#    centrat en les top 50.
-#    % totes les llengües agregades.
-
-#    An on-going presentation of different visualizations of the CCC bridging map in each language edition as articles that bridge the culture gap are created.
-#    Presentació: De manera temporal (aquesta setmana), per una llengua a seleccionar, el nombre d'articles creats de CCC d'altres llengües. Gràfic per cada llengua.
-#    Bridger.Dades: Cal crear scripts que mitjançant els articles creats a cada setmana computin els resultats i els emmagatzemin els resultats en bases de dades.
-#    Gràfic: Puc utilitzar:
-#    http://whgi.wmflabs.org/gender-by-language.html
-#    https://bokeh.pydata.org/en/latest/docs/gallery/elements.html
-
-#    LA LLENGUA EN QÜESTIÓ QUE PASSEM, LA COMPARAREM EN TRES GRÀFICS AMB: grup de la mateixa mida
-#    proximitat llengües
-#        llengua contra les 20 primeres
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-
-#   LANGUAGE BY LANGUAGE
-    # project site page WCDO for each language
-#   QUESTION: What is the extent of Cultural Context Content in each language edition broken down to territories?
-def generate_ccc_extent_qitem_table_by_language(languagecode, page_titles_qitems, qitems_page_titles_english, wiki_path):
-
-    # OBTAIN THE DATA.
-    print ('obtain the data.')
-    conn = sqlite3.connect('ccc_data.db'); cursor = conn.cursor()
-    query = 'SELECT * FROM ccc_extent_qitem WHERE measurement_date IN (SELECT MAX(measurement_date) FROM ccc_extent_qitem) AND languagecode = "'+languagecode+'" ORDER BY ccc_articles_qitem_percent_ccc DESC;'
-#    print (query)
-    df = pd.read_sql_query(query, conn)
-    df = df.set_index(['qitem'])
-    print ('This the number of territories for language '+languagecode+': '+str(len(df)))
-    if len(df)==0: return
-
-    measurement_date = df.loc[df.index.values[0]]['measurement_date']
-
-    territories_adapted=territories.loc[languagecode]
-    territories_adapted=territories.drop(territories[territories.index!=languagecode].index)
-    territories_adapted=territories_adapted.set_index(['QitemTerritory'])
-    territories_adapted=territories_adapted.rename(index={'QitemTerritory':'qitem'})
-
-#    df['Territory Name (local)']=territories_adapted.territorynameNative
-#    df['Territory Name']=territories_adapted.territoryname
-    df['country']=territories_adapted.country
-    df['ISO3166']=territories_adapted.ISO3166
-    df['ISO3166-2']=territories_adapted.ISO31662
-    df['Subregion']=territories_adapted.subregion
-    df['Region']=territories_adapted.region
-
-    territoryname={}
-    for x in df.index.values:
-        if x != None and x in qitems_page_titles_english: territoryname[x]='<a href="https://en.wikipedia.org/wiki/'+qitems_page_titles_english[x]+'">'+qitems_page_titles_english[x].replace('_',' ')+'</a>'
-        elif x != None: territoryname[x]=territories.loc[territories['QitemTerritory'] == x].loc[languagecode]['territoryname']
-        else: territoryname[x]='Not Assigned'
-    df['Territory Name'] = pd.Series(territoryname)
-
-    territoryname_local={}
-    qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
-    for x in df.index.values:
-        if x != None and x in qitems_page_titles: territoryname_local[x]='<a href="https://'+languagecode+'.wikipedia.org/wiki/'+qitems_page_titles[x]+'">'+qitems_page_titles[x].replace('_',' ')+'</a>'
-        elif x != None: territoryname[x]=territories.loc[territories['QitemTerritory'] == x].loc[languagecode]['territorynameNative']
-        else: territoryname_local[x]='Not Assigned'
-    df['Territory Name (local)'] = pd.Series(territoryname_local)
-
-    rank_dict={}
-    i=1
-    for x in list(df.index.values):
-        rank_dict[x]=i
-        i=i+1
-    df['Nº'] = pd.Series(rank_dict)
-
-    languagelink={}
-    for x in df.index.values:
-        if x != None: languagelink[x]='<a href="https://www.wikidata.org/wiki/'+x+'">'+x+'</a>'
-        else: languagelink[x]=''
-    df['Qitem'] = pd.Series(languagelink)
-
-    # Renaming the columns
-    columns_dict = {'wp_number_articles':'WP','ccc_articles_qitem':'CCC','ccc_articles_qitem_percent_ccc':'CCC %','geolocated_number_articles':'CCC Geolocated','country_wd':'Country WD','location_wd':'Location WD', 'language_strong_wd':'Language Strong WD', 'created_by_wd':'Created by WD', 'part_of_wd':'Part of WD', 'keyword_title':'Keywords Title', 'category_crawling_territories':'Category Crawling Territories', 'language_weak_wd':'Language Weak WD', 'affiliation_wd':'Affiliation WD', 'has_part_wd':'Has Part WD', 'num_inlinks_from_CCC':'Inlinks from CCC','num_outlinks_to_CCC':'Outlinks from CCC','percent_inlinks_from_CCC':'Avg. Percent Incoming Links from CCC', 'percent_outlinks_to_CCC':'Outlinks from CCC%', 'average_num_retrieval_strategies':'Avg. Num. Retrieval Strategies', 'date_created':'Avg. Date Created','measurement_date':'Measurement Date'}
-
-#    df = df.set_index(['Nº'])
-    df=df.rename(columns=columns_dict)
-
-#    # Choosing the final columns
-    columns = ['Nº','Territory Name','Territory Name (local)','Qitem','WP','CCC','CCC %','Avg. Date Created','Avg. Percent Incoming Links from CCC','CCC Geolocated','Keywords Title','Avg. Num. Retrieval Strategies','country','ISO3166','ISO3166-2','Subregion','Region']
-    df = df[columns] # selecting the parameters to export
-    df = df.fillna('')
-
-    wikitext = '' # THIS NEEDS TO BE FILLED.
-
-    os.makedirs(current_site_path + wiki_path, exist_ok=True)
-    filename = languagecode +'_'+'ccc_extent_qitem_table_by_language_' + measurement_date + '.html'
-    file_path = current_site_path + wiki_path + filename
-    print (file_path)
-
-    # Exporting to HTML
-    old_width = pd.get_option('display.max_colwidth')
-    pd.set_option('display.max_colwidth', -1)
-
-    html_str=HTML(df.to_html(index=False,escape=False))
-    html = html_str.data
-    with open(file_path, 'w', encoding='utf-8') as f: f.write(html)
-
-    pd.set_option('display.max_colwidth', old_width)
-
-    print ('* dataframe and html file created.\n')
-
-    return wikitext
-
-
-#   QUESTION: What is the topical coverage of the articles of this Wikipedia language edition?   
-def generate_ccc_topical_coverage_visualization(content_type, languagecode, wiki_path):
-    if content_type == 'ccc':
-        print (content_type)
-    else:
-        print (content_type)
-
-    print ('')
-    location_png =''
-
-    fruits = ['Apples', 'Pears', 'Nectarines', 'Plums', 'Grapes', 'Strawberries']
-    years = ["2015", "2016", "2017"]
-    colors = ["#c9d9d3", "#718dbf", "#e84d60"]
-
-    data = {'fruits' : fruits,
-            '2015'   : [2, 1, 4, 3, 2, 4],
-            '2016'   : [5, 3, 4, 2, 4, 6],
-            '2017'   : [3, 2, 4, 4, 5, 3]}
-
-    source = ColumnDataSource(data=data)
-
-    p = figure(x_range=fruits, plot_height=350, title="Fruit Counts by Year",
-               toolbar_location=None, tools="")
-
-    renderers = p.vbar_stack(years, x='fruits', width=0.9, color=colors, source=source,
-                             legend=[value(x) for x in years], name=years)
-
-    for r in renderers:
-        year = r.name
-        hover = HoverTool(tooltips=[
-            ("%s total" % year, "@%s" % year),
-            ("index", "$index")
-        ], renderers=[r])
-        p.add_tools(hover)
-
-    p.y_range.start = 0
-    p.x_range.range_padding = 0.1
-    p.xgrid.grid_line_color = None
-    p.axis.minor_tick_line_color = None
-    p.outline_line_color = None
-    p.legend.location = "top_left"
-    p.legend.orientation = "horizontal"
-
-    show(p)
-#    T’ensenyaria graficament la distribució temàtica del CCC de la llengua seleccionada (i també d’altres).
-#    Dades: Base de dades acumulat de CCC. 
-#    Caldrà posar dades de les temàtiques a la base de dades.
-#    Gràfic:     https://bokeh.pydata.org/en/latest/docs/gallery/bar_stacked.html
-    filename = languagecode+'_'+content_type+'_topical_coverage_visualization'+'.png'
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-#   QUESTION: Which are the geolocated articles with most inlinks, pageviews, etc.?
-#   QUESTION: How well does this language covers other language editions geolocated articles?
-def generate_ccc_geolocated_articles_map_visualization(languagecode, wiki_path):
-    print ('')
-
-#    A monthly updated visual representation of the CCC geographical articles. (OPCIONAL-VALORABLE)
-#    Presentació: T’ensenyaria gràficament el nombre d’articles per territori.
-#    Dades: Base de dades acumulat de CCC amb geolocalització. 
-
-#    https://developers.arcgis.com/python/sample-notebooks/html-table-to-pandas-data-frame-to-portal-item/
-#    https://github.com/python-visualization/folium
-#    https://bokeh.pydata.org/en/latest/docs/gallery/texas.html
-#    https://stats.wikimedia.org/v2/#/es.wikipedia.org/reading/pageviews-by-country
-#    http://geo.holoviews.org/Working_with_Bokeh.html
-    filename = languagecode+'_'+content_type+'_geolocated_articles_map_visualization'+'.png'
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-#   QUESTION: How well the language editions cover the CCC of this language edition?
-def generate_ccc_culture_gap_covered_visualization(languagecode, wiki_path):
-    # diagrama de boles
-
-
-    filename = languagecode+'_'+'ccc_culture_gap_covered_visualization'+'.png'
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-#   QUESTION: How well this language edition cover the CCC of the other language editions?     
-def generate_ccc_culture_gap_covering_visualization(languagecode, wiki_path):
-#    això és utilitzar table_ccc_gaps amb funció share.
-    # diagrama de boles. stacked bar o formatget.
-
-    filename = languagecode+'_'+'ccc_culture_gap_covering_visualization'+'.png'
-    file_path = current_site_path + wiki_path + filename
-
-    return file_path
-
-
-
-#   QUESTION: Which articles from each CCC should be available in other language editions?
-# It creates a table and a list of top 100, top 1000 articles according to different criteria.
-def generate_ccc_vital_articles_list(languagecode, languagecode_target, content_type, category, time_frame, rellevance_rank, rellevance_sense, window, representativity, columns, page_titles_qitems, wiki_path):
-
-    print ('Obtaining a prioritized article list based on these parameters:')
-    print (languagecode, languagecode_target, content_type, category, time_frame, rellevance_rank, rellevance_sense, window, representativity, columns)
-
-    # DEFINE CONTENT TYPE
-    # according to the content type, we make a query or another.
-    print ('define the content type')
-    if content_type[0] == 'ccc': query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1'
-    if content_type[0] == 'gl': query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1 AND geocoordinates IS NOT NULL'
-    if content_type[0] == 'kw': query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1 AND keyword_title IS NOT NULL'
-    if content_type[0] == 'ccc_not_gl': query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1 AND geocoordinates IS NULL'
-    if content_type[0] == 'ccc_main_territory': query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'
-
-
-    # DEFINE CATEGORY TO FILTER THE DATA (specific territory, specific topic)
-    print ('define the specific category')
-    if category != '':
-        print ('We are usign this category to filter, either by main_territory or main_topic: '+category)
-        if content_type[0] == 'ccc':
-            query = query + ' AND main_territory = "'+str(category)+'";'
-        if content_type[0] == 'topical':
-            query = query + ' AND main_topic = "'+str(category)+'";'
-
-
-    # DEFINE THE TIMEFRAME -> if it is necessary, it will admit two timestamps two be passed as parameters.
-    print ('define the timeframe')
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    if time_frame == 'last_week':
-        week_ago_timestamp=(datetime.date.today() - datetime.timedelta(days=7)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created > '+str(week_ago_timestamp)
-    if time_frame == 'last_month':
-        month_ago_timestamp=(datetime.date.today() - datetime.timedelta(days=30)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created > '+str(month_ago_timestamp)
-    if time_frame == 'last_three_months':
-        month_ago_timestamp=(datetime.date.today() - datetime.timedelta(days=3*30)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created > '+str(month_ago_timestamp)
-    if time_frame == 'last_year':
-        last_year_timestamp=(datetime.date.today() - datetime.timedelta(days=365)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created > '+str(last_year_timestamp)
-    if time_frame == 'last_five_years':
-        last_five_years=(datetime.date.today() - datetime.timedelta(days=5*365)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created > '+str(last_five_years)
-    if time_frame == 'first_year':
-        cursor.execute("SELECT MIN(date_created) FROM ccc_"+languagecode+"wiki;")
-        timestamp = cursor.fetchone()[0]
-        print (timestamp)
-        first_year=(datetime.datetime.strptime(timestamp,'%Y%m%d%H%M%S') + datetime.timedelta(days=365)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created < '+str(first_year)
-    if time_frame == 'first_three_years':
-        cursor.execute("SELECT MIN(date_created) FROM ccc_"+languagecode+"wiki;")
-        timestamp = cursor.fetchone()[0]
-        first_three_years=(datetime.datetime.strptime(timestamp,'%Y%m%d%H%M%S') + datetime.timedelta(days=5*365)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created < '+str(first_three_years)
-    if time_frame == 'first_five_years':
-        cursor.execute("SELECT MIN(date_created) FROM ccc_"+languagecode+"wiki;")
-        timestamp = cursor.fetchone()[0]
-        first_five_years=(datetime.datetime.strptime(timestamp,'%Y%m%d%H%M%S') + datetime.timedelta(days=5*365)).strftime('%Y%m%d%H%M%S')
-        query = query + ' AND date_created < '+str(first_five_years)
-
-
-    # OBTAIN THE DATA.
-    print ('obtain the data.')
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    print (query)
-    ccc_df = pd.read_sql_query(query, conn)
-    print (ccc_df.columns.values)
-    ccc_df = ccc_df.set_index(['qitem'])
-    ccc_df = ccc_df.fillna(0)
-    print ('this is the number of lines of the dataframe: '+str(len(ccc_df)))
-
-
-    # FILTER ARTICLES IN CASE OF CONTENT TYPE
-    if len(content_type)>1:
-        if content_type[1] == 'people': query = 'SELECT people_properties.qitem FROM people_properties INNER JOIN sitelinks ON people_properties.qitem=sitelinks.qitem WHERE people_properties.property="P31" AND sitelinks.langcode="'+languagecode+'wiki";'
-        if content_type[1] == 'male': query = 'SELECT people_properties.qitem FROM people_properties INNER JOIN sitelinks ON people_properties.qitem=sitelinks.qitem WHERE people_properties.qitem2 = "Q6581097" AND sitelinks.langcode="'+languagecode+'wiki";'
-        if content_type[1] == 'female': query = 'SELECT people_properties.qitem FROM people_properties INNER JOIN sitelinks ON people_properties.qitem=sitelinks.qitem WHERE people_properties.qitem2 = "Q6581072" AND sitelinks.langcode="'+languagecode+'wiki";'
-        if content_type[1] == 'topical': query = ''
-
-        conn3 = sqlite3.connect('wikidata.db'); cursor3 = conn3.cursor()
-        topic_selected=[]
-        print (query)
-#        print (languagecode)
-        for row in cursor3.execute(query): topic_selected.append(row[0])
-        print (len(topic_selected))
-        ccc_df = ccc_df.reindex(topic_selected)
-        print ('this is the number of lines of the dataframe after the content filtering: '+str(len(ccc_df)))
-        ccc_df = ccc_df.fillna(0)
-
-
-    # FILTER THE LOWEST PART OF CCC
-#    print ('filter the lowest part of CCC')
-    # here we would filter a % of the dataframe according to the number of inlinks_from_CCC and/or num_retrieval_strategies.
-    # ccc_df.drop(ccc_df.query('num_inlinks_ccc < 6').index)
-#    percentage = 20
-#    new_index=ccc_df['num_inlinks_from_CCC'].sort_values(ascending=False).index.tolist()
-#    ccc_df = ccc_df.reindex(index = new_index)
-#    ccc_df.drop(ccc_df.index[len(ccc_df)-int(len(ccc_df)/percentage):], inplace=True) # this is the percentage deleted
-
-#    new_index=ccc_df['num_retrieval_strategies'].sort_values(ascending=False).index.tolist()
-#    ccc_df = ccc_df.reindex(index = new_index)
-#    ccc_df.drop(ccc_df.index[len(ccc_df)-int(len(ccc_df)/percentage):], inplace=True) # this is the percentage deleted  
-
-
-    # RANK ARTICLES BY RELLEVANCE
-    print ('rank articles by rellevance')
-    articles_ranked = {}
-    if rellevance_sense=='positive': # articles top priority of rellevance
-        ascending=False
-    if rellevance_sense=='negative': # articles for deletion (no one cares)
-        ascending=True
-
-    rellevance_measures = ['num_inlinks', 'num_outlinks', 'num_bytes', 'num_references', 'num_edits', 'num_editors', 'num_pageviews', 'num_wdproperty', 'num_interwiki', 'num_discussions', 'featured_article', 'num_inlinks_from_CCC', 'num_retrieval_strategies']
-    rank_dict = {}
-    for parameter in rellevance_rank.keys():
-        if parameter in rellevance_measures:
-            coefficient=rellevance_rank[parameter]
-            ccc_ranked=ccc_df[parameter].sort_values(ascending=ascending).index.tolist()
-            print ('parameter of rellevance: '+parameter+ ' with coefficient: '+str(coefficient))
-            value = 1
-            for x in ccc_ranked:
- #               print (x,ccc_df.loc[x]['page_title'],ccc_df.loc[x][parameter]); input('')
-                if x in rank_dict:
-                    rank_dict[x]=rank_dict[x]+value*coefficient
-                else:
-                    rank_dict[x]=value*coefficient
-                value = value + 1
-    rank = sorted(rank_dict, key=rank_dict.get)
-#    print (rank[:100])
-
-#    print ('Showing the top articles: ')
-#    i=0
-#    for y in rank:
-#        print (ccc_df.loc[y]['page_title'],ccc_df.loc[y]['main_territory'],rank_dict[y],ccc_df.loc[y]['num_pageviews'])
-#        i=i+1
-#        if i == 500: break
-#    input('')
-
-  
-    # GET TERRITORY REPRESENTATIVITY COEFFICIENTS
-    # get the different territories for the language. a list.
-    print ('calculate the representativity coefficients')
-    representativity_coefficients = {}
-
-    if representativity == 'none':
-        representativity_coefficients['Any']=1
-
-    if representativity == 'all_equal': # all equal. get all the qitems for the language code. divide the 
-        try: qitems = territories.loc[languagecode]['QitemTerritory'].tolist()
-        except: qitems = [territories.loc[languagecode]['QitemTerritory']]
-        coefficient=1/(len(qitems)+1)
-        for x in qitems: representativity_coefficients[x]=coefficient
-        representativity_coefficients[0]=coefficient
-
-    if representativity == 'proportional_articles' or representativity == 'proportional_articles_compensation': # proportional to the number of articles for each territory. check data from: ccc_extent_by_qitem.
-        conn2 = sqlite3.connect('ccc_data.db'); cursor2 = conn2.cursor()
-        query = 'SELECT qitem, ccc_articles_qitem FROM ccc_extent_qitem WHERE languagecode = "'+languagecode+'" AND measurement_date IN (SELECT MAX(measurement_date) FROM ccc_extent_qitem WHERE languagecode = "'+languagecode+'");'
-#        print (query)
-        sum = 0 
-        for row in cursor2.execute(query):
-            main_territory = row[0]
-            if main_territory == None: main_territory = 0
-            representativity_coefficients[main_territory]=row[1]
-            sum = sum + row[1]
-        for x,y in representativity_coefficients.items():
-            representativity_coefficients[x]=y/sum
-
-        if representativity == 'proportional_articles_compensation':
-            for x,y in representativity_coefficients.items():
-                if y < 0.02:
-                    representativity_coefficients[x]=0.02
-                    diff = 0.02 - representativity_coefficients[x]
-                    representativity_coefficients[0]=representativity_coefficients[0]-diff
-
-    if representativity == 'proportional_ccc_rellevance': # proportional to the rellevance of each qitem.
-        # check data from: ccc_extent_by_qitems. number of inlinks from CCC.
-        total_inlinks = 0
-        for qitem in ccc_df.index:
-            inlinks = ccc_df.loc[qitem]['num_inlinks_from_CCC']; 
-            main_territory = ccc_df.loc[qitem]['main_territory']
-            if main_territory == 0: main_territory = 0
-
-            if main_territory in representativity_coefficients:
-                representativity_coefficients[main_territory]=representativity_coefficients[main_territory]+int(inlinks)
-            else:
-                representativity_coefficients[main_territory]=int(inlinks)
-            total_inlinks = total_inlinks + inlinks
-        for qitem in representativity_coefficients.keys(): representativity_coefficients[qitem]=representativity_coefficients[qitem]/total_inlinks # normalization
-
-    if representativity == 'minimum':
-        try: qitems = territories.loc[languagecode]['QitemTerritory'].tolist()
-        except: qitems = [territories.loc[languagecode]['QitemTerritory']]
-
-        coefficient=0.02
-        if coefficient > 1/len(qitems): coefficient = round(1/len(qitems),2)
-        for x in qitems: representativity_coefficients[x]=coefficient
-
-        rest=1-len(qitems)*coefficient
-        representativity_coefficients['Any']=rest
-
-    if category != '':
-        representativity_coefficients={}
-        representativity_coefficients[category]=1
-
-    representativity_coefficients_sorted = sorted(representativity_coefficients, key=representativity_coefficients.get, reverse=False)
-    print (representativity_coefficients)
-    print (representativity_coefficients_sorted)
-    sum = 0
-    for x,y in representativity_coefficients.items(): sum = sum + y
-    print (sum)
-
-    # Get dictionary names
-    qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
-    qitems_territories_names = {}
-    for x in representativity_coefficients_sorted: 
-        if x != 0 and x!= 'Any': qitems_territories_names[x]=qitems_page_titles[x]
-    print (qitems_territories_names)
-
-    if content_type[0] == 'ccc_main_territory':
-        representativity_coefficients={}
-        representativity_coefficients[representativity_coefficients_sorted[0]]=1
-
-
-    # MAKE THE DATAFRAME
-    # Creating the final dataframe with the representation for each territory
-    print ('make the new dataframe')
-    prioritized_list=[]
-    articles_ranked=rank
-    representativity_articles={}
-    d=0
-    i=1
-    error='No errors.'
-    number_windows = 1
-    while len(articles_ranked)!=d and i<=number_windows:
-        d = len(articles_ranked)
-        for x in representativity_coefficients_sorted: representativity_articles[x]=int(window*representativity_coefficients[x]) # SET THE NEXT ITERATION OF ARTICLES TO prioritized_list={}
-        print (representativity_articles)
-
-        z=0
-        for x,y in representativity_articles.items(): z=z+y
-        print ('the window has: '+str(z))
-        if window > z: representativity_articles['Any']=representativity_articles['Any']+(window-z)
-        print ('Any incremented: '+str(representativity_articles['Any']))
-
-#        input('')
-        for x,y in representativity_articles.items(): # filling the window
-            todelete = []
-            for qitem in articles_ranked:
-                main_territory = ccc_df.loc[qitem]['main_territory']
-#                print (ccc_df.loc[qitem]['page_title'],main_territory,x)
-
-                if main_territory == x or x == 'Any':
-#                    input('')
-                    if main_territory != 0: territory = qitems_territories_names[main_territory]
-                    else: territory = 'None'
-
-
-                    print (i,"("+str(y)+")",ccc_df.loc[qitem]['page_title'],
-                    '\t\t\t'+str(list(rellevance_rank.keys())[0])+':'+str(ccc_df.loc[qitem][list(rellevance_rank.keys())[0]]),
-                    '\t'+str(list(rellevance_rank.keys())[1])+':'+str(ccc_df.loc[qitem][list(rellevance_rank.keys())[1]]),
-#                    '\t'+str(list(rellevance_rank.keys())[2])+':'+str(ccc_df.loc[qitem][list(rellevance_rank.keys())[2]]),
-                    '\trank:'+str(rank_dict[qitem]),
-                    qitem,territory,main_territory,x); #input('')
-
-                    prioritized_list.append(qitem)
-                    todelete.append(qitem)
-                    i=i+1
-
-                    y = y - 1 # countdown
-                if y == 0 or y < 1:
-#                    print ('* one type is filled: '+x)
-                    break
-
-            if len(todelete) == 0 or len(todelete)<=y:
-                error = 'No articles for the territory: '+str(x)+' so we took articles from the top of the ranking to fill the gap.'
-                if len(articles_ranked)>y:
-                    for x in range(0,y):
-                        qitem = articles_ranked[x]
-                        prioritized_list.append(qitem)
-                        todelete.append(qitem)
-                        print (y,ccc_df.loc[qitem]['page_title'],rank_dict[qitem]); #input('')
-                        y = y - 1 # countdown
-
-            for qitem in todelete: articles_ranked.remove(qitem)
-
-#        print ('* one window filled.')
-    ccc_df=ccc_df.reindex(prioritized_list)
-    print (error)
-    print (len(ccc_df))
-#    print (prioritized_list[:100])
-
-
-
-##### --- ##### EXPORTING THE DATA AS HTML AND WIKIMARKUP IN THIS FUNCTION
-
-    wiki_tables_dict = {}
-
-    # ADDING NEW COLUMNS
-    # Adding new columns with the IW address from the closest languages
-    closestlanguages=[]
-    langs = obtain_proximity_wikipedia_languages_lists(languagecode)[2][:5]
-    for x in langs: closestlanguages.append(x+'wiki')
-    print (closestlanguages)
-
-    # Languages name
-    lang_dict = {}
-    for lang in langs:
-        qitem=languages.loc[lang.split('wiki')[0]]['Qitem']
-        lang_dict[lang.split('wiki')[0]]=qitems_page_titles[qitem]
-
-    qitems_list=ccc_df.index.tolist()
-    print ('adding extra wd_sitelinks')
-    conn2 = sqlite3.connect('wikidata.db'); cursor2 = conn2.cursor()
-    page_asstring = ','.join( ['?'] * len( closestlanguages ) )
-    articles_foreignlang = {}
-    for qitem in qitems_list:
-        for lang in closestlanguages:
-            query = 'SELECT page_title FROM sitelinks WHERE sitelinks.langcode = ? AND qitem = ?'
-            cursor2.execute(query,(lang,qitem))
-            row = cursor2.fetchone()
-            if row!=None:
-                languagename = lang_dict[lang.split('wiki')[0]]
-#                languagename = languages.loc[lang.split('wiki')[0]]['languagename']
-                url = '<a href="https://'+lang.split('wiki')[0]+'.wikipedia.org/wiki/'+row[0].replace(' ','_')+'">'+languagename+'</a>'
-#                print (url)
-                if qitem not in articles_foreignlang:
-                    articles_foreignlang[qitem]=url
-                else:
-                    articles_foreignlang[qitem]=articles_foreignlang[qitem]+', '+url
-        if qitem not in articles_foreignlang: articles_foreignlang[qitem]=''
-    ccc_df['Other Languages'] = pd.Series(articles_foreignlang)
-
-    # Translated Title Proposal
-    potential_titles = {}
-    for qitem in qitems_list:
-        query = 'SELECT page_title FROM sitelinks WHERE sitelinks.langcode = ? AND qitem = ?'
-        cursor2.execute(query,(languagecode_target+'wiki',qitem))
-        row = cursor2.fetchone()
-
-
-        # TODO TODO TODO
-        # NO!!! WE NEED REAL-TIME INFO. WE CANNOT USE INFO FROM THE LAST MONTH.
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
-        # TODO TODO TODO
-
-
-        if row!=None:
-            count_covered_articles=count_covered_articles+1
-            page_title = row[0].replace(' ','_')
-            url = '<a href="https://'+languagecode_target+'.wikipedia.org/wiki/'+page_title+'">'+page_title+'</a>'
-        else:
-            title = ccc_df.loc[qitem]['page_title'].replace('_',' ')
-            r = requests.post("https://cxserver.wikimedia.org/v2/translate/"+languagecode+"/"+languagecode_target+"/Apertium", data={'html': '<div>'+title+'</div>'}) # https://cxserver.wikimedia.org/v2/?doc  https://codepen.io/santhoshtr/pen/zjMMrG
-            if str(r) == 'Provider not supported': potential_title = ''
-            potential_title = r.text.split('<div>')[1].split('</div>')[0].replace(' ','_')
-            url = 'https://'+languagecode+'.wikipedia.org/w/index.php?title=Special:ContentTranslation&page='+title+'&from='+languagecode+'&to='+languagecode_target # target_url_translator
-            url = 'https://'+languagecode_target+'.wikipedia.org/wiki/Special:ContentTranslation?page='+title+'&from='+languagecode+'&to='+languagecode_target+'&targettitle='+potential_title+'&campaign=interlanguagelink' # target_url_potential_title_translator
-            url = 'https://'+languagecode_target+'.wikipedia.org/w/index.php?title='+potential_title+'&action=edit&redlink=1'
-            url = '<a href="'+ url + '">'+potential_title+'</a>'
-#            print (url)
-        potential_titles[qitem]=url
-    ccc_df['Title / Suggested Title'] = pd.Series(potential_titles)
-
-
-    # INTRODUCING THE LIST CROSS-LANGUAGE AVAILABILITY TO THE TABLE: vital_articles_lists
-    languagecode_covered = languagecode
-    list_name=wiki_path.split('/')[2]
-    create_table_ccc_bridging_lists(count_covered_articles, languagecode_covered, languagecode_covering, percentage, list_name)
-
-    print ('* list introduced into the database vital_articles_lists from ccc_data')
-    print (languagecode_covered, languagecode_covering, percentage, count_covered_articles, number_articles, list_name)
-
-
-    # REFORMATTING THE DATASET INTO AN HTML TABLE
-    # Ranking positions by main feature / Reindexing the dataframe
-    i=0
-    ccc_ranked_dict = {}
-    main_value = sorted(rellevance_rank, key=rellevance_rank.get, reverse=True)[0]
-    ccc_ranked=ccc_df[main_value].sort_values(ascending=ascending).index.tolist()
-    for x in ccc_ranked:
-        i = i + 1
-        ccc_ranked_dict[x]=i
-    ccc_df['Nº'] = pd.Series(ccc_ranked_dict)
-    ccc_df=ccc_df.reindex(ccc_ranked)
-
-    # Change editors format:
-    ccc_df['num_editors'] = ccc_df.num_editors.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_editors'] = int(ccc_df.loc[x]['num_editors'])
-
-    # Change edits format:
-    ccc_df['num_edits'] = ccc_df.num_edits.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_edits'] = int(ccc_df.loc[x]['num_edits'])
-
-    # Change discussion edits format:
-    ccc_df['num_discussions'] = ccc_df.num_discussions.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_discussions'] = int(ccc_df.loc[x]['num_discussions'])
-
-    # Change pageviews format:
-    ccc_df['num_pageviews'] = ccc_df.num_pageviews.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_pageviews'] = int(ccc_df.loc[x]['num_pageviews'])
-
-    # Change Retrieval strategies format:
-    ccc_df['num_retrieval_strategies'] = ccc_df.num_retrieval_strategies.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_retrieval_strategies'] = int(ccc_df.loc[x]['num_retrieval_strategies'])
-
-    # Change Inlinks from CCC format:
-    ccc_df['num_inlinks_from_CCC'] = ccc_df.num_inlinks_from_CCC.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_inlinks_from_CCC'] = int(ccc_df.loc[x]['num_inlinks_from_CCC'])
-
-    # Change Bytes format:
-    ccc_df['num_bytes'] = ccc_df.num_bytes.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_bytes'] = int(ccc_df.loc[x]['num_bytes'])
-
-    # Change pageviews format:
-    ccc_df['num_references'] = ccc_df.num_references.astype(int)
-    for x in ccc_ranked: ccc_df.at[x, 'num_references'] = int(ccc_df.loc[x]['num_references'])
-
-    # Change date created format
-    for x in ccc_ranked: ccc_df.at[x, 'date_created'] = time.strftime("%Y-%m-%d", time.strptime(ccc_df.loc[x]['date_created'], "%Y%m%d%H%M%S"))
-
-    # Change page_title format
-    for x in ccc_ranked: ccc_df.at[x, 'page_title'] = '<a href="https://'+languagecode+'.wikipedia.org/wiki/'+ccc_df.loc[x]['page_title']+'">'+ccc_df.loc[x]['page_title'].replace('_',' ')+'</a>'
-
-    # Change featured articles
-    ccc_df['featured_article'] = ccc_df.featured_article.astype(str)
-    for x in ccc_ranked:
-        if ccc_df.loc[x]['featured_article']=='0.0': ccc_df.at[x, 'featured_article'] = 'No'
-        else: ccc_df.at[x, 'featured_article'] = 'Yes'
-
-    # Change interwiki format:
-    ccc_df['num_interwiki'] = ccc_df.num_interwiki.astype(int)
-    ccc_df['num_interwiki'] = ccc_df.num_interwiki.astype(str)
-    for x in ccc_ranked: ccc_df.at[x,'num_interwiki'] = '<a href="https://www.wikidata.org/wiki/'+x+'">'+ccc_df.loc[x]['num_interwiki']+'</a>'
-
-    # Change properties format:
-    ccc_df['num_wdproperty'] = ccc_df.num_wdproperty.astype(int)
-    ccc_df['num_wdproperty'] = ccc_df.num_wdproperty.astype(str)
-    for x in ccc_ranked: ccc_df.at[x, 'num_wdproperty'] = '<a href="https://www.wikidata.org/wiki/'+x+'">'+ccc_df.loc[x]['num_wdproperty']+'</a>'
-
-    # Renaming the columns
-    columns_dict = {'page_title':'Title','date_created':'Date Created','main_territory':'Associated Territory','num_bytes':'Bytes','num_discussions':'Discussion Edits','num_references':'External Links','num_inlinks':'Inlinks','num_outlinks':'Outlinks','num_editors':'Editors','num_edits':'Edits','num_pageviews':'Pageviews','num_wdproperty':'Wikidata Properties','num_interwiki':'Interwiki Links','featured_article':'Featured Article','num_inlinks_from_CCC':'Inlinks from CCC','num_retrieval_strategies':'CCC Strategies'}
-    ccc_df=ccc_df.rename(columns=columns_dict)
-
-#    # Choosing the final columns
-#    columns = ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki']
-
-    for x in range(0,len(columns)): columns[x]=columns_dict[columns[x]]
-    new_columns = ['Nº','Title']+columns+['Date Created','Inlinks from CCC','Other Languages','Title / Suggested Title']
-    ccc_df = ccc_df[new_columns] # selecting the parameters to export
-
-    # Filename Path
-    if time_frame != '': time_frame = '_' + time_frame
-    path = '/srv/wcdo/site/'+languagecode+'/'
-    os.makedirs(path, exist_ok=True)
-
-    file_path = path+languagecode+'/'+str(window) + '_' + "_".join(content_type)+'_vital_articles_' + columns[0].lower().replace(' ','_') + time_frame + '_' + languagecode + '_' + languagecode_target + '.html'
-    print (file_path)
-
-    # Exporting to HTML
-    old_width = pd.get_option('display.max_colwidth')
-    pd.set_option('display.max_colwidth', -1)
-
-    html_str=HTML(ccc_df.to_html(index=False,escape=False))
-    html = html_str.data
-    with open(file_path, 'w', encoding='utf-8') as f: f.write(html)
-
-    pd.set_option('display.max_colwidth', old_width)
-
-    print ('* wikimarkup and html file created.\n')
-
-
-    return wiki_tables_dict
-
-
-
-#   QUESTION: Which of these CCC articles is or should be available in this language edition?
-def generate_ccc_all_vital_articles_lists_table(languagecode_covered, wiki_path):
-
-#    comprovar les llistes introduïdes a create_table_ccc_bridging_lists. 
-#    comptar els números. sumar els números (per ordenar-los per ranking)
-#    comprovar que els articles existeixin al ccc_Xwiki a la base de dades real enwiki...etc..
-    conn = sqlite3.connect('ccc_data.db'); cursor = conn.cursor()
-
-
-    # CREATE THE DATAFRAME. create the columns.
-
-    for languagecode in wikilanguagecodes:
-        # for a given language_covering get the lists for the language covered.
-        query = 'SELECT number_articles, percentage, list_name FROM vital_articles_lists ;'
-        
-        covering_language_SUM = 0
-        for row in cursor.execute(query):
-            list_name=row[2]
-            number_articles = row[0]
-            percentage = row[1]
-
-            covering_language_SUM = covering_language_SUM + number_articles
-
-        # recreate the links to the entire lists.
-        url='Wikipedia_Cultural_Diversity_Observatory/'+languages.loc[languagecode]['Wikipedia'].replace(' ','_')+'/'+list_name
-
-
-        # INTRODUCE IT TO A DATAFRAME (as a list.)
-
-
-    # CREATE THE TABLE IN WIKIMARKUP AND HTML FROM THE DATAFRAME. si pot ser amb colorets de vermell a verd...
-    wikitext=''
-
-
-    # RANK ACCORDING TO covering_language_SUM
-
-
-    # CREATE THE FILE IN HTML
-    filename = languagecode+'_'+'ccc_all_vital_articles_lists_table'+'.html'
-    file_path = current_site_path + wiki_path + filename
-    
-    return wikitext
-
-
-# in this function we create the table language_territories_mapping.
-def generate_ccc_language_territories_mapping_table(wiki_path):
-
-
-    print ('')
-
-
-
-### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- 
-
-### PUBLISHING TO META/NOTIFYING THE WORK DONE.
-
-# Publishes all the meta pages for all the languages in case they do not exist.
-def publish_wcdo_first_time():
-
-    site = pywikibot.Site("meta","meta")
-    text_files_path = site_path + '/first_time_texts/'
-
-    # HERE WE INTRODUCE FOR THE FIRST TIME:
-    # a) TEXT
-    # b) PICTURES TAGS (THAT ARE GOING TO BE UPDATED)
-    # c) TABLES TAGS (THAT ARE GOING TO BE UPDATED VIA TRANSCLUSION)
-    # not the actual pictures and the tables themselves.
-    # We also introduce the categories.
-
-    # CREATING THE MAIN CATEGORY
-    category_page_name = 'Wikipedia_Cultural_Diversity_Observatory'
-    categorypage = pywikibot.Category(site, category_page_name)
-    categorypage.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text='[[Category:Parent]]')
-
-    # ALL LANGUAGES PAGES
-    # WCDO project site for all languages
-    main_page_name = 'Wikipedia_Cultural_Diversity_Observatory'
-    wiki_path = main_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext = open(text_files_path+main_page_name+'.txt',"r").read()
-    wikitext= 'this is a transclusion tag based on generate_ccc_all_languages_composition, generate_ccc_extent_visualization and generate_ccc_creation_visualization_monthly'
-    wikitext = wikitext + '[[Category:'+category_page_name+']]'
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-    list_ccc_extent_page_name = 'List_of_Wikipedias_by_Cultural_Context_Content'
-    wiki_path = main_page_name + '/' + list_ccc_extent_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext = open(text_files_path+list_ccc_extent_page_name+'.txt',"r").read()
-    wikitext= 'this is a transclusion tag based on generate_ccc_extent_all_languages_table'
-    wikitext = wikitext + '[[Category:'+category_page_name+']]'
-    wikitext = wikitext + '[[Category:Lists_of_Wikipedias]]'
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-    culture_gap_page_name = 'Culture_Gap'
-    wiki_path = main_page_name + '/' + culture_gap_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext = open(text_files_path+culture_gap_page_name+'.txt',"r").read()
-    wikitext= 'this is the text and the transclusion tag based on generate_ccc_culture_gap_table'
-    wikitext = wikitext + '[[Category:'+category_page_name+']]'
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-    languages_territories_mapping_page_name = 'Language_Territories_Mapping'
-    wiki_path = main_page_name + '/' + languages_territories_mapping_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext = open(text_files_path+languages_territories_mapping_page_name+'.txt',"r").read()
-    wikitext= 'this is the text and the transclusion tag based on generate_ccc_language_territories_mapping_table'
-    wikitext = wikitext + '[[Category:'+category_page_name+']]'
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-    cultural_context_content_page_name = 'Cultural_Context_Content'
-    wiki_path = main_page_name + '/' + cultural_context_content_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext = open(text_files_path+cultural_context_content_page_name+'.txt',"r").read()
-    wikitext= 'this is the text and the transclusion tag based on generate_ccc_creation_visualization_monthly'
-    wikitext = wikitext + '[[Category:'+category_page_name+']]'
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-    get_involved_page_name = 'Get_Involved'
-    wiki_path = main_page_name + '/' + get_involved_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext = open(text_files_path+get_involved_page_name+'.txt',"r").read()
-    wikitext= 'this is the text and the transclusion tag based on generate_ccc_bridging_culture_gap_visualization_monthly'
-    wikitext = wikitext + '[[Category:'+category_page_name+']]'
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-    for languagecode in wikilanguagecodes:
-
-        # CREATING THE WCDO LANGUAGE CATEGORY
-        category_page_name = languages.loc[languagecode]['Wikipedia'].replace(' ','_')+'_(WCDO)'
-        categorypage = pywikibot.Category(site, category_page_name)
-        categorypage.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text='[[Category:Wikipedia_Cultural_Diversity_Observatory]]') # introducing the parent
-
-        # LANGUAGE BY LANGUAGE PAGES
-        language_page_name = languages.loc[languagecode]['Wikipedia'].replace(' ','_')+'_(WCDO)'
-        wiki_path = main_page_name + '/' + language_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)'+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on generate_ccc_extent_qitem_table_by_language, generate_ccc_extent_visualization, generate_ccc_creation_visualization_monthly'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        wiki_path = main_page_name + '/' + language_page_name + '/' + culture_gap_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+culture_gap_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on generate_ccc_culture_gap_covered_visualization, generate_ccc_culture_gap_covering_visualization'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        culture_gap_monthly_page_name = 'Culture_Gap_monthly'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + culture_gap_monthly_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+culture_gap_monthly_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on generate_ccc_bridging_culture_gap_visualization_monthly, generate_ccc_culture_gap_index_visualization_monthly'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        vital_articles_lists_page_name = 'Vital_articles_lists'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + vital_articles_lists_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+vital_articles_lists_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on generate_ccc_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'       
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        topical_coverage_page_name = 'Topical_coverage'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + topical_coverage_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+topical_coverage_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on generate_topical_coverage_visualization   generate_ccc_topical_coverage_visualization'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        geolocated_articles_page_name = 'Geolocated_articles'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + geolocated_articles_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+geolocated_articles_page_name+'.txt',"r").read()
-        wikitext = 'this is the text and the transclusion tag based on   generate_ccc_geolocated_articles_map_visualization'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_Top_100_page_name = 'CCC_Vital_articles_Top_100'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_Top_100_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_Top_100_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_Top_1000_page_name = 'CCC_Vital_articles_Top_1000'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_Top_1000_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_Top_1000_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_featured_page_name = 'CCC_Vital_articles_featured'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_featured_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_featured_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_geolocated_page_name = 'CCC_Vital_articles_geolocated'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_geolocated_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_geolocated_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_keywords_page_name = 'CCC_Vital_articles_keywords'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_keywords_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_keywords_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_first_years_page_name = 'CCC_Vital_articles_first_years'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_first_years_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_first_years_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_last_quarter_page_name = 'CCC_Vital_articles_last_quarter'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_last_quarter_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_last_quarter_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_women_page_name = 'CCC_Vital_articles_women'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_women_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_women_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'       
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_men_page_name = 'CCC_Vital_articles_men'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_men_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_men_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_pageviews_page_name = 'CCC_Vital_articles_pageviews'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_pageviews_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_pageviews_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'       
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        CCC_Vital_articles_discussions_page_name = 'CCC_Vital_articles_discussions'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_discussions_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext = open(text_files_path+'Language_Wikipedia_(WCDO)/'+CCC_Vital_articles_discussions_page_name+'.txt',"r").read()
-        wikitext= 'this is the text and the transclusion tag based on   generate_ccc_all_vital_articles_lists_table'
-        wikitext = wikitext + '[[Category:'+category_page_name+']]'
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-# This is a function that includes all the calls to the functions in order to create the visualizations and apply them to each language.
-def publish_wcdo_updates():
-    site = pywikibot.Site('meta','meta')
-
-
-    # HERE WE UPDATE
-    # a) PICTURES UPLOADED
-    # b) TABLES TEXT
-    # not the actual text from the pages.
-
-
-# ALL LANGUAGES
-
-    top19 = obtain_proximity_wikipedia_languages_lists('en')[0]
-
-    # WCDO PAGE
-    main_page_name = 'Wikipedia_Cultural_Diversity_Observatory'
-    wiki_path = main_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext=''
-    # QUESTION: What is the composition of the entire Wikipedia project in terms of each language Cultural Context Content?
-    file_path = generate_ccc_all_languages_composition(wiki_path)
-    bot = upload.UploadRobot(url=[join_images_path("MP_sounds.png")],
-                             description="pywikibot upload.py script test",
-                             useFilename=None, keepFilename=True,
-                             verifyDescription=True, aborts=set(),
-                             ignoreWarning=True, targetSite=self.get_site())
-    bot.run()
-    # ONCE VERIFIED AND ADJUSTED, this must be copied to evry other image.
-    # https://github.com/wikimedia/pywikibot/blob/master/scripts/upload.py
-
-    # QUESTION: What is the extent of Cultural Context Content in all language editions?
-    file_path = generate_ccc_extent_visualization('en',top19,wiki_path)
-
-    bot = upload.UploadRobot(url=[join_images_path("MP_sounds.png")],
-                             description="pywikibot upload.py script test",
-                             useFilename=None, keepFilename=True,
-                             verifyDescription=True, aborts=set(),
-                             ignoreWarning=True, targetSite=self.get_site())
-    bot.run()
-    # ONCE VERIFIED AND ADJUSTED, this must be copied to evry other image.
-    # https://github.com/wikimedia/pywikibot/blob/master/scripts/upload.py
-
-
-
-    # LIST OF WIKIPEDIAS BY CCC
-    list_ccc_extent_page_name = 'List_of_Wikipedias_by_Cultural_Context_Content'
-    wiki_path = main_page_name + '/' + list_ccc_extent_page_name
-    # QUESTION: What is the extent of cultural context content in each language edition?
-    wiki_table = generate_ccc_extent_all_languages_table(wiki_path)
-
-    table_path = wiki_path + '/Table'
-    page = pywikibot.Page(site, table_path)
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wiki_table)
-
-
-
-    # CULTURE GAP
-    culture_gap_page_name = 'Culture_Gap'
-    wiki_path = main_page_name + '/' + culture_gap_page_name
-    culture_gap_page = pywikibot.Page(site, wiki_path)
-
-    # QUESTION: How well each language edition covers the CCC of each other language edition?
-    wiki_table = generate_ccc_culture_gap_table(wiki_path) #    taula amb les top 5 que més cobreix cada llengua.
-    table_path = wiki_path + '/Table'
-    page = pywikibot.Page(site, table_path)
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wiki_table)
-
-    # QUESTION: What is the evolution of the Culture Gap Index evolve for each Wikipedia language edition?
-    file_path = generate_ccc_culture_gap_index_visualization_monthly('en',top19,wiki_path)
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-    # CULTURAL CONTEXT CONTENT
-    cultural_context_content_page_name = 'Cultural_Context_Content'
-    wiki_path = main_page_name + '/' + cultural_context_content_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext='Method and datasets'
-    # QUESTION: What is the extent of Cultural Context Content in the articles created during the last month?
-    file_path = generate_ccc_creation_visualization_monthly('en',top19,wiki_path)
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-    # GET INVOLVED
-    get_involved_page_name = 'Get_Involved'
-    wiki_path = main_page_name + '/' + get_involved_page_name
-    page = pywikibot.Page(site, wiki_path)
-    wikitext='Method and datasets'
-    # QUESTION: What is the extent of articles dedicated to bridge the CCC from other language editions from those created during the last month?
-    file_path = generate_ccc_bridging_culture_gap_visualization_monthly('en',wiki_path)
-
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-    # LANGUAGE TERRITORIES MAPPING
-    languages_territories_mapping_page_name = 'Language_Territories_Mapping'
-    wiki_path = main_page_name + '/' + languages_territories_mapping_page_name
-    table_path = wiki_path + '/Table'
-    page = pywikibot.Page(site, table_path)
-    page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wiki_table)
-
-
-# LANGUAGE BY LANGUAGE
-    # project site page WCDO for each language
-    for languagecode in wikilanguagecodes:
-        print ('\n### language '+str(wikilanguagecodes.index(languagecode)+1)+'/'+str(len(wikilanguagecodes))+': \t'+languages.loc[languagecode]['languagename']+' '+languagecode+' \t| '+languages.loc[languagecode]['region']+'\t'+languages.loc[languagecode]['subregion']+'\t'+languages.loc[languagecode]['intermediateregion']+' | '+languages.loc[languagecode]['languageofficialnational']+' '+languages.loc[languagecode]['languageofficialregional'])
-
-        qitems_page_titles_english = {v: k for k, v in load_dicts_page_ids_qitems('en')[0].items()}
-        (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(languagecode)
-
-        wikipedia_proximity_lists = obtain_proximity_wikipedia_languages_lists(languagecode)
-        top19 = wikipedia_proximity_lists[0]
-        upper9lower10 = wikipedia_proximity_lists[1]
-        closest19 = wikipedia_proximity_lists[2]
-      
-        # LANGUAGE PAGE
-        language_page_name = languages.loc[languagecode]['Wikipedia'].replace(' ','_')
-        wiki_path = main_page_name + '/' + language_page_name
-        language_page = pywikibot.Page(site, wiki_path)
-        wikitext=''
-
-        # QUESTION: What is the extent of Cultural Context Content in each language edition broken down to territories?
-        wikitext = generate_ccc_extent_qitem_table_by_language(languagecode,page_titles_qitems,qitems_page_titles_english,wiki_path)
-
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        wikitext = 'updating the transclusion'
-        language_page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-         
-        # QUESTION: What is the extent of Cultural Context Content in this language edition compared to others?
-        file_path = generate_ccc_extent_visualization(languagecode, wiki_path)
-        language_page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        # QUESTION: What is the extent of Cultural Context Content from the articles created during the last month?
-        file_path = generate_ccc_creation_visualization_monthly(languagecode,closest19, wiki_path)
-        language_page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-        # CULTURE GAP PAGE
-        wiki_path = main_page_name + '/' + language_page_name + '/' + culture_gap_page_name
-        culture_gap_page = pywikibot.Page(site, wiki_path)
-        wikitext=''
-
-        # QUESTION: How well the other language editions cover the CCC of this language edition?
-        file_path = generate_ccc_culture_gap_covered_visualization(languagecode, wiki_path)
-        culture_gap_page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        # QUESTION: How well this language edition cover the CCC of the other language editions?     
-        file_path = generate_ccc_culture_gap_covering_visualization(languagecode, wiki_path)
-        culture_gap_page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-        # CULTURE GAP MONTHLY PAGE
-        culture_gap_monthly_page_name = 'Culture_Gap_monthly'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + culture_gap_monthly_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext='Method and datasets'
-        # QUESTION: What is the extent of articles dedicated to bridge the CCC from other language editions from those created during the last month?
-        file_path=generate_ccc_bridging_culture_gap_visualization_monthly(languagecode, wiki_path)
-        # QUESTION: What is the evolution of the Culture Gap Index evolve for each Wikipedia language edition?
-        file_path=generate_ccc_culture_gap_index_visualization_monthly(languagecode,top19,wiki_path)
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-        # VITAL ARTICLES LIST PAGE
-        vital_articles_lists_page_name = 'Vital_articles_lists'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + vital_articles_lists_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-        wikitext = generate_ccc_all_vital_articles_lists_table(languagecode_covered, wiki_path)
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-
-        # TOPICAL COVERAGE PAGE
-        topical_coverage_page_name = 'Topical_coverage'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + topical_coverage_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext='Method and datasets'
-        # QUESTION: What is the topical coverage of the articles of this Wikipedia language edition?     
-        file_path = generate_topical_coverage_visualization(languagecode, wiki_path)
-        # QUESTION: What is the topical coverage of the CCC of this Wikipedia language edition?
-        file_path = generate_ccc_topical_coverage_visualization(languagecode, wiki_path)
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-        # GEOLOCATED ARTICLES PAGE
-        geolocated_articles_page_name = 'Geolocated_articles'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + geolocated_articles_page_name
-        page = pywikibot.Page(site, wiki_path)
-        wikitext='Method and datasets'
-        # QUESTION: Which are the geolocated articles with most inlinks, pageviews, etc.?
-        # QUESTION: How well does this language covers other language editions geolocated articles?
-        file_path = generate_ccc_geolocated_articles_map_visualization(languagecode, wiki_path)
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-
-
-        # RECOMMENDATION LISTS: VITAL ARTICLES
-        # QUESTION: Which of these CCC articles is or should be available in this language edition?
-        CCC_Vital_articles_Top_100_page_name = 'CCC_Vital_articles_Top_100'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_Top_100_page_name
-
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-
-
-
-
-
-        # THESE generate_ccc_vital_articles_list FUNCTIONS ARE NOT PROPERLY CONFIGURED.
-
-
-
-
-
-        CCC_Vital_articles_Top_1000_page_name = 'CCC_Vital_articles_Top_1000'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_Top_1000_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_featured_page_name = 'CCC_Vital_articles_featured'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_featured_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_geolocated_page_name = 'CCC_Vital_articles_geolocated'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_geolocated_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_keywords_page_name = 'CCC_Vital_articles_keywords'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_keywords_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_first_years_page_name = 'CCC_Vital_articles_first_years'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_first_years_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_last_quarter_page_Name = 'CCC_Vital_articles_last_quarter'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_last_quarter_page_Name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_women_page_name = 'CCC_Vital_articles_women'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_women_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_men_page_name = 'CCC_Vital_articles_men'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_men_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_pageviews_page_name = 'CCC_Vital_articles_pageviews'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_pageviews_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-        CCC_Vital_articles_discussions_page_name = 'CCC_Vital_articles_discussions'
-        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_discussions_page_name
-        table_path = wiki_path + '/Table'
-        page = pywikibot.Page(site, table_path)
-        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-        wikitext = wiki_tables_dict[languagecode]
-        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-
-#        BIGGEST SINGLE TERRITORY
-#        CCC_Vital_articles_top_territory_page_name = 'CCC_Vital_articles_top_territory'
-#        wiki_path = main_page_name + '/' + language_page_name + '/' + CCC_Vital_articles_top_territory_page_name
-#        table_path = wiki_path + '/Table'
-#        page = pywikibot.Page(site, table_path)
-#        wiki_tables_dict = generate_ccc_vital_articles_list(languagecode, 'ca', ['ccc_main_territory'], '', '', {'num_editors': 0.9,'num_inlinks_from_CCC': 0.1}, 'positive', 1000, 'minimum', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, wiki_path)
-#        wikitext = wiki_tables_dict[languagecode]
-#        page.save(summary="X", watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=wikitext)
-#        update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict)
-
-
-
-
-
-# TOOLS for publishing in Wikipedia (meta, language editions, commons, etc.)
-def upload_publish_image(filename, description, url):
-
-# upload pictures to a wikipedia
-#https://phabricator.wikimedia.org/diffusion/PWBO/browse/master/upload.py
-
-    print ('')
-
-
-def upload_publish_table(html, page):
-    wikitext = pywikibot.convertTable(html)
-    page = pywikibot.Page(site, page)
-
-    page.save(summary="Updating Table", watch=None, minor=False,
-                    botflag=False, force=False, async=False, callback=None,
-                    apply_cosmetic_changes=None, text=text)
-
-
-def update_vital_articles_transclusion_tables(languagecode, table_path, wiki_tables_dict):
-    for x, y in wiki_tables_dict.items():
-        table_path = table_path + x # x = '/en'
-        print (x, y)
-        page = pywikibot.Page(site, table_path)
-        page.save(summary="updating the table for language: "+x, watch=None, minor=False,botflag=False, force=False, async=False, callback=None,apply_cosmetic_changes=None, text=y)
-
-
-
-
-#######################################################################################
-
 
 def send_email_toolaccount(subject, message): # https://wikitech.wikimedia.org/wiki/Help:Toolforge#Mail_from_Tools
     cmd = 'echo "Subject:'+subject+'\n\n'+message+'" | /usr/sbin/exim -odf -i tools.wcdo@tools.wmflabs.org'
@@ -5717,10 +3373,10 @@ def send_email_toolaccount(subject, message): # https://wikitech.wikimedia.org/w
 
 def finish_email():
     try:
-        sys.stdout=None; send_email_toolaccount('WCDO: CCC completed successfuly', open('ccc_selection.out', 'r').read())
+        sys.stdout=None; send_email_toolaccount('CCC completed successfuly', open('ccc_selection.out', 'r').read())
     except Exception as err:
         print ('* Task aborted after: ' + str(datetime.timedelta(seconds=time.time() - startTime)))
-        sys.stdout=None; send_email_toolaccount('WCDO: CCC aborted because of an error', open('ccc_selection.out', 'r').read()+'err')
+        sys.stdout=None; send_email_toolaccount('CCC aborted because of an error', open('ccc_selection.out', 'r').read()+'err')
 
 
 #######################################################################################
@@ -5728,16 +3384,13 @@ def finish_email():
 
 ### MAIN:
 if __name__ == '__main__':
+    sys.stdout = Logger()
 
     startTime = time.time()
     year_month = datetime.date.today().strftime('%Y-%m')
 
-    site_path = '/srv/wcdo/site/'
-    data_path = '/srv/wcdo/data/'
-    current_data_path = site_path + year_month + '/'
-    current_site_path = data_path + year_month + '/'
-
-    sys.stdout = Logger()
+    data_path = '/srv/wcdo/site/datasets/'
+    current_data_path = data_path + year_month + '/'
 
     # Import the language-territories mappings
     territories = load_languageterritories_mapping()
@@ -5746,7 +3399,6 @@ if __name__ == '__main__':
     languages = load_wiki_projects_information();
     extract_check_new_wiki_projects();
 
-    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
     wikilanguagecodes = languages.index.tolist() 
 
     # Verify/Remove all languages without a replica database
@@ -5757,17 +3409,17 @@ if __name__ == '__main__':
     wikilanguagecodeswiki = []
     for a in wikilanguagecodes: wikilanguagecodeswiki.append(a+'wiki')
 
+    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
+
     # Get the number of articles for each Wikipedia language edition
     wikipedialanguage_numberarticles = load_wikipedia_language_editions_numberofarticles()
 
     # Final Wikipedia languages to process
 #    wikilanguagecodes = obtain_region_wikipedia_language_list('Oceania', '', '').index.tolist() # e.g. get the languages from a particular region.
 #    wikilanguagecodes=wikilanguagecodes[wikilanguagecodes.index('cs')+1:]
-    wikilanguagecodes = ['en']
+#    wikilanguagecodes = ['ca']
 
-    print ('\n* Starting the WCDO CYCLE '+year_month+' at this exact time: ' + str(datetime.datetime.now()))
+    print ('\n* Starting the CCC SELECTION CYCLE '+year_month+' at this exact time: ' + str(datetime.datetime.now()))
     main()
-    print ('* WCDO CYCLE completed successfuly after: ' + str(datetime.timedelta(seconds=time.time() - startTime)))
+    print ('* CCC SELECTION CYCLE completed successfuly after: ' + str(datetime.timedelta(seconds=time.time() - startTime)))
 #    finish_email()
-
-
