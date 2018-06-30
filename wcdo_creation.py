@@ -54,11 +54,11 @@ def main():
 #    wikitext = generate_ccc_language_territories_mapping_table(wiki_path)
 
 
-    wiki_path = 'Wikipedia_Cultural_Diversity_Observatory/Culture_Gap_(spread)'
-    wikitext = generate_ccc_culture_gap_table(wiki_path, 'spread')
+#    wiki_path = 'Wikipedia_Cultural_Diversity_Observatory/Culture_Gap_(spread)'
+#    wikitext = generate_ccc_culture_gap_table(wiki_path, 'spread')
 
-#    wiki_path = 'Wikipedia_Cultural_Diversity_Observatory/Culture_Gap_(coverage)'
-#    wikitext = generate_ccc_culture_gap_table(wiki_path, 'coverage')
+    wiki_path = 'Wikipedia_Cultural_Diversity_Observatory/Culture_Gap_(coverage)'
+    wikitext = generate_ccc_culture_gap_table(wiki_path, 'coverage')
 
     file = open('testfile.txt','w') 
     file.write(wikitext)
@@ -1465,13 +1465,19 @@ def generate_ccc_culture_gap_table(wiki_path, spread_coverage):
         language_dict = {}
         for languagecode in wikilanguagecodes:
             print (languagecode)
-            query = "SELECT ccc_percent_wp FROM ccc_extent_language WHERE languagecode = ?"
+            query = "SELECT ccc_percent_wp, ccc_number_articles FROM ccc_extent_language WHERE languagecode = ?"
             cursor.execute(query,(languagecode,))
-            ccc_percent_wp=cursor.fetchone()[0]
+            row = cursor.fetchone()
+            value = row[1]
+            if value == None: value = 0
+            ccc_number_articles = '{:,}'.format(int(value))
+            value2 = row[0]
+            if value2 == None: value2 = 0
+            ccc_percent_wp=ccc_number_articles+' <small>'+'('+str(value2)+'%)</small>'
 
-            query = "SELECT languagecode_covering, number_articles, percentage FROM ccc_gaps WHERE languagecode_covered='"+languagecode+"' AND group_type='ccc' AND measurement_date IN (SELECT MAX(measurement_date) FROM ccc_gaps WHERE group_type='ccc') AND reference='share' ORDER BY percentage DESC"
+            query = "SELECT languagecode_covering, number_articles, percentage FROM ccc_gaps WHERE languagecode_covered='"+languagecode+"' AND group_type='ccc' AND measurement_date IN (SELECT MAX(measurement_date) FROM ccc_gaps WHERE group_type='ccc') AND reference='share' ORDER BY number_articles DESC"
 
-            ranking = 5
+            ranking = 7
             i = 1
             spread_articles_sum=0
             sum_percentage=0
@@ -1480,25 +1486,36 @@ def generate_ccc_culture_gap_table(wiki_path, spread_coverage):
             for row in cursor.execute(query):
                 languagecode_covering=row[0]
                 number_articles=row[1]
-                percentage=row[2]
+                percentage=round(row[2],2)
                 spread_articles_sum += number_articles
                 sum_percentage += percentage
                 total_number_articles += wikipedialanguage_numberarticles[languagecode_covering]
 
                 if i <= ranking:
-                    value = languagecode_covering + '<small>('+str(percentage)+'%)</small>'
+                    languagecode_covering = languagecode_covering.replace('be_tarask','be_x_old')
+                    languagecode_covering = languagecode_covering.replace('zh_min_nan','nan')
+                    languagecode_covering = languagecode_covering.replace('zh_classical','lzh')
+                    languagecode_covering = languagecode_covering.replace('_','-')
+
+                    value = languagecode_covering + ' ('+str(percentage)+'%)'
                     row_dict[str(i)]=value
                 i+=1
 
+            for j in range(1,ranking+1):
+                if str(j) in row_dict:
+                    row_dict[str(j)]='<small>'+row_dict[str(j)]+'</small>'
+                else:
+                    row_dict[str(j)]='<small>0</small>'
+
             relative_spread_index = round(sum_percentage/i,2)
-            if total_number_articles!=0: total_spread_index = round(spread_articles_sum/total_number_articles,2)
+            if total_number_articles!=0: total_spread_index = round(100*spread_articles_sum/total_number_articles,2)
             else: total_spread_index=0
 
             row_dict['language']=languages.loc[languagecode]['languagename']
             row_dict['CCC%']=ccc_percent_wp
             row_dict['relative_spread_index']=relative_spread_index
             row_dict['total_spread_index']=total_spread_index
-            row_dict['spread_articles_sum']=spread_articles_sum
+            row_dict['spread_articles_sum']='{:,}'.format(int(spread_articles_sum))
 
             language_dict[languagecode]=row_dict
 
@@ -1506,9 +1523,9 @@ def generate_ccc_culture_gap_table(wiki_path, spread_coverage):
             create_db_table_ccc_indexs(languagecode, 'total_spread_index', total_spread_index)
             create_db_table_ccc_indexs(languagecode, 'spread_articles_sum', spread_articles_sum)
 
-        column_list_dict = {'language':'Language', 'CCC%':'CCC %','1':'1','2':'2','3':'3','4':'4','5':'5','relative_spread_index':'Relative Spread Idx','total_spread_index':'Total Spread Idx','spread_articles_sum':'Spread Articles Sum'}
+        column_list_dict = {'language':'Language', 'CCC%':'CCC %','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','6':'nº6','7':'nº7','relative_spread_index':'R.Spread','total_spread_index':'T.Spread','spread_articles_sum':'Spread Art.'}
 
-        column_list = ['Language','CCC %','1','2','3','4','5','Relative Spread Idx','Total Spread Idx','Spread Articles Sum']
+        column_list = ['Language','CCC %','nº1','nº2','nº3','nº4','nº5','R.Spread','T.Spread','Spread Art.']
 
         # HTML (from dataframe)
         df=pd.DataFrame.from_dict(language_dict,orient='index')
@@ -1525,7 +1542,7 @@ def generate_ccc_culture_gap_table(wiki_path, spread_coverage):
         # WIKITEXT
         class_header_string = '{| border="1" cellpadding="2" cellspacing="0" style="width:100%; background: #f9f9f9; border: 1px solid #aaaaaa; border-collapse: collapse; white-space: nowrap; text-align: right" class="sortable"\n'
 
-        dict_data_type = {'CCC':'data-sort-type="number"|'}
+        dict_data_type = {'CCC %':'data-sort-type="number"|'}
 
         header_string = '!'
         for x in range(0,len(column_list)):
@@ -1548,17 +1565,16 @@ def generate_ccc_culture_gap_table(wiki_path, spread_coverage):
                 value = row[x]
                 if value == '': value = 0
                 print (value)
-                print ('ah')
 
                 color = ''
+
                 if x > 1 and x < 7:
                     scale = 10
                     color1 = '#cc0000' # red
                     color2 = '#339933' # green
-                    colorhex = get_hexcolorrange(color1, color2, scale, 0, 100, int(value))
-                    color = 'style="background: '+colorhex+';" |' # here we might add colors depending on the value.
-
-                    row_string = row_string + color + str(value) + add # here is the value
+                    #colorhex = get_hexcolorrange(color1, color2, scale, 0, 100, int(value))
+                    #color = 'style="background: '+colorhex+';" |' # here we might add colors depending on the value.
+                row_string = row_string + color + str(value) + add # here is the value
                   
             row_string = midline + row_string + '\n'
             rows = rows + row_string
@@ -1584,36 +1600,53 @@ def generate_ccc_culture_gap_table(wiki_path, spread_coverage):
             ccc_number_articles=cursor.fetchone()[0]
             ccc_articles_dict[languagecode]=ccc_number_articles
 
-
+        language_dict={}
         for languagecode in wikilanguagecodes:
-            query = "SELECT languagecode_covered, number_articles, percentage FROM ccc_gaps WHERE languagecode_covering='"+languagecode+"' AND group_type='ccc' AND measurement_date IN (SELECT MAX(measurement_date) FROM ccc_gaps WHERE group_type='ccc') AND reference='gap' ORDER BY percentage DESC";
+            query = "SELECT languagecode_covered, number_articles, percentage FROM ccc_gaps WHERE languagecode_covering='"+languagecode+"' AND group_type='ccc' AND measurement_date IN (SELECT MAX(measurement_date) FROM ccc_gaps WHERE group_type='ccc') AND reference='gap' ORDER BY number_articles DESC";
 
-            ranking = 5
+            ranking = 7
             i = 1
             coverage_articles_sum=0
             sum_percentage=0
+            total_number_articles=0
             row_dict = {}
             for row in cursor.execute(query):               
                 languagecode_covered=row[0]
                 number_articles=row[1]
-                percentage=row[2]
+                percentage=round(row[2],2)
                 coverage_articles_sum += number_articles
                 sum_percentage += percentage
                 total_number_articles += ccc_articles_dict[languagecode_covered]
 
                 if i <= ranking:
-                    value = languagecode_covered + '<small>('+str(percentage)+'%)</small>'
+                    languagecode_covered = languagecode_covered.replace('be_tarask','be_x_old')
+                    languagecode_covered = languagecode_covered.replace('zh_min_nan','nan')
+                    languagecode_covered = languagecode_covered.replace('zh_classical','lzh')
+                    languagecode_covered = languagecode_covered.replace('_','-')
+
+                    value = languagecode_covered + ' ('+str(percentage)+'%)'
                     row_dict[str(i)]=value
                 i+=1
 
+            for j in range(1,ranking+1):
+                if str(j) in row_dict:
+                    row_dict[str(j)]='<small>'+row_dict[str(j)]+'</small>'
+                else:
+                    row_dict[str(j)]='<small>0</small>'
+
+
             relative_coverage_index = round(sum_percentage/i,2)
-            total_coverage_index = round(spread_articles_sum/total_number_articles,2)
+            total_coverage_index = round(100*coverage_articles_sum/total_number_articles,2)
+
+            if coverage_articles_sum > int(wikipedialanguage_numberarticles[languagecode]):
+                coverage_articles_sum = int(wikipedialanguage_numberarticles[languagecode])
 
             row_dict['language']=languages.loc[languagecode]['languagename']
-            row_dict['WP articles']=wikipedialanguage_numberarticles[languagecode]
+            row_dict['WP articles']='{:,}'.format(int(wikipedialanguage_numberarticles[languagecode]))
             row_dict['relative_coverage_index']=relative_coverage_index
             row_dict['total_coverage_index']=total_coverage_index
-            row_dict['coverage_articles_sum']=coverage_articles_sum
+            row_dict['coverage_articles_sum']='{:,}'.format(int(coverage_articles_sum))
+
 
             language_dict[languagecode]=row_dict
 
@@ -1622,58 +1655,62 @@ def generate_ccc_culture_gap_table(wiki_path, spread_coverage):
             create_db_table_ccc_indexs(languagecode, 'coverage_articles_sum', coverage_articles_sum)
 
 
-        columns_list_dict = {'language':'Language', 'WP articles':'WP articles','1':'1','2':'2','3':'3','4':'4','5':'5','relative_coverage_index':'Relative Coverage Idx','total_coverage_index':'Total Coverage Idx','coverage_articles_sum':'Coverage Articles Sum'}
-        column_list = ['Language','WP articles','1','2','3','4','5','Relative Coverage Idx.','Total Coverage Idx.','Coverage Articles Sum']
+        column_list_dict = {'language':'Language', 'WP articles':'Articles','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','relative_coverage_index':'R.Coverage','total_coverage_index':'T.Coverage','coverage_articles_sum':'Coverage Art.'}
+        column_list = ['Language','Articles','nº1','nº2','nº3','nº4','nº5','R.Coverage','T.Coverage','Coverage Art.']
+
 
         # HTML (from dataframe)
-        df=pd.DataFrame([language_dict])
-        df=df.rename(columns=columns_list_dict)
+        df=pd.DataFrame.from_dict(language_dict,orient='index')
+
+        df=df.rename(columns=column_list_dict)
+
         df = df[column_list] # selecting the parameters to export
         df = df.fillna('')
+
+        df_columns_list = df.columns.values.tolist()
+        df_rows = df.values.tolist()
+
 
         # WIKITEXT
         class_header_string = '{| border="1" cellpadding="2" cellspacing="0" style="width:100%; background: #f9f9f9; border: 1px solid #aaaaaa; border-collapse: collapse; white-space: nowrap; text-align: right" class="sortable"\n'
 
-        dict_data_type = {'CCC':'data-sort-type="number"|'}
+        dict_data_type = {'CCC %':'data-sort-type="number"|'}
 
         header_string = '!'
         for x in range(0,len(column_list)):
             if x == len(column_list)-1: add = ''
             else: add = '!!'
             data_type = ''
+            if df_columns_list[x] in dict_data_type: data_type = ' '+dict_data_type[df_columns_list[x]]
 
             header_string = header_string + data_type + column_list[x] + add
         header_string = header_string + '\n'
 
-
         rows = ''
-        for languagecode in sorted(language_dict.items(), key = lambda x: x[0], reverse=False):
+        for row in df_rows:
+            midline = '|-\n'
+            row_string = '|'
 
-            row = []
-            row_dict = language_dict[languagecode]
-            for x in column_list: 
-                row.append(row_dict[x])
-                midline = '|-\n'
-                row_string = '|'
+            for x in range(0,len(row)):
+                if x == len(row)-1: add = ''
+                else: add = '||'
+                value = row[x]
+                if value == '': value = 0
+                print (value)
 
-                for x in range(0,len(row)):
-                    if x == len(row)-1: add = ''
-                    else: add = '||'
-                    value = row[x]
+                color = ''
 
-                    color = ''
-                    if x > 1 and x < 7:
-                        scale = 10
-                        color1 = '#cc0000' # red
-                        color2 = '#339933' # green
-                        colorhex = get_hexcolorrange(color1, color2, scale, 0, 100, value)
-                        color = 'style="background: '+colorhex+';" |' # here we might add colors depending on the value.
-
-                    row_string = row_string + color + str(value) + add # here is the value
+                if x > 1 and x < 7:
+                    scale = 10
+                    color1 = '#cc0000' # red
+                    color2 = '#339933' # green
+                    #colorhex = get_hexcolorrange(color1, color2, scale, 0, 100, int(value))
+                    #color = 'style="background: '+colorhex+';" |' # here we might add colors depending on the value.
+                row_string = row_string + color + str(value) + add # here is the value
                   
-                row_string = midline + row_string + '\n'
-                rows = rows + row_string
-            closer_string = '|}'
+            row_string = midline + row_string + '\n'
+            rows = rows + row_string
+        closer_string = '|}'
 
         wiki_table_string = class_header_string + header_string + rows + closer_string
 
