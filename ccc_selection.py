@@ -33,7 +33,7 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 class Logger(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("ccc_selectionaaa.out", "w")
+        self.log = open("ccc_selection"+'_test'+".out", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -42,9 +42,28 @@ class Logger(object): # this prints both the output to a file and to the termina
 # MAIN
 def main():
 
+    languagecode = 'ca'
+    (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(languagecode)
 
-    print ('new')
+    get_ccc_articles_country_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_country_wd');
+    get_ccc_articles_location_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_location_wd');
+    get_ccc_articles_language_strong_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_language_strong_wd');
+    get_ccc_articles_keywords(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_keywords');
+    # * retrieve indirect
+    get_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_created_by_properties_wd');
+    get_ccc_articles_part_of_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_part_of_properties_wd');
 
+    return 
+
+
+    # B2. RETRIEVE (POTENTIAL) CCC ARTICLES THAT RELATE TO CCC:
+    # * retrieve direct
+    get_articles_category_crawling(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_category_crawling');
+    get_articles_language_weak_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_language_weak_wd');
+    get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_inlinks');
+    get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_outlinks');
+    get_articles_affiliation_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_affiliation_properties_wd');
+    get_articles_has_part_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_has_part_properties_wd');
 
 """
 # MAIN
@@ -55,6 +74,7 @@ def main():
     download_latest_wikidata_dump()
     wd_dump_iterator()
     wd_geolocated_update_db()
+    wd_labels_update_db()
 
     # CREATE THE PAGEVIEWS DB
     download_latest_pageviews_dump()
@@ -63,6 +83,9 @@ def main():
     # * CREATE THE WIKIPEDIA CCC DB
     create_wikipedia_ccc_db()
     insert_page_ids_page_titles_qitems_ccc_db()
+    wd_check_and_introduce_wikipedia_missing_qitems()
+
+    # * INTRODUCE THE ARTICLE FEATURES
     for languagecode in wikilanguagecodes:
         (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(languagecode)
         extend_articles_discussions(languagecode, page_titles_qitems, page_titles_page_ids)
@@ -70,15 +93,16 @@ def main():
         extend_articles_edits(languagecode, page_titles_qitems)
         extend_articles_editors(languagecode,page_titles_qitems,page_titles_page_ids)
         extend_articles_references(languagecode,page_titles_qitems,page_titles_page_ids)
-        extend_articles_bytes(languagecode, page_titles_qitems)      
+        extend_articles_bytes(languagecode, page_titles_qitems)
         extend_articles_featured(languagecode, page_titles_qitems)
         extend_articles_interwiki(languagecode,page_titles_page_ids)
         extend_articles_qitems_properties(languagecode,page_titles_page_ids)
         extend_articles_pageviews(languagecode,page_titles_qitems,page_titles_page_ids)
     print ('ready for the Wikipedia CCC Data Phase.')
 
+
 # (B) -> WIKIPEDIA CCC DATA PHASE
-    # Obtaining CCC for all WP
+    # Obtaining CCC features for all WP
     for languagecode in wikilanguagecodes:
         print ('\n### language '+str(wikilanguagecodes.index(languagecode)+1)+'/'+str(len(wikilanguagecodes))+': \t'+languages.loc[languagecode]['languagename']+' '+languagecode+' \t| '+languages.loc[languagecode]['region']+'\t'+languages.loc[languagecode]['subregion']+'\t'+languages.loc[languagecode]['intermediateregion']+' | '+languages.loc[languagecode]['languageofficialnational']+' '+languages.loc[languagecode]['languageofficialregional'])
         (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(languagecode)
@@ -95,19 +119,27 @@ def main():
         # * retrieve indirect
         get_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_created_by_properties_wd');
         get_ccc_articles_part_of_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_ccc_articles_part_of_properties_wd');
-        get_ccc_articles_from_community_vital_list(languagecode)
 
         # B2. RETRIEVE (POTENTIAL) CCC ARTICLES THAT RELATE TO CCC:
         # * retrieve direct
-        get_articles_geolocated_geo_tags(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_geolocated_geo_tags');
         get_articles_category_crawling(languagecode,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_category_crawling');
         get_articles_language_weak_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_language_weak_wd');
-        get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_inlinks');
-        get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_outlinks');
+        get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_inlinks');
+        get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_with_outlinks');
         get_articles_affiliation_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_affiliation_properties_wd');
         get_articles_has_part_properties_wd(languagecode,page_titles_page_ids); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' get_articles_has_part_properties_wd');
 
-        # B3. FILTERING AND CREATING THE DEFINITIVE CCC
+    for languagecode in wikilanguagecodes:
+        print ('\n### language '+str(wikilanguagecodes.index(languagecode)+1)+'/'+str(len(wikilanguagecodes))+': \t'+languages.loc[languagecode]['languagename']+' '+languagecode+' \t| '+languages.loc[languagecode]['region']+'\t'+languages.loc[languagecode]['subregion']+'\t'+languages.loc[languagecode]['intermediateregion']+' | '+languages.loc[languagecode]['languageofficialnational']+' '+languages.loc[languagecode]['languageofficialregional'])
+        (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(languagecode)
+
+        # B3. RETRIEVE (POTENTIAL) NEGATIVE CCC
+        get_other_ccc_wikidata_properties(languagecode,page_titles_page_ids,page_titles_qitems)
+        get_other_ccc_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems)
+        get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems,'no ccc');
+        get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems,'no ccc');
+
+        # B4. FILTERING AND CREATING THE DEFINITIVE CCC
         filter_articles_geolocated_elsewhere(languagecode)
         calculate_articles_ccc_binary_classifier(languagecode,'RandomForest',page_titles_page_ids,page_titles_qitems); extract_ccc_count(languagecode,'ccc_current.txt', languagecode+' calculate_articles_ccc_binary_classifier');
         calculate_articles_ccc_main_territory(languagecode)
@@ -115,8 +147,6 @@ def main():
 
     # EXTRACT CCC DATASETS INTO CSV AND CLEAN OLD DATABASES
     extract_ccc_tables_to_files()
-    delete_wikidata_db()
-    delete_pageviews_db()
     delete_latest_wikidata_dump()
     delete_latest_pageviews_dump()
     backup_ccc_current_db()
@@ -131,11 +161,11 @@ def main():
 # Loads language_territories_mapping_quality.csv file
 def load_languageterritories_mapping():
 # READ FROM STORED FILE:
-    territories = pd.read_csv('language_territories_mapping_quality.csv',sep='\t',na_filter = False)
+    territories = pd.read_csv(databases_path +'language_territories_mapping_quality.csv',sep='\t',na_filter = False)
     territories = territories[['WikimediaLanguagecode','languagenameEnglishethnologue','territoryname','territorynameNative','QitemTerritory','demonym','demonymNative','ISO3166','ISO31662','regional','country','indigenous','languagestatuscountry','officialnationalorregional']]
 
     territories = territories.set_index(['WikimediaLanguagecode'])
-#    territories.to_csv('language_territories_mapping_quality_beta.csv',sep='\t')
+#    territories.to_csv(databases_path +'language_territories_mapping_quality_beta.csv',sep='\t')
 
     territorylanguagecodes = territories.index.tolist()
     for n, i in enumerate(territorylanguagecodes): territorylanguagecodes[n]=i.replace('-','_')
@@ -145,7 +175,7 @@ def load_languageterritories_mapping():
 
     # add regions
     ISO3166=territories['ISO3166'].tolist()
-    regions = pd.read_csv('wikipedia_country_regions.csv',sep=',',na_filter = False)
+    regions = pd.read_csv(databases_path +'country_regions.csv',sep=',',na_filter = False)
     regions = regions[['alpha-2','region','sub-region','intermediate-region']]
     regions = regions.set_index(['alpha-2'])
     region=[]; subregion=[]; intermediateregion=[]
@@ -181,7 +211,7 @@ def load_wiki_projects_information():
     # in case of extending the project to other WMF sister projects, it would be necessary to revise these columns and create a new file where a column would specify whether it is a language edition, a wikictionary, etc.
 
 # READ FROM STORED FILE:
-    languages = pd.read_csv('wikipedia_language_editions.csv',sep='\t',na_filter = False)
+    languages = pd.read_csv(databases_path + 'wikipedia_language_editions.csv',sep='\t',na_filter = False)
     languages=languages[['languagename','Qitem','WikimediaLanguagecode','Wikipedia','WikipedialanguagearticleEnglish','languageISO','languageISO3','languageISO5','languageofficialnational','languageofficialregional','languageofficialsinglecountry','nativeLabel','numbercountriesOfficialorRegional']]
     languages = languages.set_index(['WikimediaLanguagecode'])
 #    print (list(languages.columns.values))
@@ -222,14 +252,13 @@ def load_wiki_projects_information():
 
 # READ FROM META: 
 # uses pywikibot and verifies the differences with the file. 
-#    read_meta_language_territories_mapping_table()
 # sends an e-mail with the difference and the 'new proposed file'
 #    send_email_toolaccount('subject', 'message')
 # stops.
 # we verify this e-mail, we re-start the task.
 
 #    filename = 'language_editions_with_regions'
-#    languages.to_csv(filename+'.csv',sep='\t')
+#    languages.to_csv(databases_path + filename+'.csv',sep='\t')
 
     return languages
 
@@ -237,8 +266,8 @@ def load_wiki_projects_information():
 def load_wikipedia_language_editions_numberofarticles():
     wikipedialanguage_numberarticles = {}
 
-    if not os.path.isfile('ccc_current.db'): return
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    if not os.path.isfile(databases_path + 'ccc_current.db'): return
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 
     # Obtaining CCC for all WP
     for languagecode in wikilanguagecodes:
@@ -249,22 +278,24 @@ def load_wikipedia_language_editions_numberofarticles():
     return wikipedialanguage_numberarticles
 
 
-def read_meta_language_territories_mapping_table():
-    site = pywikibot.Site("meta", '')
-    # get the text from the meta page and see any editor had changed it. send an e-mail with changes.
-    text = ''
-    page = pywikibot.Page(site, "List of Wikipedias/table")
-    page.text.split('\n')
-    # https://meta.wikimedia.org/w/index.php?title=List_of_Wikipedias/Table&action=edit
-    print ('')
 
+def load_dicts_page_ids_qitems(languagecode):
+    page_titles_qitems = {}
+    page_titles_page_ids = {}
 
-def read_community_generated_article_lists():
-# this gets the links from each language edition version page with the list of articles.
-# 1.3 publicar una taula amb els encarregats de tirar endavant el projecte en cada llengua.
-# publicar una taula amb els links a les llistes d'articles col·locats per les comunitats en cada llengua. lectura d'aquesta taula amb links de 1.5. 
-# 1.5 lectura pàgina de llista d'articles 'List of articles from X Wikipedia Cultural Contexts that every other should have' en cada llengua.
-    print ('')
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
+    for row in cursor.execute(query):
+        page_title=row[0].replace(' ','_')
+        page_titles_page_ids[page_title]=row[2]
+        page_titles_qitems[page_title]=row[1]
+    print ('page_ids loaded.')
+    print ('qitems loaded.')
+    print ('they are:')
+    print (len(page_titles_qitems))
+
+    return (page_titles_qitems, page_titles_page_ids)
+
 
 
 # It returns a list of languages based on the region preference introduced.
@@ -409,8 +440,8 @@ def extract_check_new_wiki_projects():
     newlanguages = []
 
     # CHECK IF THERE IS ANY NEW LANGUAGE
-    if os.path.isfile(filename+'.csv'): # FILE EXISTS: CREATE IT WITH THE NEW LANGUAGES IN THE FILENAME
-        languages = pd.read_csv(filename+'.csv',sep='\t')
+    if os.path.isfile(databases_path + filename+'.csv'): # FILE EXISTS: CREATE IT WITH THE NEW LANGUAGES IN THE FILENAME
+        languages = pd.read_csv(databases_path + filename+'.csv',sep='\t')
         languages = languages.set_index(['languagename'])
 
         languagecodes_file = languages['WikimediaLanguagecode'].tolist(); languagecodes_file.append('nan')
@@ -426,14 +457,16 @@ def extract_check_new_wiki_projects():
             print (message)
             df=df.reindex(newlanguages)
             send_email_toolaccount('WCDO: New languages to introduce into the file.', message)
+            print ('The new languages are in a file named: ')
             filename="_".join(newlanguages)+'_'+filename
+            print (databases_path + filename+'.csv')
             print (df.head())
-            df.to_csv(filename+'.csv',sep='\t')
+            df.to_csv(databases_path + filename+'.csv',sep='\t')
         else:
             print ('There are no new Wikipedia language editions.')
 
     else: # FILE DOES NOT EXIST: CREATE IT WITH THE WHOLE NAME
-        df.to_csv(filename+'.csv',sep='\t')
+        df.to_csv(databases_path + filename+'.csv',sep='\t')
 
     return newlanguages
 
@@ -460,12 +493,12 @@ def create_wikipedia_ccc_db():
 
     # Removes current CCC database (just for code debugging)
     try:
-        os.remove("ccc_current.db"); print ('ccc_current.db deleted.');
+        os.remove(databases_path + "ccc_current.db"); print ('ccc_current.db deleted.');
     except:
         pass
 
     # Creates the current CCC database.
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor(); print ('ccc_current.db created.');
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor(); print ('ccc_current.db created.');
 
     # Creates a table for each Wikipedia language edition CCC.
     nonexistingwp = []
@@ -487,14 +520,17 @@ def create_wikipedia_ccc_db():
         'page_id integer, '+
         'page_title text, '+
         'date_created integer, '+
+        'geocoordinates text, '+ # coordinate1,coordinate2
+        'iso3166 text, '+ # code
+        'iso31662 text, '+ # code
 
         # calculations:
         'ccc_binary integer, '+
-        'main_territory text, '+ # here there would be a Q with the main territory to which is associated.
+        'main_territory text, '+ # Q from the main territory with which is associated.
         'num_retrieval_strategies integer, '+ # this is an index
 
         # set as CCC
-        'geocoordinates text, '+ # coordinate1,coordinate2
+        'ccc_geolocated integer,'+ # 1, -1 o null.
         'country_wd text, '+ # 'P1:Q1;P2:Q2;P3:Q3'
         'location_wd text, '+ # 'P1:QX1:Q; P2:QX2:Q' Q is the main territory
         'language_strong_wd text, '+ # 'P1:Q1;P2:Q2;P3:Q3'
@@ -512,6 +548,25 @@ def create_wikipedia_ccc_db():
         'num_outlinks_to_CCC integer, '+
         'percent_inlinks_from_CCC real, '+
         'percent_outlinks_to_CCC real, '+
+
+        # retrieved as potential negative CCC (part of other CCC)
+            # from wikidata properties
+        'other_ccc_country_wd integer, '+
+        'other_ccc_location_wd integer, '+
+        'other_ccc_language_strong_wd integer, '+
+        'other_ccc_created_by_wd integer, '+
+        'other_ccc_part_of_wd integer, '+
+        'other_ccc_language_weak_wd integer, '+
+        'other_ccc_affiliation_wd integer, '+
+        'other_ccc_has_part_wd integer, '+
+            # from other wikipedia ccc database.
+        'other_ccc_keyword_title integer, '+
+        'other_ccc_category_crawling_relative_level real, '+
+            # from links to/from non-ccc geolocated articles.
+        'num_inlinks_from_geolocated_abroad integer, '+
+        'num_outlinks_to_geolocated_abroad integer, '+
+        'percent_inlinks_from_geolocated_abroad real, '+
+        'percent_outlinks_to_geolocated_abroad real, '+
 
         # characteristics of rellevance
         'num_inlinks integer, '+
@@ -542,13 +597,13 @@ def create_wikipedia_ccc_db():
 
 # Drop the CCC database.
 def backup_ccc_current_db():
-    shutil.copyfile("ccc_current.db","ccc_old.db")
+    shutil.copyfile(databases_path + "ccc_current.db",databases_path + "ccc_old.db")
 
 
 # Creates a dataset from the CCC database for a list of languages.
 # COMMAND LINE: sqlite3 -header -csv ccc_current.db "SELECT * FROM ccc_cawiki;" > ccc_cawiki.csv
 def extract_ccc_tables_to_files():
-    conn = sqlite3.connect('ccc.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 
     for languagecode in wikilanguagecodes:
         superfolder = './datasets/'+year_month
@@ -559,8 +614,8 @@ def extract_ccc_tables_to_files():
         if not os.path.exists(latestfolder): os.makedirs(latestfolder)
 
         # These are the files.
-        ccc_filename_archived = languagecode + 'wiki_' + str(datetime.date.today()).replace('-','')+'_ccc.csv' # (e.g. 'cawiki_20180215_ccc.csv')
-        ccc_filename_latest = languagecode + 'wiki_latest_ccc.csv' # (e.g. cawiki_latest_ccc.csv)
+        ccc_filename_archived = databases_path + languagecode + 'wiki_' + str(datetime.date.today()).replace('-','')+'_ccc.csv' # (e.g. 'cawiki_20180215_ccc.csv')
+        ccc_filename_latest = databases_path + languagecode + 'wiki_latest_ccc.csv' # (e.g. cawiki_latest_ccc.csv)
 
         # These are the final paths and files.
         path_latest = latestfolder + ccc_filename_latest
@@ -599,7 +654,7 @@ def extract_ccc_tables_to_files():
 
 
 def extract_ccc_count(languagecode, filename, message):
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'
     cursor.execute(query)
     row = cursor.fetchone()
@@ -614,25 +669,6 @@ def extract_ccc_count(languagecode, filename, message):
 
     with open(filename, 'a') as f:
         f.write(languagename+'\t'+message+'\t'+row1+'\t'+row2+'\n')
-
-
-def load_dicts_page_ids_qitems(languagecode):
-    page_titles_qitems = {}
-    page_titles_page_ids = {}
-
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
-    for row in cursor.execute(query):
-        page_title=row[0].replace(' ','_')
-        page_titles_page_ids[page_title]=row[2]
-        page_titles_qitems[page_title]=row[1]
-    print ('page_ids loaded.')
-    print ('qitems loaded.')
-    print ('they are:')
-    print (len(page_titles_qitems))
-
-    return (page_titles_qitems, page_titles_page_ids)
-
 
 def download_latest_pageviews_dump():
     functionstartTime = time.time()
@@ -663,9 +699,9 @@ def download_latest_pageviews_dump():
 
 
 def create_pageviews_db():
-    try: os.remove("pageviews.db");
+    try: os.remove(databases_path + "pageviews.db");
     except: pass;
-    conn = sqlite3.connect('pageviews.db')
+    conn = sqlite3.connect(databases_path + 'pageviews.db')
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS pageviews (languagecode text,  page_title text, num_pageviews int, PRIMARY KEY (languagecode, page_title))")
     return conn
@@ -733,10 +769,10 @@ def pageviews_dump_iterator():
 
 
 def delete_latest_pageviews_dump():
-    os.remove("latest_pageviews.bz2")
+    os.remove(databases_path + "latest_pageviews.bz2")
 
 def delete_pageviews_db():
-    os.remove("pageviews.db")
+    os.remove(databases_path + "pageviews.db")
 
 
 def download_latest_wikidata_dump():
@@ -746,7 +782,7 @@ def download_latest_wikidata_dump():
     local_filename = url.split('/')[-1]
     # NOTE the stream=True parameter
     r = requests.get(url, stream=True)
-    with open(local_filename, 'wb') as f:
+    with open(databases_path + local_filename, 'wb') as f:
         for chunk in r.iter_content(chunk_size=10240): 
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
@@ -755,11 +791,11 @@ def download_latest_wikidata_dump():
 
 
 def create_wikidata_db():
-    try: os.remove("wikidata.db");
+    try: os.remove(databases_path + "wikidata.db");
     except: pass;
-    conn = sqlite3.connect('wikidata.db')
+    conn = sqlite3.connect(databases_path + 'wikidata.db')
     cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS sitelinks (qitem text, langcode text, page_title text, page_id integer, PRIMARY KEY (qitem, langcode));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS sitelinks (qitem text, langcode text, page_title text, PRIMARY KEY (qitem, langcode));")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS geolocated_property (qitem text, property text, coordinates text, admin1 text, iso3166 text, PRIMARY KEY (qitem));")
     cursor.execute("CREATE TABLE IF NOT EXISTS language_strong_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
@@ -774,6 +810,9 @@ def create_wikidata_db():
     cursor.execute("CREATE TABLE IF NOT EXISTS people_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
 
     cursor.execute("CREATE TABLE IF NOT EXISTS metadata (qitem text, properties integer, sitelinks integer, PRIMARY KEY (qitem));")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS labels (qitem text, langcode text, label text, PRIMARY KEY (qitem, langcode));")
+
     print ('Created the Wikidata sqlite3 file and tables.')
     return conn
 
@@ -799,12 +838,13 @@ def wd_dump_iterator():
 
     # Locate the dump
     read_dump = 'latest-all.json.gz' # read_dump = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
-    dump_in = gzip.open(read_dump, 'r')
+    dump_in = gzip.open(databases_path + read_dump, 'r')
     line = dump_in.readline()
     iter = 0
 
     conn = create_wikidata_db(); cursor = conn.cursor()
-    qitems = wd_all_qitems(cursor); conn.commit() # getting all the qitems
+    conn.commit()
+    wd_all_qitems(cursor); conn.commit() # getting all the qitems
 
     print ('Iterating the dump.')
     while line != '':
@@ -825,9 +865,10 @@ def wd_dump_iterator():
 
         if iter % 500000 == 0:
 #            print (iter)
-            print (100*iter/45138856)
+            print (100*iter/48138856)
             print ('current time: ' + str(time.time() - startTime))
 #            break
+
 
     cursor.execute("DROP TABLE qitems;")
     conn.commit()
@@ -967,11 +1008,53 @@ def wd_sitelinks_insert_db(cursor, qitem, wd_sitelinks):
             except: print ('This Q is already in: '+qitem)
 
 
+def wd_check_and_introduce_wikipedia_missing_qitems(languagecode):
+
+    langcodes = []
+    if languagecode != '': langcodes.append(languagecode)
+    else: langcodes = wikilanguagecodes
+
+    for languagecode in langcodes:
+        print ('\n* '+languagecode)
+
+        page_titles=list()
+        page_ids=list()
+        conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+        query = 'SELECT page_title, page_id FROM ccc_'+languagecode+'wiki;'
+        for row in cursor.execute(query):
+            page_title=str(row[0])
+            page_id = row[1]
+            page_titles.append(str(row[0]))
+            page_ids.append(row[1])
+
+        parameters = []
+        mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
+        query = 'SELECT page_title, page_id FROM page WHERE page_namespace=0 AND page_is_redirect=0;'
+        mysql_cur_read.execute(query)
+        rows = mysql_cur_read.fetchall()
+        articles_namespace_zero = len(rows)
+        for row in rows: 
+            page_title = row[0].decode('utf-8')
+            page_id = row[1]
+            if page_id not in page_ids: 
+                print (page_title, page_id)
+                qitem=page_titles_qitems[page_title]
+                parameters.append((page_title,page_id,''))
+
+        print ('* '+languagecode+' language edition has '+str(articles_namespace_zero)+' articles non redirect with namespace 0.')
+        print ('* '+languagecode+' language edition has '+str(len(parameters))+' articles that have no qitem in Wikidata and therefore are not in the CCC database.\n')
+
+        conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+        query = 'INSERT OR IGNORE INTO ccc_'+languagecode+'wiki (page_title,page_id,qitem) VALUES (?,?,?);';
+        cursor.executemany(query,parameters)
+        conn.commit()
+        print ('page ids for this language are in: '+languagecode+'\n')
+
 
 # Runs the reverse geocoder and update the database. It needs 5000m.
 def wd_geolocated_update_db():
     functionstartTime = time.time()
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
 
     print ('* Updating the Wikidata database with the geolocation coordinates.')
     geolocated_qitems = {}
@@ -1006,13 +1089,74 @@ def wd_geolocated_update_db():
     print ('* wd_geolocated_update_db Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
+# It updates the database with the labels for those items whose language does not have title in sitelink.
+def wd_labels_update_db():
+    # Locate the dump
+    read_dump = 'latest-all.json.gz' # read_dump = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
+    dump_in = gzip.open(databases_path + read_dump, 'r')
+    line = dump_in.readline()
+    iter = 0
+
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    print ('Iterating the dump to update the labels.')
+    labels = 0
+    while line != '':
+        iter += 1
+        line = dump_in.readline()
+        line = line.rstrip().decode('utf-8')[:-1]
+
+        try:
+            entity = json.loads(line)
+            qitem = entity['id']
+            if not qitem.startswith('Q'): continue
+        except:
+            print ('JSON error.')
+        wd_labels = entity['labels']
+
+        query = 'SELECT langcode FROM sitelinks WHERE qitem ="'+qitem+'"'
+        langs = set()
+        for row in cursor.execute(query): langs.add(str(row[0]))
+        if len(langs)==0: continue
+
+#        print (qitem)
+#        print ('these are the languages sitelinks:')
+#        print (langs)
+#        print ('these are the languages labels:')
+#        print (wd_labels)   
+        for code, title in wd_labels.items(): # bucle de llengües
+            code = code + 'wiki'
+            if code in wikilanguagecodeswiki and code not in langs:
+                values=[qitem,code,title['value']]
+                try: 
+                    cursor.execute("INSERT INTO labels (qitem, langcode, label) VALUES (?,?,?)",values)
+                    labels+=1
+ #                   print ('This is new:')
+ #                   print (values)
+                except: 
+                    pass
+#                    print ('This Q and language are already in: ')
+ #                  print (values)
+
+        if iter % 500000 == 0:
+            conn.commit()
+
+#            print (iter)
+            print (100*iter/48138856)
+            print ('current number of stored labels: '+str(labels))
+            print ('current time: ' + str(time.time() - startTime))
+#            break
+    conn.commit()
+    conn.close()
+    print ('DONE with the JSON for the labels iteration.')
+
+
 # Checks all the databses and updates the database.
 def insert_page_ids_page_titles_qitems_ccc_db():
     functionstartTime = time.time()
 
     print ('* insert_page_ids_page_titles_qitems_ccc_db')
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
 
     for languagecode in wikilanguagecodes:
         print (languagecode)
@@ -1059,7 +1203,7 @@ def extend_articles_timestamp(languagecode, page_titles_qitems):
     last_period_time = functionstartTime
     print ('* extend_articles_timestamp')
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     page_ids_timestamps = []
 
     try:
@@ -1112,7 +1256,7 @@ def extend_articles_editors(languagecode, page_titles_qitems, page_titles_page_i
     print ('* extend_articles_editors')
 
     page_titles_editors = []
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 
     try:
         print ('Trying to run the entire query.')
@@ -1166,7 +1310,7 @@ def extend_articles_discussions(languagecode, page_titles_qitems, page_titles_pa
     print ('* extend_articles_discussions')
 
     updated = []
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 
     try:
         print ('Trying to run the entire query.')
@@ -1218,7 +1362,7 @@ def extend_articles_edits(languagecode, page_titles_qitems):
     print ('* extend_articles_edits')
 
     page_ids_edits = []
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 
     try:
         print ('Trying to run the entire query.')
@@ -1274,7 +1418,7 @@ def extend_articles_bytes(languagecode, page_titles_qitems):
     last_period_time = functionstartTime
     print ('* extend_articles_bytes')
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
     mysql_cur_read.execute("SELECT page_title, page_id, page_len FROM page WHERE page_namespace=0 AND page_is_redirect=0;")
     rows = mysql_cur_read.fetchall()
@@ -1300,7 +1444,7 @@ def extend_articles_references(languagecode, page_titles_qitems, page_titles_pag
     print ('* extend_articles_references')
     page_ids_page_titles = {v: k for k, v in page_titles_page_ids.items()}
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
     mysql_cur_read.execute("SELECT el_from, COUNT(*) FROM externallinks INNER JOIN page ON el_from=page_id WHERE page_namespace=0 AND page_is_redirect=0 GROUP by el_from;")
     rows = mysql_cur_read.fetchall()
@@ -1325,8 +1469,8 @@ def extend_articles_interwiki(languagecode, page_titles_page_ids):
     functionstartTime = time.time()
     print ('* extend_articles_interwiki')
 
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
 
     updated = []
     query = "SELECT metadata.qitem, metadata.sitelinks, sitelinks.page_title FROM metadata INNER JOIN sitelinks ON sitelinks.qitem = metadata.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki'"
@@ -1351,8 +1495,8 @@ def extend_articles_qitems_properties(languagecode, page_titles_page_ids):
     functionstartTime = time.time()
     print ('* extend_articles_qitems_properties')
 
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
 
     updated = []
     query = "SELECT metadata.qitem, metadata.properties, sitelinks.page_title FROM metadata INNER JOIN sitelinks ON sitelinks.qitem = metadata.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki'"
@@ -1378,8 +1522,8 @@ def extend_articles_pageviews(languagecode, page_titles_qitems, page_titles_page
     functionstartTime = time.time()
     print ('* extend_articles_pageviews')
 
-    conn = sqlite3.connect('pageviews.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + 'pageviews.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
 
     query = "SELECT page_title, num_pageviews FROM pageviews WHERE languagecode = '"+languagecode+"';"
     updated = []
@@ -1405,7 +1549,7 @@ def extend_articles_pageviews(languagecode, page_titles_qitems, page_titles_page
 def extend_articles_featured(languagecode, page_titles_qitems):
     functionstartTime = time.time()
     print ('* extend_articles_featured')
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 
     featuredarticleslanguages = {}
     featuredarticleslanguages['enwiki']="Featured_articles"
@@ -1424,11 +1568,10 @@ def extend_articles_featured(languagecode, page_titles_qitems):
         featuredarticleslanguages[language] = title
         if language == 'itwiki': featuredarticleslanguages[language] = 'Voci_in_vetrina_su_it.wiki'
         if language == 'ruwiki': featuredarticleslanguages[language] = 'Википедия:Избранные_статьи_по_алфавиту'
-#    print ('These are the featured articles categories in the different languages.')
-#    print (featuredarticleslanguages)
-#    input('')
+    print ('These are the featured articles categories in the different languages.')
+    print (featuredarticleslanguages)
 
-    if languagecode in featuredarticleslanguages: featuredtitle=featuredarticleslanguages[languagecode+'wiki']
+    if languagecode+'wiki' in featuredarticleslanguages: featuredtitle=featuredarticleslanguages[languagecode+'wiki']
     else: print ('no featured articles for language: '+languagecode); return
 
     featuredarticles=[]
@@ -1454,10 +1597,10 @@ def extend_articles_featured(languagecode, page_titles_qitems):
 
 
 def delete_wikidata_db():
-    os.remove("wikidata.db")
+    os.remove(databases_path + "wikidata.db")
 
 def delete_latest_wikidata_dump():
-    os.remove("latest-all.json.gz")
+    os.remove(databases_path + "latest-all.json.gz")
 
 
 # CCC STRATEGIES
@@ -1495,7 +1638,7 @@ def get_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qitem
             ISO31662 = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO31662']
             ISO31662codes[ISO31662]=qitem
     # with a subdivision name you get a ISO 31662 (without the ISO3166 part), that allows you to get a Qitem
-    input_subdivisions_filename = 'world_subdivisions.csv'
+    input_subdivisions_filename = databases_path + 'world_subdivisions.csv'
     input_subdivisions_file = open(input_subdivisions_filename, 'r')
     subdivisions = {}
     for line in input_subdivisions_file: 
@@ -1530,9 +1673,11 @@ def get_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qitem
         page_title = geolocated_pageids_titles[page_id]
         admin1=results[x]['admin1']
         iso3166=results[x]['cc']
+        try: iso31662=iso3166+'-'+subdivisions[admin1]
+        except: pass
         lat = str(geolocated_pageids_coords[page_id][0])
         lon = str(geolocated_pageids_coords[page_id][1])
-#        print (page_title,page_id,admin1,iso3166)
+#        print (page_title,page_id,admin1,iso3166,iso31662)
 
         qitem=''
         # try both country code and admin1, at the same time, just in case there is desambiguation ('Punjab' in India (IN) and in Pakistan (PK) for 'pa' language)
@@ -1564,23 +1709,27 @@ def get_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qitem
         except:
             pass
 
-        # the Qitem is decided.
-        if qitem!='':
-            coordinates = lat+','+lon
-            try: 
-                qitem_specific=page_titles_qitems[page_title]
-                ccc_geolocated_items.append((1,coordinates,qitem,page_id,page_title,qitem_specific))
-            except: continue
+        coordinates = lat+','+lon
+        if qitem!='': 
+            ccc_geolocated = 1
+            ccc_binary = 1
 #            print ((page_id,page_title,coordinates,qitem)); print ('*** IN! ENTRA!\n')
-#        else:
+        else: 
+            ccc_geolocated = -1
+            ccc_binary = 0
 #            print ('### NO!\n')
-        if x%20000 == 0: print (x)
 
+        try: 
+            qitem_specific=page_titles_qitems[page_title]
+            ccc_geolocated_items.append((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
+        except: continue
+
+        if x%20000 == 0: print (x)
 
     if len(ccc_geolocated_items)==0: print ('No geolocated articles in Wikidata for this language edition.');return
     # It inserts the right articles into the corresponding CCC database.
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,geocoordinates,main_territory) = (?,?,?) WHERE page_id = ? AND page_title = ? AND qitem = ?;'
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,ccc_geolocated,iso3166,iso31662,geocoordinates,main_territory) = (?,?,?,?,?,?) WHERE page_id = ? AND page_title = ? AND qitem = ?;'
     cursor.executemany(query,ccc_geolocated_items)
     conn.commit()
 
@@ -1625,9 +1774,10 @@ def get_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
             ISO31662codes[ISO31662]=qitem
         allISO3166.append(territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO3166'])
     allISO3166 = list(set(allISO3166))
+    print (allISO3166)
 
     # with a subdivision name you get a ISO 31662 (without the ISO3166 part), that allows you to get a Qitem
-    input_subdivisions_filename = 'world_subdivisions.csv'
+    input_subdivisions_filename = databases_path + 'world_subdivisions.csv'
     input_subdivisions_file = open(input_subdivisions_filename, 'r')
     subdivisions = {}
     for line in input_subdivisions_file: 
@@ -1636,7 +1786,7 @@ def get_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
 
     # Get the articles, evaluate them and insert the good ones.   
     ccc_geolocated_items = []
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
 #    query = 'SELECT geolocated_property.qitem, geolocated_property.coordinates, geolocated_property.admin1, geolocated_property.iso3166, sitelinks.page_title FROM geolocated_property INNER JOIN sitelinks ON sitelinks.qitem=geolocated_property.qitem WHERE sitelinks.langcode="'+languagecode+'wiki";'
 
     page_asstring = ','.join( ['?'] * len(allISO3166) )
@@ -1644,16 +1794,22 @@ def get_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
 
     x = 0
     for row in cursor.execute(query,allISO3166):
+#        print (row)
+#        input('')
         qitem_specific=str(row[0])
         coordinates=str(row[1])
         admin1=str(row[2]) # it's the Territory Name according to: https://github.com/thampiman/reverse-geocoder
         iso3166=str(row[3])
+        iso31662=''; 
+        try: iso31662=iso3166+'-'+subdivisions[admin1]
+        except: pass
         page_title=str(row[4]).replace(' ','_')
+        try: page_id = page_titles_page_ids[page_title]
+        except: continue
 
-#        print (page_title,qitem_specific,admin1,iso3166,coordinates)
-#        input('un moment')
+#        print (page_title,page_id,qitem_specific,admin1,iso3166,coordinates)
+
         qitem=''
-
         # try both country code and admin1, at the same time, just in case there is desambiguation ('Punjab' in India (IN) and in Pakistan (PK) for 'pa' language)
         try: qitem=territories[(territories.ISO3166 == iso3166) & (territories.territoryname == admin1)].loc[languagecode]['QitemTerritory']
 #            print (qitem); print ('name and country')
@@ -1681,24 +1837,30 @@ def get_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
         except:
             pass
 
-        # the Qitem is decided.
+
         if qitem!='':
-            try: 
-                page_id=page_titles_page_ids[page_title]
-                ccc_geolocated_items.append((1,coordinates,qitem,qitem_specific,page_title,page_id)) 
-            except: continue
-#            print ((qitem_specific,page_title,coordinates,qitem)); print ('*** IN! ENTRA!\n')
-#            input('')
-#        else:
+            ccc_geolocated = 1
+            ccc_binary = 1
+#            print ((page_id,page_title,coordinates,qitem)); print ('*** IN! ENTRA!\n')
+        else: 
+            ccc_geolocated = -1
+            ccc_binary = 0
 #            print ('### NO!\n')
-        if x%20000 == 0: print (x);
+        try:
+#            print ((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
+            ccc_geolocated_items.append((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
+        except:
+            pass
+
+        if x%20000 == 0: print (x)
         x = x + 1
+
 
     if len(ccc_geolocated_items)==0: print ('No geolocated articles in Wikidata for this language edition.');return
     # Insert to the corresponding CCC database.
     print ('Inserting/Updating articles into the database.')
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
-    query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,geocoordinates,main_territory) = (?,?,?) WHERE qitem = ? AND page_title = ? AND page_id = ?;'
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
+    query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,ccc_geolocated,iso3166,iso31662,geocoordinates,main_territory) = (?,?,?,?,?,?) WHERE page_id = ? AND page_title = ? AND qitem = ?;'
     cursor2.executemany(query,ccc_geolocated_items)
     conn2.commit()
     print ('All geolocated articles from Wikidata validated through reverse geocoding are in. They are: '+str(len(ccc_geolocated_items))+'.')
@@ -1710,7 +1872,7 @@ def get_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
 # Obtain the articles with a country property related to a territory from the list of territories from the language. Label them as CCC.
 def get_ccc_articles_country_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
-    conn = sqlite3.connect('wikidata.db');cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db');cursor = conn.cursor()
     print ('\n* Getting articles with Wikidata from items with "country" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
     # country qitems
@@ -1749,7 +1911,7 @@ def get_ccc_articles_country_wd(languagecode,page_titles_page_ids):
             continue
 
     # Insert to the corresponding CCC database.
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
     query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,country_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor2.executemany(query,ccc_country_items)
     conn2.commit()
@@ -1761,7 +1923,7 @@ def get_ccc_articles_country_wd(languagecode,page_titles_page_ids):
 # Obtain the articles with a location property that is iteratively associated to the list of territories associated to the language. Label them as CCC.
 def get_ccc_articles_location_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
 
 #    page_qitems_titles={}
 #    for row in cursor.execute('SELECT page_title, qitem FROM sitelinks WHERE langcode = "'+languagecode+'wiki";'): page_qitems_titles[row[1]]=row[0].replace(' ','_')
@@ -1836,7 +1998,7 @@ def get_ccc_articles_location_wd(languagecode,page_titles_page_ids):
         ccc_located_items.append((1,value,page_title,qitem,page_id))
 
 
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
     query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,location_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor2.executemany(query,ccc_located_items)
     conn2.commit()
@@ -1850,7 +2012,7 @@ def get_ccc_articles_language_strong_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
     print ('\n* Getting articles with Wikidata from items with "language" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
 
     # language qitems
     qitemresult = languages.loc[languagecode]['Qitem']
@@ -1889,7 +2051,7 @@ def get_ccc_articles_language_strong_wd(languagecode,page_titles_page_ids):
             continue
 
     # Insert to the corresponding CCC database.
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
     query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,language_strong_wd,page_title) = (?,?,?) WHERE qitem = ? AND page_id = ?;'
     cursor2.executemany(query,ccc_language_items)
     conn2.commit()
@@ -1903,7 +2065,7 @@ def get_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids)
     functionstartTime = time.time()
 
     print ('\n* Getting articles with Wikidata from items with "created by" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     ccc_articles={}
     for row in cursor.execute('SELECT page_title, qitem FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'): ccc_articles[row[1]]=row[0].replace(' ','_')
 
@@ -1912,7 +2074,7 @@ def get_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids)
 #        potential_ccc_articles[row[1]]=row[0].replace(' ','_')
 
     selected_qitems={}
-    conn2 = sqlite3.connect('wikidata.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wikidata.db'); cursor2 = conn2.cursor()
     query = 'SELECT created_by_properties.qitem, created_by_properties.property, created_by_properties.qitem2, sitelinks.page_title FROM created_by_properties INNER JOIN sitelinks ON sitelinks.qitem = created_by_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
     for row in cursor2.execute(query):
         qitem = row[0]
@@ -1954,14 +2116,14 @@ def get_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids)
 # Obtain the articles which are part of items already retrieved as CCC. Label them as CCC.
 def get_ccc_articles_part_of_properties_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
 
     print ('\n* Getting articles with Wikidata from items with "part of" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
     part_of_properties = {'P361':'part of'} 
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('wikidata.db'); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wikidata.db'); cursor2 = conn2.cursor()
 
     ccc_articles={}
     for row in cursor.execute('SELECT page_title, qitem FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'):
@@ -2091,7 +2253,7 @@ def get_ccc_articles_keywords(languagecode,page_titles_qitems):
         except: continue
         insertedarticles.append((1,keyword_title,page_title,page_id,qitem))
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     query = 'UPDATE ccc_'+languagecode+'wiki SET (ccc_binary,keyword_title,page_title) = (?,?,?) WHERE page_id = ? AND qitem = ?;'
     cursor.executemany(query,insertedarticles)
     conn.commit()
@@ -2100,16 +2262,8 @@ def get_ccc_articles_keywords(languagecode,page_titles_qitems):
     print ('* get_ccc_articles_keywords Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
-def get_ccc_articles_from_community_vital_list(languagecode):
-    # update the CCC_binary with more groundtruth.
-    # update to calculate the ccc_gaps later.
 
-    read_community_generated_article_lists()
-#    print ('vital100_community integer')
-
-    
-
-# Obtain the articles with coordinates gelocated in the territories associated to that language. This is considered potential CCC.
+# Obtain the articles with coordinates gelocated in the territories associated to that language. This is considered potential CCC - there are some interferences in this database. This function is unnecessary, since geolocated_reverse_geocoding uses the same data and cleans it, and geolocation_wd covers the data with that from wikidata.
 def get_articles_geolocated_geo_tags(languagecode,page_titles_qitems):
     functionstartTime = time.time()
     print ('\n* Getting geolocated articles with geo tags for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
@@ -2163,7 +2317,7 @@ def get_articles_geolocated_geo_tags(languagecode,page_titles_qitems):
             count = count + 1
 
         # Insert to the corresponding CCC database.
-        conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
         query = 'UPDATE ccc_'+languagecode+'wiki SET (geocoordinates,main_territory) = (?,?) WHERE page_title = ? AND page_id = ? AND qitem=?;'
         cursor.executemany(query,ccc_geolocated_items)
         conn.commit()
@@ -2324,7 +2478,7 @@ def get_articles_category_crawling(languagecode,page_titles_qitems):
         except: continue
         parameters.append((categorycrawling,selectedarticles_level[page_id],page_title,page_id,qitem))
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     query = 'UPDATE ccc_'+languagecode+'wiki SET (category_crawling_territories,category_crawling_level) = (?,?) WHERE page_title = ? AND page_id = ? AND qitem=?;'
     cursor.executemany(query,parameters)
     conn.commit()
@@ -2343,49 +2497,52 @@ def get_articles_category_crawling(languagecode,page_titles_qitems):
 
 
 # Get the articles table with the number of inlinks.
-def get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems):
+def get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qitems,group):
     functionstartTime = time.time()
-    print ("\n* Updating the number of inlinks and the number of inlinks from CCC for language: "+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
+    print ("\n* Updating the number of inlinks and the number of inlinks from "+group+" for language: "+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
     try:
-        # INLINKS FROM CCC
         # get the ccc and potential ccc articles
         print ('Attempt with a MySQL.')
-#        a=0
-#        print (a/a)
 
-        conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-        query = 'SELECT page_id, page_title, ccc_binary, qitem FROM ccc_'+languagecode+'wiki;'
-        ccc_articles = {}
-#        all_ccc_articles = {}
-#        all_ccc_articles_qitems = {}
-        for row in cursor.execute(query):
-            if row[2]==1: ccc_articles[row[0]]=row[1]
-#            all_ccc_articles[row[1]]=row[0]
-#            all_ccc_articles_qitems[row[1]]=row[3]
-        print ('- Articles in CCC: '+str(len(ccc_articles)))
-#        print (str(len(all_ccc_articles)))
+        conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+        article_selection = {}
+        if group == 'ccc':
+            query = 'SELECT page_id, page_title, ccc_binary, qitem FROM ccc_'+languagecode+'wiki;'
+            for row in cursor.execute(query):
+                if row[2]==1: article_selection[row[0]]=row[1]
+            print ('- Articles in CCC: '+str(len(article_selection)))
+        else:
+            query = 'SELECT page_id, page_title, ccc_geolocated, qitem FROM ccc_'+languagecode+'wiki;'
+            for row in cursor.execute(query):
+                if row[2]==-1: article_selection[row[0]]=row[1]
+            print ('- Articles geolocated somewhere else: '+str(len(article_selection)))
 
-        page_titles_inlinks_ccc = []
+
+        page_titles_inlinks_group = []
         mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
 
-        page_asstring = ','.join( ['%s'] * len( ccc_articles ) )
+        page_asstring = ','.join( ['%s'] * len( article_selection ) )
         query = 'SELECT count(pl_from), pl_title FROM pagelinks WHERE pl_from_namespace=0 AND pl_namespace=0 AND pl_from IN (%s) GROUP BY pl_title' % page_asstring
-        mysql_cur_read.execute(query,list(ccc_articles.keys()))
+        mysql_cur_read.execute(query,list(article_selection.keys()))
         rows = mysql_cur_read.fetchall()
 #        print ('query run.')
         for row in rows:
             pl_title = str(row[1].decode('utf-8'))
             try: 
 #                print ((row[0],all_ccc_articles[pl_title],all_ccc_articles_qitems[pl_title]))
-                page_titles_inlinks_ccc.append((row[0],page_titles_page_ids[pl_title],page_titles_qitems[pl_title], pl_title))
+                page_titles_inlinks_group.append((row[0],page_titles_page_ids[pl_title],page_titles_qitems[pl_title], pl_title))
             except: pass
 
-        query = 'UPDATE ccc_'+languagecode+'wiki SET num_inlinks_from_CCC=? WHERE page_id = ? AND qitem = ? AND page_title=?;'
-        cursor.executemany(query,page_titles_inlinks_ccc)
+        if group == 'ccc':
+            query = 'UPDATE ccc_'+languagecode+'wiki SET num_inlinks_from_CCC=? WHERE page_id = ? AND qitem = ? AND page_title=?;'
+        else:
+            query = 'UPDATE ccc_'+languagecode+'wiki SET num_inlinks_from_geolocated_abroad=? WHERE page_id = ? AND qitem = ? AND page_title=?;'
+
+        cursor.executemany(query,page_titles_inlinks_group)
         conn.commit()
-        print ('- Articles with links coming from CCC: '+str(len(page_titles_inlinks_ccc)))
-        print ('* get_articles_with_inlinks_ccc completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+        print ('- Articles with links coming from the group: '+str(len(page_titles_inlinks_group)))
+        print ('* get_articles_with_inlinks completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
         # INLINKS
         query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE num_inlinks IS NOT NULL;'
@@ -2409,32 +2566,30 @@ def get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qite
     #                print ((row[0],float(row[0]),all_ccc_articles[pl_title],all_ccc_articles_qitems[pl_title]))
                 except: continue
 
-            query = 'UPDATE ccc_'+languagecode+'wiki SET num_inlinks=?,percent_inlinks_from_CCC=(num_inlinks_from_CCC/?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+            if group == 'ccc':
+                query = 'UPDATE ccc_'+languagecode+'wiki SET num_inlinks=?,percent_inlinks_from_CCC=(num_inlinks_from_CCC/?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+            else:
+                query = 'UPDATE ccc_'+languagecode+'wiki SET num_inlinks=?,percent_inlinks_from_geolocated_abroad=(num_inlinks_from_geolocated_abroad /?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+
             cursor.executemany(query,page_titles_inlinks)
             conn.commit()
             print ('- Articles with any inlink at all: '+str(len(page_titles_inlinks)))
-            print ('* get_articles_with_inlinks  completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+            print ('* get_articles_with_inlinks completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
     except:
         print ("MySQL has gone away. Let's try to do the joins in the code logics.")
 
         functionstartTime = time.time()
         # get the ccc and potential ccc articles
-        conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+        conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
         query = 'SELECT page_id, page_title, ccc_binary, qitem FROM ccc_'+languagecode+'wiki;'
-        ccc_articles = {}
-#        all_ccc_articles = {}
-#        all_ccc_articles_qitems = {}
+        article_selection = {}
         for row in cursor2.execute(query):
-            if row[2]==1: ccc_articles[row[0]]=row[1]
-#            all_ccc_articles[row[1]]=row[0]
-#            all_ccc_articles_qitems[row[1]]=row[3]
-        print ('- Articles in CCC: '+str(len(ccc_articles)))
-#        num_all_ccc_articles=len(all_ccc_articles)
-#        print (str(num_all_ccc_articles))
-        ccc_articles_page_ids = set(ccc_articles.keys())
+            if row[2]==1: article_selection[row[0]]=row[1]
+        print ('- Articles in CCC: '+str(len(article_selection)))
+        article_selection_page_ids = set(article_selection.keys())
 
-        page_titles_inlinks_ccc = []
+        page_titles_inlinks_group = []
         page_ids=[]
         num_art = 0
         mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
@@ -2453,70 +2608,74 @@ def get_articles_with_inlinks(languagecode,page_titles_page_ids,page_titles_qite
                     print (100*num_art/len(page_titles_page_ids))
                     print ('current time: ' + str(time.time() - startTime))
 
-                count=len(list(set(page_ids).intersection(ccc_articles_page_ids)))
-#                print (list(set(page_ids).intersection(ccc_articles_page_ids)))
-                page_titles_inlinks_ccc.append((count,len(page_ids),float(count)/float(len(page_ids)),page_titles_page_ids[pl_title],page_titles_qitems[pl_title],pl_title))
-#                print (count,str(len(page_ids)),float(count)/float(len(page_ids)),pl_title,all_ccc_articles[pl_title],all_ccc_articles_qitems[pl_title])
+                count=len(list(set(page_ids).intersection(article_selection_page_ids)))
+                page_titles_inlinks_group.append((count,len(page_ids),float(count)/float(len(page_ids)),page_titles_page_ids[pl_title],page_titles_qitems[pl_title],pl_title))
                 page_ids.clear()
             except: 
                 continue
 
-        print ('- Articles with inlinks: '+str(len(page_titles_inlinks_ccc)))
+        print ('- Articles with inlinks: '+str(len(page_titles_inlinks_group)))
+        if group == 'ccc':
+            query = 'UPDATE ccc_'+languagecode+'wiki SET (num_inlinks_from_CCC,num_inlinks,percent_inlinks_from_CCC)=(?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+        else:
+            query = 'UPDATE ccc_'+languagecode+'wiki SET (num_inlinks_from_geolocated_abroad,num_inlinks,percent_inlinks_from_geolocated_abroad)=(?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'            
 
-        query = 'UPDATE ccc_'+languagecode+'wiki SET (num_inlinks_from_CCC,num_inlinks,percent_inlinks_from_CCC)=(?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
-        cursor2.executemany(query,page_titles_inlinks_ccc)
+        cursor2.executemany(query,page_titles_inlinks_group)
         conn2.commit()
         print ('* get_articles_with_inlinks_ccc Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
 # Get the articles table with the number of outlinks.
-def get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems):
+def get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qitems,group):
     functionstartTime = time.time()
-    print ("\n* Get the number of outlinks and the number of outlinks to CCC for language: "+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
+    print ("\n* Get the number of outlinks and the number of outlinks to "+group+" for language: "+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
     page_ids_page_titles = {v: k for k, v in page_titles_page_ids.items()}
 
     try:
         print ('Attempt with a MySQL.')
-#        a=0
-#        print (a/a)
+        conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+        article_selection = {}
 
         # get the ccc and potential ccc articles
-        conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-        query = 'SELECT page_id, page_title, ccc_binary, qitem FROM ccc_'+languagecode+'wiki;'
-        ccc_articles = {}
-    #        all_ccc_articles = {}
-    #        all_ccc_articles_qitems = {}
-        for row in cursor.execute(query):
-            if row[2]==1: ccc_articles[row[0]]=row[1]
-    #            all_ccc_articles[row[0]]=row[1]
-    #            all_ccc_articles_qitems[row[0]]=row[3]
-        print ('- Articles in CCC: '+str(len(ccc_articles)))
-    #        print (str(len(all_ccc_articles)))
+        if group == 'ccc':
+            query = 'SELECT page_id, page_title, ccc_binary, qitem FROM ccc_'+languagecode+'wiki;'
+            for row in cursor.execute(query):
+                if row[2]==1: article_selection[row[0]]=row[1]
+            print ('- Articles in CCC: '+str(len(article_selection)))
+        else:
+            query = 'SELECT page_id, page_title, ccc_geolocated, qitem FROM ccc_'+languagecode+'wiki;'
+            for row in cursor.execute(query):
+                if row[2]==-1: article_selection[row[0]]=row[1]
+            print ('- Articles geolocated somewhere else: '+str(len(article_selection)))
 
-        page_titles_outlinks_ccc = []
+
+        page_titles_outlinks_group = []
         mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
-    #    mysql_con_read = mdb.connect(host=languagecode+'wiki.analytics.db.svc.eqiad.wmflabs',db=languagecode+'wiki_p', read_default_file='./my.cnf', cursorclass=mdb_cursors.SSCursor,charset='utf8mb4'); mysql_cur_read = mysql_con_read.cursor()
 
-        page_asstring = ','.join( ['%s'] * len( ccc_articles ) )
+        page_asstring = ','.join( ['%s'] * len( article_selection ) )
         query = 'SELECT count(pl_title), pl_from FROM pagelinks WHERE pl_from_namespace=0 AND pl_namespace=0 AND pl_title IN (%s) GROUP BY pl_from;' % page_asstring
 
-        mysql_cur_read.execute(query,list(ccc_articles.values()))
+        mysql_cur_read.execute(query,list(article_selection.values()))
         rows = mysql_cur_read.fetchall()
     #        print ('query run.')
         for row in rows:
             try:
                 page_title=page_ids_page_titles[row[1]]
-                page_titles_outlinks_ccc.append((row[0],row[1],page_titles_qitems[page_title],page_title))
+                page_titles_outlinks_group.append((row[0],row[1],page_titles_qitems[page_title],page_title))
             except: pass
 
-        query = 'UPDATE ccc_'+languagecode+'wiki SET num_outlinks_to_CCC=? WHERE page_id = ? AND qitem = ? AND page_title=?;'
-        cursor.executemany(query,page_titles_outlinks_ccc)
+        if group == 'ccc':
+            query = 'UPDATE ccc_'+languagecode+'wiki SET num_outlinks_to_CCC=? WHERE page_id = ? AND qitem = ? AND page_title=?;'
+        else:
+            query = 'UPDATE ccc_'+languagecode+'wiki SET num_outlinks_to_geolocated_abroad=? WHERE page_id = ? AND qitem = ? AND page_title=?;'
+
+        cursor.executemany(query,page_titles_outlinks_group)
         conn.commit()
 
-        print ('- Articles pointing at CCC: '+str(len(page_titles_outlinks_ccc)))
+        print ('- Articles pointing at the group: '+str(len(page_titles_outlinks_group)))
         print ('* get_articles_with_outlinks_ccc completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
-
+        # OUTLINKS
         query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE num_outlinks IS NOT NULL;'
         cursor.execute(query)
         if cursor.fetchone()[0] == 0:
@@ -2524,13 +2683,8 @@ def get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qit
             mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
             query = 'SELECT count(pl_title),pl_from FROM pagelinks WHERE pl_from_namespace=0 AND pl_namespace=0 GROUP BY pl_from'
             mysql_cur_read.execute(query)
-        #        page_asstring = ','.join( ['%s'] * len( all_ccc_articles ) )
-        #        query = 'SELECT count(pl_title),pl_from FROM pagelinks WHERE pl_from_namespace=0 AND pl_namespace=0 AND pl_from IN (%s) GROUP BY pl_from' % page_asstring
-        #        mysql_cur_read.execute(query,set(all_ccc_articles.keys()))
 
-        #        mysql_cur_read.execute('SELECT count(pl_title),pl_from FROM pagelinks WHERE pl_from_namespace=0 AND pl_namespace=0 GROUP BY pl_from')
             rows = mysql_cur_read.fetchall()
-        #        print ('query run.')
             for row in rows:
                 try:
                     count=row[0]
@@ -2538,8 +2692,11 @@ def get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qit
                     page_titles_outlinks.append((count,float(count),row[1],page_titles_qitems[page_title],page_title))
                 except: continue
             print ('- Articles with any outlink at all: '+str(len(page_titles_outlinks)))
+            if group == 'ccc':
+                query = 'UPDATE ccc_'+languagecode+'wiki SET num_outlinks=?,percent_outlinks_to_CCC=(num_outlinks_to_CCC/?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+            else:
+                query = 'UPDATE ccc_'+languagecode+'wiki SET num_outlinks=?,percent_outlinks_to_geolocated_abroad=(num_outlinks_to_geolocated_abroad/?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
 
-            query = 'UPDATE ccc_'+languagecode+'wiki SET num_outlinks=?,percent_outlinks_to_CCC=(num_outlinks_to_CCC/?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
             cursor.executemany(query,page_titles_outlinks)
             conn.commit()
             print ('* get_articles_with_outlinks completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
@@ -2548,21 +2705,15 @@ def get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qit
         print ("MySQL has gone away. Let's try to do the joins in the code logics.")
         #input('')
        # get the ccc and potential ccc articles
-        conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+        conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
         query = 'SELECT page_id, page_title, ccc_binary, qitem FROM ccc_'+languagecode+'wiki;'
-        ccc_articles = {}
-#        all_ccc_articles = {}
-#        all_ccc_articles_qitems = {}
+        article_selection = {}
         for row in cursor2.execute(query):
-            if row[2]==1: ccc_articles[row[0]]=row[1]
-#            all_ccc_articles[row[0]]=row[1]
-#            all_ccc_articles_qitems[row[0]]=row[3]
-        print ('- Articles in CCC: '+str(len(ccc_articles)))
-#        num_all_ccc_articles=len(all_ccc_articles)
-#        print (str(num_all_ccc_articles))
-        ccc_articles_page_titles = set(ccc_articles.values())
+            if row[2]==1: article_selection[row[0]]=row[1]
+        print ('- Articles in CCC: '+str(len(article_selection)))
+        ccc_articles_page_titles = set(article_selection.values())
 
-        page_titles_outlinks_ccc = []
+        page_titles_outlinks_group = []
         mysql_con_read = establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
 
         page_titles=[]
@@ -2583,15 +2734,18 @@ def get_articles_with_outlinks(languagecode,page_titles_page_ids,page_titles_qit
                     print ('current time: ' + str(time.time() - startTime))
                 count=len(list(set(page_titles).intersection(ccc_articles_page_titles)))
                 page_title=page_ids_page_titles[pl_from]
-                page_titles_outlinks_ccc.append((count,len(page_titles),float(count)/float(len(page_titles)),pl_from,page_titles_qitems[page_title],page_title))
-#                print (count,str(len(page_titles)),float(count)/float(len(page_titles)),all_ccc_articles[pl_from],pl_from,all_ccc_articles_qitems[pl_from])
+                page_titles_outlinks_group.append((count,len(page_titles),float(count)/float(len(page_titles)),pl_from,page_titles_qitems[page_title],page_title))
                 page_titles.clear()
             except:
                 continue
-        print ('Articles with outlinks: '+str(len(page_titles_outlinks_ccc)))
+        print ('Articles with outlinks: '+str(len(page_titles_outlinks_group)))
 
-        query = 'UPDATE ccc_'+languagecode+'wiki SET (num_outlinks_to_CCC,num_outlinks,percent_outlinks_to_CCC)=(?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
-        cursor2.executemany(query,page_titles_outlinks_ccc)
+        if group == 'ccc':
+            query = 'UPDATE ccc_'+languagecode+'wiki SET (num_outlinks_to_CCC,num_outlinks,percent_outlinks_to_CCC)=(?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+        else:
+            query = 'UPDATE ccc_'+languagecode+'wiki SET (num_outlinks_to_geolocated_abroad,num_outlinks,percent_outlinks_to_geolocated_abroad)=(?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+
+        cursor2.executemany(query,page_titles_outlinks_group)
         conn2.commit()
         print ('* get_articles_with_outlinks_ccc Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
@@ -2602,7 +2756,7 @@ def get_articles_language_weak_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
     print ('\n* Getting articles with Wikidata from items with "language" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
 
     # language qitems
     qitemresult = languages.loc[languagecode]['Qitem']
@@ -2640,7 +2794,7 @@ def get_articles_language_weak_wd(languagecode,page_titles_page_ids):
         except: continue
 
     # Insert to the corresponding CCC database.
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
     query = 'UPDATE ccc_'+languagecode+'wiki SET (language_weak_wd) = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor2.executemany(query,ccc_language_items)
     conn2.commit()
@@ -2652,12 +2806,12 @@ def get_articles_language_weak_wd(languagecode,page_titles_page_ids):
 # Get the articles with the number of affiliation-like properties to other articles already retrieved as CCC.
 def get_articles_affiliation_properties_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
 
     print ('\n* Get articles with Wikidata from items with "affiliation" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('wikidata.db'); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wikidata.db'); cursor2 = conn2.cursor()
 
     ccc_articles={}
     for row in cursor.execute('SELECT page_title, qitem FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'):
@@ -2713,14 +2867,116 @@ def get_articles_affiliation_properties_wd(languagecode,page_titles_page_ids):
     print ('* get_articles_affiliation_properties_wd Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
+def get_other_ccc_wikidata_properties(languagecode,page_titles_page_ids,page_titles_qitems):
+
+    functionstartTime = time.time()
+    print ('\n* Updating the features based on properties for the potential no CCC articles from language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
+
+    qitems = page_titles_qitems.values()
+
+    tables = ['language_strong_properties', 'country_properties', 'location_properties', 'created_by_properties','part_of_properties','language_weak_properties', 'has_part_properties', 'affiliation_properties']
+    columns = ['language_strong_wd', 'country_wd', 'location_wd', 'created_by_wd', 'part_of_wd', 'language_weak_wd', 'has_part_wd', 'affiliation_wd']
+    columns_update = ['other_ccc_language_strong_wd','other_ccc_country_wd','other_ccc_location_wd','other_ccc_created_by_wd','other_ccc_part_of_wd','other_ccc_language_weak_wd','other_ccc_has_part_wd','other_ccc_affiliation_wd']
+
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
+
+    for x in range(0,len(tables)):
+
+        table_update = []
+        for qitem in qitems:
+            negative_ccc_property_count = 0
+
+            total_property_count = 0
+            query = 'SELECT count(qitem) FROM '+tables[x]+' WHERE qitem ='+str(qitem)
+            cursor.execute(query)
+            value = cursor.fetchone()
+            if value != None: total_property_count = value[0]
+
+            query = 'SELECT '+columns[x]+', page_id FROM ccc_'+languagecode+'wiki WHERE qitem = '+str(qitem)
+            cursor2.execute(query)
+            ccc_property_count = 0
+            if value2 != None: 
+                properties = value2[0]
+                page_id = value2[1]
+                ccc_property_count = properties.count(';')
+                if ccc_property_count == 0: ccc_property_count = 1
+            negative_ccc_property_count = total_property_count - ccc_property_count
+
+            print (total_property_count,negative_ccc_property_count,qitem,page_id)
+
+            if negative_ccc_property_count != 0:
+                table_update.append((negative_ccc_property_count,qitem,page_id))
+
+        print ('The number of articles that are going to be updated for this table: '+columns_update[x]+' are: '+str(len(table_update)))
+        cursor2.executemany('UPDATE ccc_'+languagecode+'wiki SET '+columns_update[x]+'=? WHERE qitem = ? AND page_id = ?', table_update)
+        conn2.commit()
+
+    print ('* get_other_ccc_wikidata_properties Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
+def get_other_ccc_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems):
+
+    functionstartTime = time.time()
+    print ('\n* Updating the features based on keywords and category crawling levels for the potential no CCC articlces from language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
+
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    qitem_page_titles = {v: k for k, v in page_titles_qitems.items()}
+
+    qitems_keywords_binary = {}
+    qitems_category_crawling_level = {}
+
+    for queried_languagecode in languagecodes:
+        query = 'SELECT MAX(category_crawling_level) FROM ccc_'+queried_languagecode+'wiki'
+        value = cursor.fetchone()
+        if value != None: level_max = value[0]
+
+        query = 'SELECT qitem, category_crawling_level, keyword_title FROM ccc_'+queried_languagecode+'wiki;'
+        for row in execute(query):
+            qitem=row[0]
+
+            if row[2] != None: qitems_keywords_binary[qitem]=1
+
+            category_crawling_level=row[1]-1
+            if category_crawling_level > 5: category_crawling_level = 5 # we put a threshold because after the fifth level the categorization is not really a specialization. there is a big difference between being in the first or in the fifth, but there is not between the fifth and the tenth.
+            relative_level=1-float(category_crawling_level/level_max)
+
+            # we choose always the lowest category crawling level in case the article is in category crawling of different languages.
+            if qitem in qitems_category_crawling_level:
+                if qitems_category_crawling_level[qitem]>relative_level:
+                    qitems_category_crawling_level[qitem]=relative_level
+            else: qitems_category_crawling_level[qitem]=relative_level
+
+    qitems = page_titles_qitems.values()
+
+    table_update = []
+    for qitem in qitems:
+        page_id=page_titles_page_ids[qitem_page_titles[qitem]]
+
+        if qitem in qitems_keywords_binary: keyword = 1
+        else: keyword = 0
+
+        if qitem in qitems_category_crawling_level:
+            relative_level = qitems_category_crawling_level[qitem]
+        else: relative_level = 0
+
+        table_update.append((relative_level,keyword,qitem,page_id))
+
+    print ('The number of articles that are going to be updated for this language edition CCC: '+languagecode+' that relate other language edition keywords/category crawling are: '+str(len(table_update)))
+    cursor.executemany('UPDATE ccc_'+languagecode+'wiki SET other_ccc_category_crawling_relative_level = ?, other_ccc_keyword_title = ? WHERE qitem = ? AND page_id = ?', table_update)
+    conn.commit()
+
+    print ('* get_other_ccc_wikidata_properties Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
 # Get the articles with the properties that state that has articles already retrieved as CCC as part of them.
 def get_articles_has_part_properties_wd(languagecode,page_titles_page_ids):
     functionstartTime = time.time()
 
     print ('\n* Updating articles with Wikidata from items with "has part" properties for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('wikidata.db'); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wikidata.db'); cursor2 = conn2.cursor()
 
     ccc_articles={}
     for row in cursor.execute('SELECT page_title, qitem FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'):
@@ -2780,14 +3036,14 @@ def filter_articles_geolocated_elsewhere(languagecode):
     print ('\n* Filtering all the CCC selected qitems which are geolocated but not among the geolocated articles to the territories associated to the language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
 
     qitems={}
-    conn = sqlite3.connect('wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
     query = 'SELECT sitelinks.qitem, sitelinks.page_title FROM geolocated_property INNER JOIN sitelinks ON geolocated_property.qitem = sitelinks.qitem WHERE langcode = "'+languagecode+'wiki'+'";'
     for row in cursor.execute(query):
         qitems[row[0]]=row[1]
 #    print ('The number of geolocated articles in the Italian Wikipedia is: '+str(len(qitems)))
 
     not_ccc=[]
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn2.cursor()
     query = 'SELECT qitem, page_id FROM ccc_'+languagecode+'wiki WHERE ccc_binary IS NOT 1;'
     for row in cursor2.execute(query):
         qitem = str(row[0])
@@ -2796,19 +3052,24 @@ def filter_articles_geolocated_elsewhere(languagecode):
             not_ccc.append((qitem,page_id))
 
     print ('The number of articles that are going to be categorized as ccc binary = 0 is: '+str(len(not_ccc)))
-    cursor2.executemany('UPDATE ccc_'+languagecode+'wiki SET ccc_binary=0 WHERE qitem = ? AND page_id = ?', not_ccc)
+    cursor2.executemany('UPDATE ccc_'+languagecode+'wiki SET ccc_binary=0, ccc_geolocated=-1 WHERE qitem = ? AND page_id = ?', not_ccc)
 
 #    cursor2.executemany('DELETE FROM ccc_'+languagecode+'wiki WHERE qitem = ? AND page_id = ?', not_ccc)
     conn2.commit()
     print ('* filter_articles_geolocated_elsewhere Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
+
 def get_training_data(languagecode):
     # OBTAIN THE DATA TO FIT.
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary IS NOT NULL;'
     ccc_df = pd.read_sql_query(query, conn)
 
-    ccc_df = ccc_df[['qitem','category_crawling_territories','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC','ccc_binary']]
+    positive_features = ['qitem','category_crawling_territories','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC','ccc_binary']
+    negative_features = ['other_ccc_country_wd','other_ccc_location_wd','other_ccc_language_strong_wd','other_ccc_created_by_wd','other_ccc_part_of_wd','other_ccc_language_weak_wd','other_ccc_affiliation_wd','other_ccc_has_part_wd', 'other_ccc_keyword_title','other_ccc_category_crawling_relative_level', 'num_inlinks_from_geolocated_abroad', 'num_outlinks_to_geolocated_abroad', 'percent_inlinks_from_geolocated_abroad', 'percent_outlinks_to_geolocated_abroad']
+    features = positive_features+negative_features
+
+    ccc_df = ccc_df[features]
     ccc_df = ccc_df.set_index(['qitem'])
 #    print (ccc_df.head())
     if len(ccc_df.index.tolist())==0: print ('It is not possible to classify Wikipedia articles as there is no groundtruth.'); return (0,0,[],[]) # maxlevel,num_articles_ccc,ccc_df_list,binary_list
@@ -2909,12 +3170,16 @@ def get_training_data(languagecode):
 
 def get_testing_data(languagecode,maxlevel):
     # OBTAIN THE DATA TO TEST
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 #    query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary IS NULL;' # ALL
     query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary IS NULL AND (category_crawling_territories IS NOT NULL OR category_crawling_level IS NOT NULL OR language_weak_wd IS NOT NULL OR affiliation_wd IS NOT NULL OR has_part_wd IS NOT NULL);' # POTENTIAL
 
     potential_ccc_df = pd.read_sql_query(query, conn)
-    potential_ccc_df = potential_ccc_df[['page_title','category_crawling_territories','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC']]
+    positive_features = ['page_title','category_crawling_territories','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC']
+    negative_features = ['other_ccc_country_wd','other_ccc_location_wd','other_ccc_language_strong_wd','other_ccc_created_by_wd','other_ccc_part_of_wd','other_ccc_language_weak_wd','other_ccc_affiliation_wd','other_ccc_has_part_wd', 'other_ccc_keyword_title','other_ccc_category_crawling_relative_level', 'num_inlinks_from_geolocated_abroad', 'num_outlinks_to_geolocated_abroad', 'percent_inlinks_from_geolocated_abroad', 'percent_outlinks_to_geolocated_abroad']
+    features = positive_features + negative_features
+
+    potential_ccc_df = potential_ccc_df[features]
     potential_ccc_df = potential_ccc_df.set_index(['page_title'])
     potential_ccc_df = potential_ccc_df.fillna(0)
 
@@ -3071,7 +3336,7 @@ def calculate_articles_ccc_binary_classifier(languagecode,classifier,page_titles
     evaluate_ccc_selection_manual_assessment(languagecode,selected,page_titles_page_ids)
 #    input('')
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
     query = 'UPDATE ccc_'+languagecode+'wiki SET ccc_binary = 1 WHERE page_id = ? AND qitem = ?;'
     cursor.executemany(query,selected)
     conn.commit()
@@ -3087,7 +3352,7 @@ def calculate_articles_ccc_main_territory(languagecode):
     for i in range(1,number_iterations):
         print ('* iteration nº: '+str(i))
         # this function verifies the keywords associated territories, category crawling associated territories, and the wikidata associated territories in order to choose one.
-        conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
 
         if languagecode not in languageswithoutterritory:
             try: qitems=territories.loc[languagecode]['QitemTerritory'].tolist()
@@ -3231,8 +3496,8 @@ def calculate_articles_ccc_main_territory(languagecode):
 def calculate_articles_ccc_retrieval_strategies(languagecode):
     functionstartTime = time.time()
 
-    conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('ccc_current.db'); cursor2 = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'ccc_current.db'); cursor2 = conn.cursor()
 
     strategies = []
     query = 'SELECT qitem, page_id, geocoordinates, country_wd, location_wd, language_strong_wd, created_by_wd, part_of_wd, keyword_title, category_crawling_territories, language_weak_wd, affiliation_wd, has_part_wd, num_inlinks_from_CCC, num_outlinks_to_CCC FROM ccc_'+languagecode+'wiki'+';'
@@ -3254,7 +3519,7 @@ def evaluate_ccc_selection_manual_assessment(languagecode, selected, page_titles
 
     if selected is None:
         print ('Retrieving the CCC articles from the .db')
-        conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
         query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary IS NOT NULL;'
         ccc_df = pd.read_sql_query(query, conn)
         ccc_df = ccc_df[['page_title','category_crawling_territories','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC','ccc_binary']]
@@ -3282,7 +3547,7 @@ def evaluate_ccc_selection_manual_assessment(languagecode, selected, page_titles
         page_ids_page_titles = {v: k for k, v in page_titles_page_ids.items()}
 
         print ('Using the CCC articles that have just been classified.')
-        conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
         query = 'SELECT * FROM ccc_'+languagecode+'wiki WHERE ccc_binary IS NOT NULL;'
         ccc_df = pd.read_sql_query(query, conn)
         ccc_df = ccc_df[['page_title','category_crawling_territories','category_crawling_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC','ccc_binary']]
@@ -3389,8 +3654,10 @@ if __name__ == '__main__':
     startTime = time.time()
     year_month = datetime.date.today().strftime('%Y-%m')
 
-    data_path = '/srv/wcdo/site/datasets/'
-    current_data_path = data_path + year_month + '/'
+    databases_path = '/srv/wcdo/databases/'
+
+    datasets_path = '/srv/wcdo/site/datasets/'
+    current_datasets_path = datasets_path + year_month + '/'
 
     # Import the language-territories mappings
     territories = load_languageterritories_mapping()
