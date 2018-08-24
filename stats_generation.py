@@ -111,10 +111,10 @@ def main():
 # DATABASE AND DATASETS MAINTENANCE FUNCTIONS (CCC AND WIKIDATA)
 ################################################################
 
-# Loads language_territories_mapping_quality.csv file
+# Loads language_territories_mapping.csv file
 def load_languageterritories_mapping():
 # READ FROM STORED FILE:
-    territories = pd.read_csv(databases_path + 'language_territories_mapping_quality.csv',sep='\t',na_filter = False)
+    territories = pd.read_csv(databases_path + 'language_territories_mapping.csv',sep='\t',na_filter = False)
     territories = territories[['territoryname','territorynameNative','QitemTerritory','languagenameEnglishethnologue','WikimediaLanguagecode','demonym','demonymNative','ISO3166','ISO31662','regional','country','indigenous','languagestatuscountry','officialnationalorregional']]
     territories = territories.set_index(['WikimediaLanguagecode'])
 

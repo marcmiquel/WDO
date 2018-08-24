@@ -7,16 +7,15 @@ import sys
 import codecs
 import pycountry
 import requests
+from lxml import html
 import babel.languages
 from babel import Locale
 import pandas as pd
-from lxml import html
 
 
 if sys.stdout.encoding is None: sys.stdout = codecs.open("/dev/stdout", "w", 'utf-8')
 #sys.stdout=open("test.txt","w")
 startTime = time.time()
-data_dir = 'data_folder/'
 
 # INSTRUCTIONS: ****************************************************************************************************************
 # First time: use it without arguments to create the language list.
@@ -291,7 +290,7 @@ def extract_language_territories_unicode(languagelist):
 				territorynameNative=''
 				ISO3166=country.alpha_2
 				ISO31662=''
-				region=''
+				region='' # We consider it a region when it does not have a ISO 3166. Certain regions that have ISO 3166 (usually colonies) have a 'no' in this attribute.
 				countryname = Locale('EN').territories[country.alpha_2] # in English
 				officialnationalorregional='no'
 				singlelanguageofficialcountry='no'
@@ -367,7 +366,7 @@ def identify_territories_from_location_sentence(sentence,wikidatacountrysubdivis
 			    'demonymNative': '',
 			    'ISO3166': ISO3166,
 			    'ISO31662': subdivision.code,
-			    'region':'yes',
+			    'region':'yes', # We consider it a region when it does not have a ISO 3166. Certain regions that have ISO 3166 (usually colonies) have a 'no' in this attribute.
 			    'parentcode':subdivision.parent_code,
 			    'type':subdivision.type,
 			    'locationtext': sentence,
@@ -428,7 +427,7 @@ def identify_territories_from_location_sentence(sentence,wikidatacountrysubdivis
 	    'demonymNative': '',
 	    'ISO3166': ISO3166,
 	    'ISO31662': '',
-	    'region': 'yes',
+	    'region': 'yes', # We consider it a region when it does not have a ISO 3166. Certain regions that have ISO 3166 (usually colonies) have a 'no' in this attribute.
 	    'locationtext': sentence
 		})
 
