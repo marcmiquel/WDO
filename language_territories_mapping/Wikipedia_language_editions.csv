@@ -5,7 +5,7 @@ Acehnese	Q27683	ace	Acehnese Wikipedia	https://en.wikipedia.org/wiki/Acehnese_la
 Adyghe	Q27776	ady	Adyghe Wikipedia	https://en.wikipedia.org/wiki/Adyghe_language		ady			RU	yes	адыгабзэ;кӏахыбзэ;кӏах псалъэ;адыгэбзэ	1
 Afrikaans	Q14196	af	Afrikaans Wikipedia	https://en.wikipedia.org/wiki/Afrikaans	af	afr			ZA	yes	afrikaans	1
 Akan language	Q28026	ak	Akan Wikipedia	https://en.wikipedia.org/wiki/Akan_language	ak	aka			GH	yes	akan	1
-Alsatian;Alemannic German;Zurich German;Swabian German;Basel German	Q8786;Q131339;Q248682;Q327274;Q359972	als	Alemannic Wikipedia	https://en.wikipedia.org/wiki/Basel_German		gsw;swg				no	elsässerditsch;elsässisch;alemannisch;züritüütsch;schwäbisch;baseldytsch;shqip (shqipëri)	0
+Alemannic	Q8786;Q131339;Q248682;Q327274;Q359972	als	Alemannic Wikipedia	https://en.wikipedia.org/wiki/Basel_German		gsw;swg				no	elsässerditsch;elsässisch;alemannisch;züritüütsch;schwäbisch;baseldytsch;shqip (shqipëri)	0
 Amharic	Q28244	am	Amharic Wikipedia	https://en.wikipedia.org/wiki/Amharic	am	amh		ET		yes	አማርኛ	1
 Aragonese	Q8765	an	Aragonese Wikipedia	https://en.wikipedia.org/wiki/Aragonese_language	an	arg				no	idioma aragonés;aragonés	0
 Old English	Q42365	ang	Old English Wikipedia	https://en.wikipedia.org/wiki/Old_English		ang				no	ænglisc sprǣc;old english;englisce sprǣc;englisce sprǽc;englisce geþéode;englisc sprǣc;englisc sprǽc;englisc spræc;englisc spraec;englisc geþéode;ænglisc	0
@@ -18,7 +18,7 @@ Atikamekw	Q56590	atj	Atikamekw Wikipedia	https://en.wikipedia.org/wiki/Atikamekw
 Avar	Q29561	av	Avar Wikipedia	https://en.wikipedia.org/wiki/Avar_language	av	ava			RU	yes	авар мацi;магӏарул мацӏ;магiарул мацi	1
 Aymara	Q4627	ay	Aymara Wikipedia	https://en.wikipedia.org/wiki/Aymara_language	ay	aym		BO		yes	aymar aru;aymara aru	1
 Azerbaijani	Q9292	az	Azerbaijani Wikipedia	https://en.wikipedia.org/wiki/Azerbaijani_language	az	aze		AZ	IQ;RU	no	azərbaycan dili;azərbaycanca	3
-South Azerbaijani	Q3449805	azb	South Azerbaijani Wikipedia	no link		azb				no	azerbaijani	0
+South Azerbaijani	Q3449805	azb	South Azerbaijani Wikipedia	https://en.wikipedia.org/wiki/South_Azerbaijani_language		azb				no	azerbaijani	0
 Bashkir language	Q13389	ba	Bashkir Wikipedia	https://en.wikipedia.org/wiki/Bashkir_language	ba	bak			RU	yes	башҡорт теле	1
 Bavarian language	Q29540	bar	Bavarian Wikipedia	https://en.wikipedia.org/wiki/Bavarian_language		bar				no	boarisch	0
 Samogitian	Q213434	bat-smg	Samogitian Wikipedia	https://en.wikipedia.org/wiki/Samogitian_dialect		sgs				no	žemaitiu ruoda	0
@@ -37,7 +37,7 @@ Breton	Q12107	br	Breton Wikipedia	https://en.wikipedia.org/wiki/Breton_language	
 Bosnian	Q9303	bs	Bosnian Wikipedia	https://en.wikipedia.org/wiki/Bosnian_language	bs	bos		BA		yes	bosanski jezik;босански;бос.;jezik bošnjačkog naroda;bosanski;bos.	1
 Buginese	Q33190	bug	Buginese Wikipedia	https://en.wikipedia.org/wiki/Buginese_language		bug				no	ᨅᨗᨌᨑ ᨕᨘᨁᨗ;ᨅᨔ ᨕᨘᨁᨗ;basa ugi	0
 Buryat	Q33120	bxr	Buryat Wikipedia	https://en.wikipedia.org/wiki/Buryat_language		bua				no	буряад хэлэн;буряад-монгол хэлэн	0
-Catalan	Q7026	ca	Catalan Wikipedia	https://en.wikipedia.org/wiki/Catalan_language	ca	cat		AD	ES	no	català;valencià;llengua catalana;idioma català	2
+Catalan	Q7026;Q32641	ca	Catalan Wikipedia	https://en.wikipedia.org/wiki/Catalan_language	ca	cat		AD	ES	no	català;valencià;llengua catalana;idioma català	2
 Chavacano	Q33281	cbk-zam	Chavacano Wikipedia	https://en.wikipedia.org/wiki/Chavacano		cbk				no	chavacano;chavacano language;chabacano	0
 Min Dong	Q36455	cdo	Min Dong Wikipedia	https://en.wikipedia.org/wiki/Eastern_Min		cdo				no	mìng-dĕ̤ng-ngṳ̄;閩東語|buc=mìng-dĕ̤ng-ngṳ̄;mìng-dĕ̤ng-uâ	0
 Chechen	Q33350	ce	Chechen Wikipedia	https://en.wikipedia.org/wiki/Chechen_language	ce	che			RU	yes	noxçiyn mott;нохчийн мотт;нохчийн	1
@@ -90,7 +90,7 @@ Scottish Gaelic	Q9314	gd	Scottish Gaelic Wikipedia	https://en.wikipedia.org/wiki
 Galician	Q9307	gl	Galician Wikipedia	https://en.wikipedia.org/wiki/Galician_language	gl	glg			ES	yes	lingua galega;o galego、a lingua galega;galego	1
 Gilaki	Q33657	glk	Gilaki Wikipedia	https://en.wikipedia.org/wiki/Gilaki_language		glk				no	گيلکي	0
 Guarani	Q35876	gn	Guarani Wikipedia	https://en.wikipedia.org/wiki/Guarani_language	gn	grn		PY		yes	avañe'ẽ;ñe’ẽ guaraní;ñe’e guaraní;ñe'ẽ guarani;guarani ñe'ẽ	1
-Goan Konkani	Q5575236	gom	Goan Konkani Wikipedia	no link		gom				no	goan konkani	0
+Goan Konkani	Q5575236	gom	Goan Konkani Wikipedia	https://en.wikipedia.org/wiki/Konkani_language		gom				no	goan konkani	0
 Gorontalo	Q2501174	gor	Gorontalo Wikipedia	https://en.wikipedia.org/wiki/Gorontalo_language		gor					hulontalo	
 Gothic	Q35722	got	Gothic Wikipedia	https://en.wikipedia.org/wiki/Gothic_language		got				no	𐌲𐌿𐍄𐍂𐌰𐌶𐌳𐌰	0
 Gujarati	Q5137	gu	Gujarati Wikipedia	https://en.wikipedia.org/wiki/Gujarati_language	gu	guj			IN	yes	ગુજરાતી ભાષા;ગુજરાતી	1
@@ -106,7 +106,7 @@ Croatian	Q6654	hr	Croatian Wikipedia	https://en.wikipedia.org/wiki/Croatian_lang
 Upper Sorbian	Q13248	hsb	Upper Sorbian Wikipedia	https://en.wikipedia.org/wiki/Upper_Sorbian_language		hsb				no	hornjoserbšćina;hornjoserbska rěč	0
 Haitian Creole	Q33491	ht	Haitian Creole Wikipedia	https://en.wikipedia.org/wiki/Haitian_Creole	ht	hat		HT		yes	kreyòl ayisyen;lang kreyòl ayisyen;créole	1
 Hungarian	Q9067	hu	Hungarian Wikipedia	https://en.wikipedia.org/wiki/Hungarian_language	hu	hun		HU	AT;RS	no	magyar nyelv;magyar	3
-Armenian;Western Armenian;Eastern Armenian	Q8785;Q180945;Q181059	hy	Armenian Wikipedia	https://en.wikipedia.org/wiki/Eastern_Armenian	hy	hye	hyx	AM		yes	հայերեն;արևելահայերեն;արեւելահայերէն;արևելահայ	1
+Armenian	Q8785;Q180945;Q181059	hy	Armenian Wikipedia	https://en.wikipedia.org/wiki/Eastern_Armenian	hy	hye	hyx	AM		yes	հայերեն;արևելահայերեն;արեւելահայերէն;արևելահայ	1
 Herero	Q33315	hz	Herero Wikipedia	https://en.wikipedia.org/wiki/Herero_language	hz	her				no	otsiherero	0
 Interlingua	Q35934	ia	Interlingua Wikipedia	https://en.wikipedia.org/wiki/Interlingua	ia	ina				no	interlingua;interlingua de iala	0
 Indonesian	Q9240	id	Indonesian Wikipedia	https://en.wikipedia.org/wiki/Indonesian_language	id	ind		ID		yes	bahasa indonesia;indonesia	1
@@ -177,7 +177,7 @@ Mongolian	Q9246	mn	Mongolian Wikipedia	https://en.wikipedia.org/wiki/Mongolian_l
 Moldovan	Q36392	mo	Moldovan Wikipedia	https://en.wikipedia.org/wiki/Moldovan_language	mo	ron				no	лимба молдовеняскэ;limba moldovenească	0
 Marathi	Q1571	mr	Marathi Wikipedia	https://en.wikipedia.org/wiki/Marathi_language	mr	mar			IN	yes	मराठी;मराठी भाषा	1
 Hill Mari language	Q1776032	mrj	Hill Mari Wikipedia	https://en.wikipedia.org/wiki/Hill_Mari_language		mrj				no	мары йӹлмӹ;кырык мары йылмы	0
-Malaysian;Malay	Q15065;Q9237	ms	Malay Wikipedia	https://en.wikipedia.org/wiki/Malay_language	ms	zsm;msa		BN;MY;SG		no	bahasa melayu;bahasa bahasa melayu	3
+Malay	Q15065;Q9237	ms	Malay Wikipedia	https://en.wikipedia.org/wiki/Malay_language	ms	zsm;msa		BN;MY;SG		no	bahasa melayu;bahasa bahasa melayu	3
 Maltese	Q9166	mt	Maltese Wikipedia	https://en.wikipedia.org/wiki/Maltese_language	mt	mlt		MT		yes	lingwa maltija;malti	1
 Muscogee	Q523014	mus	Muscogee Wikipedia	https://en.wikipedia.org/wiki/Muscogee_language		mus				no	mvskoke	0
 Mirandese	Q13330	mwl	Mirandese Wikipedia	https://en.wikipedia.org/wiki/Mirandese_language		mwl				no	lhéngua mirandesa;mirandés;léngua mirandesa	0
@@ -194,7 +194,7 @@ Nepali	Q33823	ne	Nepali Wikipedia	https://en.wikipedia.org/wiki/Nepali_language	
 Nepal Bhasa	Q33979	new	Nepal Bhasa Wikipedia	https://en.wikipedia.org/wiki/Newar_language		new				no	नेपालभाषा;नेवा भाय्;नेपाल भाषा;nepal bhasa wikipedia	0
 Ndonga	Q33900	ng	Ndonga Wikipedia	https://en.wikipedia.org/wiki/Ndonga_dialect	ng	ndo				no	ndonga	0
 Dutch	Q7411	nl	Dutch Wikipedia	https://en.wikipedia.org/wiki/Dutch_language	nl	nld		AW;BE;BQ;CW;NL;SR;SX		no	nederlands	7
-Nynorsk;Høgnorsk	Q25164;Q1420587	nn	Nynorsk Wikipedia	https://en.wikipedia.org/wiki/H%C3%B8gnorsk	nn	nno		NO		yes	nynorsk;norsk nynorsk;norsk (nynorsk);høgnorsk;høgnorskt;høgnorske;høgnorska;hognorsk	1
+Norwegian (Nynorsk)	Q25164;Q1420587	nn	Nynorsk Wikipedia	https://en.wikipedia.org/wiki/H%C3%B8gnorsk	nn	nno		NO		yes	nynorsk;norsk nynorsk;norsk (nynorsk);høgnorsk;høgnorskt;høgnorske;høgnorska;hognorsk	1
 Bokmål	Q25167	no	Norwegian Wikipedia	https://en.wikipedia.org/wiki/Bokm%C3%A5l	nb	nob		NO;SJ		no	bokmål;norsk bokmål (norge)	2
 Novial	Q36738	nov	Novial Wikipedia	https://en.wikipedia.org/wiki/Novial		nov				no	novial;novial lingue	0
 Norman	Q33850	nrm	Norman Wikipedia	https://en.wikipedia.org/wiki/Norman_language		nrf				no	normaund;nouormand;normand	0
@@ -248,6 +248,7 @@ Samoan	Q34011	sm	Samoan Wikipedia	https://en.wikipedia.org/wiki/Samoan_language	
 Shona	Q34004	sn	Shona Wikipedia	https://en.wikipedia.org/wiki/Shona_language	sn	sna		ZW		yes	chishona	1
 Somali	Q13275	so	Somali Wikipedia	https://en.wikipedia.org/wiki/Somali_language	so	som		SO		yes	af-soomaali;soomaali	1
 Albanian	Q8748	sq	Albanian Wikipedia	https://en.wikipedia.org/wiki/Albanian_language	sq	sqi	sqj	AL	MK	no	gjuha shqipe;shqipja;shqip	2
+Santali	Q33965	sat	Santali Wikipedia	https://en.wikipedia.org/wiki/Santali_language		sat					santali;ᱥᱟᱱᱛᱟᱲᱤ ᱯᱟᱹᱨᱥᱤ	
 Serbian	Q9299	sr	Serbian Wikipedia	https://en.wikipedia.org/wiki/Serbian_language	sr	srp		BA;RS		no	srpski jezik;срп.;српски језик;српски	2
 Siberian language	Q1194341	ru-sib	Siberian Wikipedia	no link							сибирской	
 Sranan tongo	Q33989	srn	Sranan Wikipedia	https://en.wikipedia.org/wiki/Sranan_Tongo		srn				no	sranantongo;sranan tongo	0
@@ -302,3 +303,4 @@ Zeelandic	Q237409	zea	Zeelandic Wikipedia	https://en.wikipedia.org/wiki/Zeelandi
 Standard Chinese	Q727694	zh	Chinese Wikipedia	https://en.wikipedia.org/wiki/Standard_Chinese	zh	cmn		CN;SG;TW		no	現代標準漢語;現代漢語;中文	3
 Classical Chinese	Q37041	zh-classical	Classical Chinese Wikipedia	https://en.wikipedia.org/wiki/Classical_Chinese		lzh				no	文言	0
 Cantonese	Q9186	zh-yue	Cantonese Wikipedia	https://en.wikipedia.org/wiki/Cantonese		yue				no	粵文;粵語	0
+Zulu	Q10179	zu	Zulu Wikipedia	https://en.wikipedia.org/wiki/Zulu_language	zu	zul			ZA	yes	zu	1
