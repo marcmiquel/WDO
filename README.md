@@ -1,5 +1,5 @@
 # WCDO
-========
+=========
 
 The [__Wikipedia Cultural Diversity Obsevatory (WCDO)__](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory) is a research project whose purpose is to raise awareness on Wikipedia’s current state of cultural diversity, __(1) providing datasets__, __(2) sites with visualizations and statistics__, and __(3) pointing out solutions to improve__ intercultural coverage and __knowledge inequalities__ among languages and geographical places.
 
@@ -17,7 +17,7 @@ The method is build with:
 - [Sqlite 3](https://www.sqlite.org/) - To store the data.
 - [Scikit-learn](https://scikit-learn.org) - To process the data.
 
-The datasets are generated on a monthly basis at wcdo.wmflabs.org in CSV ((more info))[https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content#Datasets].
+The datasets are generated on a monthly basis at wcdo.wmflabs.org in CSV [(more info)](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content#Datasets).
 One sample of the generated CCC datasets is stored in the [datasets_sample folder](https://github.com/marcmiquel/WCDO/tree/master/datasets_sample), and the historical archive is in [wcdo.wmflabs.org/datasets](http://wcdo.wmflabs.org/datasets/).
 
 
@@ -26,10 +26,10 @@ In order to be able to answer questions on Wikipedia cultural diversity, it is n
 * `stats_generation.py` computes these statistics and ranks the articles in order to create valuable lists of articles for each Wikipedia language edition. It stores the results in `wcdo_stats.db` on a monthly basis so it can be used to create tables and graphs.
 
 Currently, most of the results are presented through tables in the (WCDO meta pages)[https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory], with results for all languages and for each individually. This is done using:
-- [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot)
-- [Bokeh](https://bokeh.pydata.org)
+- [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot) - To post and update mediawiki pages.
+- [Bokeh](https://bokeh.pydata.org) - To represent the stats.
 
-In the near future, the lists of articles (now presented in static HTML, e.g. List of 100 articles from the Romanian CCC that have been edited by the highest number of editors and its existance in Danish Wikipedia)[http://wcdo.wmflabs.org/archive/2018-07/Wikipedia_Cultural_Diversity_Observatory/Romanian_Wikipedia/CCC_Vital_articles_Top_100/ro_da.html] are going to be automatically presented through a Flask app.
+In the near future, the lists of articles [(now presented in static HTML, e.g. List of 100 articles from the Romanian CCC that have been edited by the highest number of editors and its existance in Danish Wikipedia)](http://wcdo.wmflabs.org/archive/2018-07/Wikipedia_Cultural_Diversity_Observatory/Romanian_Wikipedia/CCC_Vital_articles_Top_100/ro_da.html) are going to be automatically presented through a Flask app.
 
 
 ## Resarch: Papers and presentations
