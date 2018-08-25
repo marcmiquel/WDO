@@ -1,5 +1,5 @@
 # WCDO
-=========
+==========
 
 The [__Wikipedia Cultural Diversity Obsevatory (WCDO)__](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory) is a research project whose purpose is to raise awareness on Wikipedia’s current state of cultural diversity, __(1) providing datasets__, __(2) sites with visualizations and statistics__, and __(3) pointing out solutions to improve__ intercultural coverage and __knowledge inequalities__ among languages and geographical places.
 
