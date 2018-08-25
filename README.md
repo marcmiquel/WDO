@@ -1,5 +1,5 @@
 # WCDO
-======
+========
 
 The [__Wikipedia Cultural Diversity Obsevatory (WCDO)__](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory) is a research project whose purpose is to raise awareness on Wikipedia’s current state of cultural diversity, __(1) providing datasets__, __(2) sites with visualizations and statistics__, and __(3) pointing out solutions to improve__ intercultural coverage and __knowledge inequalities__ among languages and geographical places.
 
@@ -10,52 +10,26 @@ Cultural Context Content is the group of articles in a Wikipedia language editio
 The [method](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content) to obtain this group of articles is divided into two steps.
 
 * `language_territories_mapping.py` creates the first version of the database language_territories_mapping.csv with the territories that speak a language because it is either official or native.
-* `ccc_selection.py` retrieves and processes data from  __Wikidata JSON dump__ and the Wikipedia langauge editions databases __(MySQL replicas)__ in order to create the final dataset.
+* `ccc_selection.py` uses this database as a reference, retrieves and processes data from  __Wikidata JSON dump__ and the Wikipedia langauge editions databases __(MySQL replicas)__ in order to create the final CCC dataset.
 
-They use:
+The method is build with:
 - [Python 3](https://www.python.org/download/releases/3.0/) - To manage the data.
-- [Scikit-learn](https://scikit-learn.org) - To process the data.
 - [Sqlite 3](https://www.sqlite.org/) - To store the data.
+- [Scikit-learn](https://scikit-learn.org) - To process the data.
 
-The datasets are generated on a monthly basis at wcdo.wmflabs.org in CSV and this data format.
-One sample of the generated CCC datasets is stored in this folder.
-
-
-
-
-
-
-
-
-
-
-
+The datasets are generated on a monthly basis at wcdo.wmflabs.org in CSV ((more info))[https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content#Datasets].
+One sample of the generated CCC datasets is stored in the [datasets_sample folder](https://github.com/marcmiquel/WCDO/tree/master/datasets_sample), and the historical archive is in [wcdo.wmflabs.org/datasets](http://wcdo.wmflabs.org/datasets/).
 
 
 ## Site: Meta page and Vital article lists
+In order to be able to answer questions on Wikipedia cultural diversity, it is necessary to compute several statistics based on CCC and other groups of articles.
+* `stats_generation.py` computes these statistics and ranks the articles in order to create valuable lists of articles for each Wikipedia language edition. It stores the results in `wcdo_stats.db` on a monthly basis so it can be used to create tables and graphs.
 
-__Built with__
+Currently, most of the results are presented through tables in the (WCDO meta pages)[https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory], with results for all languages and for each individually. This is done using:
+- [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot)
+- [Bokeh](https://bokeh.pydata.org)
 
-
-or.... in this github there is a sample.
-
-what are the STATS BY WCDO (intersections, increments, rankings). LINK.
- wcdo_stats.db ->
-* stats_generation.py
-
-
-
-- [Python](https://vuejs.org/) - The web framework used
-- [d3](https://d3js.org/) - Version 4+ for visualizations
-- [CrossFilter](https://github.com/crossfilter/crossfilter) - For exploring large multivariate datasets in the browser
-
-* meta_update.py
-uses pywikibot, bokeh.
-
-* lists_app.py
-
-uses flask.
-
+In the near future, the lists of articles (now presented in static HTML, e.g. List of 100 articles from the Romanian CCC that have been edited by the highest number of editors and its existance in Danish Wikipedia)[http://wcdo.wmflabs.org/archive/2018-07/Wikipedia_Cultural_Diversity_Observatory/Romanian_Wikipedia/CCC_Vital_articles_Top_100/ro_da.html] are going to be automatically presented through a Flask app.
 
 
 ## Resarch: Papers and presentations
