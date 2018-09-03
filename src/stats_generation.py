@@ -26,16 +26,17 @@ class Logger(object): # this prints both the output to a file and to the termina
 # MAIN
 def main():
 
-    # CREATE DATABASES
-    print ('Creating the databases.')
-    create_intersections_db()
-    create_increments_db()
-    create_ccc_vital_articles_lists_db()
-
     # GENERATE MAIN STATS
     print ('Generating the main stats.')
-    generate_all_articles_intersections()
+    generate_langs_intersections()
+    generate_ccc_segments_intersections()
+    generate_langs_ccc_intersections()
+    generate_ccc_vital_articles_lists_intersections()
+    generate_people_segments_intersections()
+    generate_people_ccc_intersections()
+    generate_geolocated_segments_intersections()
     generate_last_month_articles_intersections()
+    generate_pageviews_intersections()
     delete_last_iteration_increments()
 
     # GENERATE CCC VITAL ARTICLES LISTS
@@ -65,36 +66,34 @@ def main():
             else: category = ''
 
             # EDITORS
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_editors': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_editors')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_editors': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_editors')
 
             # FEATURED, LONG AND CITED
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'featured_article': 0.8, 'num_references':0.1, 'num_bytes':0.1}, 'positive', length, 'none', ['featured_article','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_featured')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'featured_article': 0.8, 'num_references':0.1, 'num_bytes':0.1}, 'positive', length, 'none', ['featured_article','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_featured')
 
             # GL MOST INLINKED FROM CCC
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['gl'], category, 80, '', {'num_inlinks_from_CCC': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_geolocated')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['gl'], category, 80, '', {'num_inlinks_from_CCC': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_geolocated')
 
             # KEYWORDS ON TITLE WITH MOST BYTES
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['kw'], category, 80, '', {'num_bytes': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','featured_article','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_keywords')    
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['kw'], category, 80, '', {'num_bytes': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','featured_article','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_keywords')    
 
             # MOST EDITED WOMEN BIOGRAPHY
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc','female'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_women')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc','female'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_women')
 
             # MOST EDITED MEN BIOGRAPHY
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc','male'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_men')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc','male'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_men')
 
             # MOST EDITED AND CREATED DURING FIRST THREE YEARS
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, 'first_three_years', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_created_first_three_years')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, 'first_three_years', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_created_first_three_years')
 
             # MOST EDITED AND CREATED DURING LAST YEAR
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, 'last_year', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_created_last_year')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, 'last_year', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_created_last_year')
 
             # MOST SEEN (PAGEVIEWS) DURING LAST MONTH
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_pageviews':1}, 'positive', length, 'none', ['num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_pageviews')
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_pageviews':1}, 'positive', length, 'none', ['num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_pageviews')
 
             # MOST DISCUSSED (EDITS DISCUSSIONS)
-            generate_intersections_with_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_discussions': 1}, 'positive', length, 'none', ['num_discussions','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_discussions')
-
-    # FINISH
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_discussions': 1}, 'positive', length, 'none', ['num_discussions','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_discussions')
     delete_last_iteration_ccc_vital_articles_lists()
 
 
@@ -104,6 +103,81 @@ def main():
 # MAIN
 ######################## STATS GENERATION SCRIPT ######################## 
 
+    # CREATE DATABASES
+    print ('Creating the databases.')
+    create_intersections_db()
+    create_increments_db()
+    create_ccc_vital_articles_lists_db()
+
+    # GENERATE MAIN STATS
+    print ('Generating the main stats.')
+    generate_langs_intersections()
+    generate_ccc_segments_intersections()
+    generate_langs_ccc_intersections()
+    generate_ccc_vital_articles_lists_intersections()
+    generate_people_segments_intersections()
+    generate_people_ccc_intersections()
+    generate_geolocated_segments_intersections()
+    generate_last_month_articles_intersections()
+    generate_pageviews_intersections()
+    delete_last_iteration_increments()
+
+    # GENERATE CCC VITAL ARTICLES LISTS
+    print ('Generating the CCC Vital articles lists.')
+    for languagecode in wikilanguagecodes_real:
+        (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(languagecode)
+
+        print ('\n### language '+str(wikilanguagecodes.index(languagecode)+1)+'/'+str(len(wikilanguagecodes))+': \t'+languages.loc[languagecode]['languagename']+' '+languagecode+' \t| '+languages.loc[languagecode]['region']+'\t'+languages.loc[languagecode]['subregion']+'\t'+languages.loc[languagecode]['intermediateregion']+' | '+languages.loc[languagecode]['languageofficialnational']+' '+languages.loc[languagecode]['languageofficialregional'])
+
+        countries = load_countries_from_language(languagecode)
+        countries.append('')
+        print ('these are the countries from this language:')
+        print (countries)
+        length = 1000
+        for country in countries:
+            # for the wiki_path
+            if country != '': 
+                country_name = territories.loc[territories['ISO3166'] == country].loc[languagecode]['country']
+                if isinstance(country_name, str) != True: country_name=list(country_name)[0]
+                country = country_name
+            else: country = ''
+
+            # category
+            if country != '': 
+                qitems_list = load_language_territories_from_country_language(country, languagecode)
+                category = qitems_list
+            else: category = ''
+
+            # EDITORS
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_editors': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_editors')
+
+            # FEATURED, LONG AND CITED
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'featured_article': 0.8, 'num_references':0.1, 'num_bytes':0.1}, 'positive', length, 'none', ['featured_article','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_featured')
+
+            # GL MOST INLINKED FROM CCC
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['gl'], category, 80, '', {'num_inlinks_from_CCC': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_geolocated')
+
+            # KEYWORDS ON TITLE WITH MOST BYTES
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['kw'], category, 80, '', {'num_bytes': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','featured_article','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_keywords')    
+
+            # MOST EDITED WOMEN BIOGRAPHY
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc','female'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_women')
+
+            # MOST EDITED MEN BIOGRAPHY
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc','male'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_men')
+
+            # MOST EDITED AND CREATED DURING FIRST THREE YEARS
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, 'first_three_years', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_created_first_three_years')
+
+            # MOST EDITED AND CREATED DURING LAST YEAR
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, 'last_year', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_created_last_year')
+
+            # MOST SEEN (PAGEVIEWS) DURING LAST MONTH
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_pageviews':1}, 'positive', length, 'none', ['num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_pageviews')
+
+            # MOST DISCUSSED (EDITS DISCUSSIONS)
+            generate_ccc_vital_articles_lists(languagecode, 'ca', ['ccc'], category, 80, '', {'num_discussions': 1}, 'positive', length, 'none', ['num_discussions','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'CCC_Vital_articles_discussions')
+    delete_last_iteration_ccc_vital_articles_lists()
 
 """
 
@@ -307,9 +381,9 @@ def obtain_proximity_wikipedia_languages_lists(languagecode):
     upper9lower10 = wikipedialanguage_numberarticles_sorted[i-9:i]+wikipedialanguage_numberarticles_sorted[i:i+11]
 
     # CLOSEST
-    conn = sqlite3.connect('wcdo_data.db'); cursor = conn.cursor()
-    query = 'SELECT rel_value, entity_2 FROM wcdo_intersections WHERE entity_1 = "'+languagecode+'" AND entity_1_descriptor = "ccc" AND entity_2_descriptor = "wp";'
-    for row in cursor.execute(query):
+    conn = sqlite3.connect('wcdo_stats.db'); cursor = conn.cursor()
+    query = 'SELECT rel_value, set2 FROM wcdo_intersections WHERE set1 = "'+languagecode+'" AND set1descriptor = "ccc" AND set2descriptor = "wp";'
+
     closest19 = []
     i = 1
     for row in cursor.execute(query):
@@ -352,21 +426,21 @@ def obtain_region_wikipedia_language_list(region, subregion, intermediateregion)
 
 
 # INTERSECTIONS AND INCREMENTS
-# COMMAND LINE: sqlite3 -header -csv wcdo_data.db "SELECT * FROM create_intersections_db;" > create_intersections_db.csv
+# COMMAND LINE: sqlite3 -header -csv wcdo_stats.db "SELECT * FROM create_intersections_db;" > create_intersections_db.csv
 def create_intersections_db():
     functionstartTime = time.time()
     print ('* create_intersections_db')
 
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
     query = ('CREATE table if not exists wcdo_intersections ('+
     'intersection_id integer primary key autoincrement, '+
     'content text not null, '+
-    'entity_1 text not null, '+
-    'entity_1_descriptor text, '+
+    'set1 text not null, '+
+    'set1descriptor text, '+
 
-    'entity_2 text, '+
-    'entity_2_descriptor text, '+
+    'set2 text, '+
+    'set2descriptor text, '+
 
     'abs_value integer,'+
     'rel_value float,'+
@@ -380,7 +454,7 @@ def create_increments_db():
     functionstartTime = time.time()
     print ('* create_increments_db')
 
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
 
     query = ('CREATE table if not exists wcdo_increments ('+
@@ -388,8 +462,7 @@ def create_increments_db():
     'abs_increment integer,'+
     'rel_increment float,'+
     'period text,'+
-
-    'PRIMARY KEY (cur_intersection_id, period);')
+    'PRIMARY KEY (cur_intersection_id, period));')
 
     cursor.execute(query)
 
@@ -403,7 +476,7 @@ def create_ccc_vital_articles_lists_db():
     print ('* create_ccc_vital_articles_lists_db')
 
 
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
     query = ('CREATE table if not exists wcdo_lists_article_features ('+
     'langcode_original text, '+
@@ -432,7 +505,7 @@ def create_ccc_vital_articles_lists_db():
     'list_name text,'+
     'measurement_date text,'+
 
-    'PRIMARY KEY (qitem, langcode_original, list_name, measurement_date);')
+    'PRIMARY KEY (qitem, langcode_original, list_name, measurement_date));')
     cursor.execute(query)
 
     query = ('CREATE table if not exists wcdo_lists_article_page_titles ('+
@@ -450,15 +523,15 @@ def create_ccc_vital_articles_lists_db():
     print ('* create_ccc_vital_articles_lists_db Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
-def generate_all_articles_intersections():
+def generate_langs_intersections():
     functionstartTime = time.time()
-    print ('* generate_all_articles_intersections')
+    print ('* generate_langs_intersections')
 
     conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
     conn3 = sqlite3.connect(databases_path + 'wikidata.db'); cursor3 = conn3.cursor()
 
-    query_insert = 'INSERT INTO wcdo_intersections (content,entity_1, entity_1_descriptor, entity_2, entity_2_descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
+    query_insert = 'INSERT INTO wcdo_intersections (content,set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
     # LANGUAGE EDITIONS
     for languagecode_1 in wikilanguagecodes:
@@ -468,20 +541,20 @@ def generate_all_articles_intersections():
             wpnumberofarticles_2=wikipedialanguage_numberarticles[languagecode_2]
 
             query = 'SELECT COUNT(qitem) FROM sitelinks WHERE langcode ='+languagecode_1+'wiki AND langcode ='+languagecode_2+'wiki;'
-            cursor.execute(query)
-            article_count = cursor.fetchone()[0]
+            cursor3.execute(query)
+            article_count = cursor3.fetchone()[0]
 
             values = ('articles',languagecode_1,'wp',languagecode_2,'wp',article_count,100*article_count/wpnumberofarticles_1,measurement_date)
-            cursor3.execute(query_insert,values); conn3.commit()
-            cursor3.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_1, 'wp', languagecode_2, 'wp', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1, 'wp', languagecode_2, 'wp', measurement_date)
 
             values = ('articles',languagecode_2,'wp',languagecode_1,'wp',article_count,100*article_count/wpnumberofarticles_2,measurement_date)
-            cursor3.execute(query_insert,values); conn3.commit()
-            cursor3.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_1, 'wp', languagecode_2, 'wp', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1, 'wp', languagecode_2, 'wp', measurement_date)
 
         # entire wp
         query = 'SELECT count(page_title) FROM ccc_'+languagecode_1+'wiki WHERE num_interwiki = 0'
@@ -489,9 +562,9 @@ def generate_all_articles_intersections():
         zero_ill_wp_count = cursor.fetchone()[0]
 
         values = ('articles',languagecode_1,'wp',languagecode_1,'zero_ill',zero_ill_wp_count,100*zero_ill_wp_count/wpnumberofarticles, measurement_date)
-        cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode_1,'wp',languagecode_1,'zero_ill', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode_1,'wp',languagecode_1,'zero_ill', measurement_date)
 
 
         query = 'SELECT count(*) FROM ccc_'+languagecode_1+'wiki WHERE qitem='' or qitem IS NULL'
@@ -499,15 +572,27 @@ def generate_all_articles_intersections():
         null_qitem_count = cursor.fetchone()[0]
 
         values = ('articles',languagecode_1,'wp',languagecode_1,'null_qitems',null_qitem_count,100*null_qitem_count/wpnumberofarticles, measurement_date)
-        cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode_1,'wp',languagecode_1,'null_qitems', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode_1,'wp',languagecode_1,'null_qitems', measurement_date)
 
     print ('languagecode_1, wp, languagecode_2, wp,'+measurement_date)
     print ('languagecode_2, wp, languagecode_1, wp,'+measurement_date)
 
     print ('languagecode, wp, languagecode, zero_ill,'+measurement_date)
     print ('languagecode, wp, languagecode, null_qitems,'+measurement_date)
+
+    print ('* generate_langs_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
+def generate_ccc_segments_intersections():
+    functionstartTime = time.time()
+    print ('* generate_ccc_segments_intersections')
+
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
+
+    query_insert = 'INSERT INTO wcdo_intersections (content, set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
 
     # LANGUAGE EDITIONS AND CCC, NO CCC, CCC SEGMENTS (CCC GEOLOCATED, CCC KEYWORDS)
@@ -518,45 +603,45 @@ def generate_all_articles_intersections():
         row = cursor.fetchone()
 
         ccc_count = row[0]
-        no_own_ccc_created_count = wpnumberofarticles - ccc_count
+        not_own_ccc_created_count = wpnumberofarticles - ccc_count
         ccc_geolocated_count = row[1]
         ccc_keywords_count = row[2]
 
         values = ('articles',languagecode,'wp',languagecode,'ccc',ccc_keywords_count,100*ccc_keywords_count/wpnumberofarticles,measurement_date)
         cursor2.execute(query_insert,values); conn2.commit()
         cursor2.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'wp', languagecode, 'ccc', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'ccc', measurement_date)
 
-        values = ('articles',languagecode,'wp',languagecode,'no_language_ccc',no_own_ccc_created_count,100*no_own_ccc_created_count/wpnumberofarticles,measurement_date)
+        values = ('articles',languagecode,'wp',languagecode,'not_own_ccc',not_own_ccc_created_count,100*not_own_ccc_created_count/wpnumberofarticles,measurement_date)
         cursor2.execute(query_insert,values); conn2.commit()
         cursor2.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'wp', languagecode, 'no_language_ccc', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'not_own_ccc', measurement_date)
 
         values = ('articles',languagecode,'wp',languagecode,'ccc_geolocated',ccc_geolocated_count,100*ccc_geolocated_count/wpnumberofarticles,'covering',measurement_date)
         cursor2.execute(query_insert,values); conn2.commit()
         cursor2.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'wp', languagecode, 'ccc_geolocated', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'ccc_geolocated', measurement_date)
 
         values = ('articles',languagecode,'wp',languagecode,'ccc_keywords',ccc_keywords_count,100*ccc_keywords_count/wpnumberofarticles,'covering',measurement_date)
         cursor2.execute(query_insert,values); conn2.commit()
         cursor2.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'wp', languagecode, 'ccc_keywords', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'ccc_keywords', measurement_date)
 
         values = ('articles',languagecode,'ccc',languagecode,'ccc_keywords',ccc_keywords_count,100*ccc_keywords_count/ccc_count,measurement_date)
         cursor2.execute(query_insert,values); conn2.commit()
         cursor2.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc', languagecode, 'ccc_keywords', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'ccc', languagecode, 'ccc_keywords', measurement_date)
 
         values = ('articles',languagecode,'ccc',languagecode,'ccc_geolocated',ccc_geolocated_count,100*ccc_geolocated_count/ccc_count,measurement_date)
         cursor2.execute(query_insert,values); conn2.commit()
         cursor2.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc', languagecode, 'ccc_geolocated', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'ccc', languagecode, 'ccc_geolocated', measurement_date)
 
 
         # zero ill
@@ -565,9 +650,9 @@ def generate_all_articles_intersections():
         zero_ill_ccc_count = cursor.fetchone()[0]
 
         values = ('articles',languagecode,'ccc',languagecode,'zero_ill',zero_ill_ccc_count,100*zero_ill_ccc_count/ccc_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode,'ccc',languagecode,'zero_ill',measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode,'ccc',languagecode,'zero_ill',measurement_date)
 
         # MAIN TERRITORIES
         query = 'SELECT main_territory, COUNT(ccc_binary), COUNT(ccc_geolocated), COUNT (keyword_title) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1 GROUP BY main_territory;';
@@ -580,23 +665,23 @@ def generate_all_articles_intersections():
             ccc_keywords_count=row[3]
 
             values = ('articles',languagecode,'ccc','ccc',main_territory,ccc_articles_count,100*ccc_articles_count/ccc_count, measurement_date)
-            cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'ccc','ccc',main_territory, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode,'ccc','ccc',main_territory, measurement_date)
 
             values = ('articles',languagecode,'ccc','ccc_geolocated',main_territory,ccc_geolocated_count,100*ccc_geolocated_count/ccc_count, measurement_date)
-            cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'ccc','ccc_geolocated',main_territory, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode,'ccc','ccc_geolocated',main_territory, measurement_date)
 
             values = ('articles',languagecode,'ccc','ccc_keywords',main_territory,ccc_keywords_count,100*ccc_keywords_count/ccc_count, measurement_date)
-            cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'ccc','ccc_keywords',main_territory, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode,'ccc','ccc_keywords',main_territory, measurement_date)
 
 
     print ('languagecode, wp, languagecode, ccc,'+measurement_date)
-    print ('languagecode, wp, languagecode, no_language_ccc,'+measurement_date)
+    print ('languagecode, wp, languagecode, not_own_ccc,'+measurement_date)
     print ('languagecode, wp, languagecode, ccc_geolocated,'+measurement_date)
     print ('languagecode, wp, languagecode, ccc_keywords,'+measurement_date)
 
@@ -609,11 +694,23 @@ def generate_all_articles_intersections():
     print ('languagecode, ccc, ccc_geolocated, qitem,'+measurement_date)
     print ('languagecode, ccc, ccc_keywords, qitem,'+measurement_date)
 
+    print ('* generate_ccc_segments_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
+def generate_langs_ccc_intersections():
+    functionstartTime = time.time()
+    print ('* generate_langs_ccc_intersections')
+
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
+    conn3 = sqlite3.connect(databases_path + 'wikidata.db'); cursor3 = conn3.cursor()
+
+    query_insert = 'INSERT INTO wcdo_intersections (content,set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
     # WIKIDATA AND CCC
     query = 'SELECT COUNT(DISTINCT qitem) FROM sitelinks;'
     cursor3.execute(query)
-    wikidata_article_qitems_count = cursor.fetchone()[0]
+    wikidata_article_qitems_count = cursor3.fetchone()[0]
 
     ccc_qitems = {}
     for languagecode in wikilanguagecodes:
@@ -623,11 +720,11 @@ def generate_all_articles_intersections():
             ccc_count+=1
             ccc_qitems[qitem]=''
 
-        values = ('articles','wikidata_article_qitems',,languagecode,'ccc',ccc_count,100*ccc_count/wikidata_article_qitems_count,measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','wikidata_article_qitems,',languagecode,'ccc',ccc_count, measurement_date)
+        values = ('articles','wikidata_article_qitems',None,languagecode,'ccc',ccc_count,100*ccc_count/wikidata_article_qitems_count,measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'wikidata_article_qitems',None,languagecode,'ccc', measurement_date)
 
 
     # LANGUAGES AND LANGUAGES CCC
@@ -649,7 +746,7 @@ def generate_all_articles_intersections():
             all_ccc_articles_count_total+=ccc_articles_count_total
             language_ccc_count[languagecode_2]=ccc_articles_count_total
 
-            query = 'SELECT COUNT (*) FROM ccc_'+languagecode_2+'wiki INNER JOIN ccc_'+languagecode_1+'wiki ON ccc_'+languagecode_1+'wiki.qitem = ccc_'+languagecode_2+'wiki.qitem WHERE ccc_'+languagecode_2+'wiki.ccc_binary = 1;'
+            query = 'SELECT COUNT(*) FROM ccc_'+languagecode_2+'wiki INNER JOIN ccc_'+languagecode_1+'wiki ON ccc_'+languagecode_1+'wiki.qitem = ccc_'+languagecode_2+'wiki.qitem WHERE ccc_'+languagecode_2+'wiki.ccc_binary = 1;'
             cursor.execute(query)
             row = cursor.fetchone()
             ccc_articles_count = row[0]
@@ -663,64 +760,64 @@ def generate_all_articles_intersections():
 
             ## spread
             values = ('articles',languagecode_2,'ccc',languagecode_1,'wp',ccc_articles_count,100*ccc_articles_count/ccc_articles_count_total,measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_2, 'ccc', languagecode_1, 'wp', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_2, 'ccc', languagecode_1, 'wp', measurement_date)
 
             values = ('articles',languagecode_2,'ccc_keywords',languagecode_1,'wp',ccc_keywords_count,100*ccc_keywords_count/ccc_keywords_count_total,measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_2, 'ccc_keywords', languagecode_1, 'wp', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_2, 'ccc_keywords', languagecode_1, 'wp', measurement_date)
 
             values = ('articles',languagecode_2,'ccc_geolocated',languagecode_1,'wp',ccc_geolocated_count,100*ccc_geolocated_count/ccc_geolocated_count_total,measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_2, 'ccc_geolocated', languagecode_1, 'wp', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_2, 'ccc_geolocated', languagecode_1, 'wp', measurement_date)
 
             ## gap
             values = ('articles',languagecode_1,'wp',languagecode_2,'ccc',ccc_articles_count,100*ccc_articles_count/wpnumberofarticles,measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_1, 'wp', languagecode_2, 'ccc', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1, 'wp', languagecode_2, 'ccc', measurement_date)
 
             values = ('articles',languagecode_1,'wp',languagecode_2,'ccc_keywords',ccc_keywords_count,100*ccc_keywords_count/wpnumberofarticles,measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_1, 'wp', languagecode_2, 'ccc_keywords', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1, 'wp', languagecode_2, 'ccc_keywords', measurement_date)
 
             values = ('articles',languagecode_1,'wp',languagecode_2,'ccc_geolocated',ccc_geolocated_count,100*ccc_geolocated_count/wpnumberofarticles,measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_1, 'wp', languagecode_1, 'ccc_geolocated', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1, 'wp', languagecode_1, 'ccc_geolocated', measurement_date)
 
 
         ### all articles
         # how well this language edition covered all CCC articles?
         values = ('articles','all_ccc_articles','',languagecode_1,'wp',all_ccc_articles_count,100*all_ccc_articles_count/all_ccc_articles_count_total, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
+        cursor.execute(query_insert,values); conn2.commit()
         cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','all_ccc_articles','',languagecode_1,'wp', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'all_ccc_articles','',languagecode_1,'wp', measurement_date)
 
         # what is the extent of all ccc articles in this language edition?
         values = ('articles',languagecode_1,'wp','all_ccc_articles','',all_ccc_articles_count,100*all_ccc_articles_count/wpnumberofarticles, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
+        cursor.execute(query_insert,values); conn2.commit()
         cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','all_ccc_articles','',languagecode_1,'wp', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'all_ccc_articles','',languagecode_1,'wp', measurement_date)
 
         # what is the extent of this language ccc in all the languages ccc?
         values = ('articles','all_ccc_articles','',languagecode_1,'ccc',all_ccc_articles_count,100*all_ccc_articles_count/language_ccc_count[languagecode_1], measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
+        cursor.execute(query_insert,values); conn2.commit()
         cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','all_ccc_articles','',languagecode_1,'ccc', measurement_date)
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'all_ccc_articles','',languagecode_1,'ccc', measurement_date)
 
 
         ### all articles in average
@@ -728,19 +825,19 @@ def generate_all_articles_intersections():
         all_ccc_rel_value_ccc_total_avg=all_ccc_rel_value_ccc_total/len(wikilanguagecodes)
         all_ccc_abs_value_avg=all_ccc_articles_count/len(wikilanguagecodes)
         values = ('articles','all_ccc_avg','',languagecode_1,'wp',all_ccc_abs_value_avg,all_ccc_rel_value_ccc_total_avg, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','all_ccc_avg', '',languagecode_1, 'wp', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'all_ccc_avg', '',languagecode_1, 'wp', measurement_date)
 
         # what is the average extent of this language ccc in all the languages ccc?
         all_ccc_rel_value_ccc_total_avg=all_ccc_rel_value_wp_total/len(wikilanguagecodes)
         all_ccc_abs_value_avg=all_ccc_articles_count/len(wikilanguagecodes)
-        values = ('articles',languagecode_1,'ccc', 'all_wp_avg', , all_ccc_rel_value_ccc_total_avg, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode_1, 'ccc', 'all_wp_avg', , measurement_date)
+        values = ('articles',languagecode_1,'ccc','all_wp_avg',None, all_ccc_rel_value_ccc_total_avg, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode_1, 'ccc', 'all_wp_avg',None, measurement_date)
 
     print ('languagecode_2, ccc, languagecode_1, wp'+ measurement_date)
     print ('languagecode_2, ccc_keywords, languagecode_1, wp'+ measurement_date)
@@ -757,7 +854,6 @@ def generate_all_articles_intersections():
     print ('all_ccc_avg, ,languagecode_1, wp'+ measurement_date)
     print ('languagecode_1, wp, all_wp_avg, ,'+ measurement_date)
 
-
     # between languages ccc
     for languagecode_1 in wikilanguagecodes:
         for languagecode_2 in wikilanguagecodes:
@@ -767,14 +863,24 @@ def generate_all_articles_intersections():
             ccc_coincident_articles_count = row[0]
 
             values = ('articles',languagecode_1,'ccc',languagecode_2,'ccc',ccc_coincident_articles_count,100*ccc_coincident_articles_count/language_ccc_count[languagecode_1],measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode_1,'ccc',languagecode_2,'ccc', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1,'ccc',languagecode_2,'ccc', measurement_date)
 
     print ('languagecode_1, ccc, languagecode_2, ccc,'+ measurement_date)
 
+    print ('* generate_langs_ccc_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
+
+def generate_ccc_vital_articles_lists_intersections():
+    functionstartTime = time.time()
+    print ('* generate_ccc_vital_articles_lists_intersections')
+
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
+
+    query_insert = 'INSERT INTO wcdo_intersections (content,set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
     # WORK TO DO: THIS SHOULD BE LIMITED TO 100 ARTICLES PER LIST.
     # CCC VITAL ARTICLES LISTS
@@ -793,58 +899,72 @@ def generate_all_articles_intersections():
             all_ccc_vital_articles_count+=len(lists_qitems)
 
             page_asstring = ','.join( ['?'] * len( lists_qitems ) )
-            ccc_list_count =
             query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE qitem IN (%);' % page_asstring
-            cursor.execute(query, (lists_qitems))
-            ccc_list_coincident_count = cursor.fetchone()[0]
+            cursor2.execute(query, (lists_qitems))
+            ccc_list_coincident_count = cursor2.fetchone()[0]
             all_ccc_vital_articles_coincident_count+=ccc_list_coincident_count
 
             rel_value = 100*ccc_list_coincident_count/wpnumberofarticles
             values = ('articles','ccc_vital_articles_lists',list_name,'wp',languagecode,ccc_list_coincident_count,100*ccc_list_coincident_count/wpnumberofarticles, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'last_month_articles','ccc_vital_articles_lists',list_name, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,'ccc_vital_articles_lists',list_name,'wp',languagecode, measurement_date)
 
         # all CCC Vital articles lists
         values = ('articles','ccc','all_ccc_vital_articles',languagecode,'wp',all_ccc_vital_articles_coincident_count,100*all_ccc_vital_articles_coincident_count/all_ccc_vital_articles_count, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'last_month_articles','ccc_vital_articles_lists',list_name, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'ccc','all_ccc_vital_articles',languagecode,'wp', measurement_date)
 
         values = ('articles',languagecode,'wp','ccc','all_ccc_vital_articles',all_ccc_vital_articles_coincident_count,100*all_ccc_vital_articles_coincident_count/wpnumberofarticles, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'last_month_articles','ccc_vital_articles_lists',list_name, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode,'wp','ccc','all_ccc_vital_articles', measurement_date)
 
+    print ('ccc_vital_articles_lists, list_name, wp, languagecode,'+ measurement_date)
+    print ('ccc, all_ccc_vital_articles, languagecode, wp,'+ measurement_date)
+    print ('languagecode, wp, ccc, all_ccc_vital_articles,'+ measurement_date)
+
+    print ('* generate_ccc_vital_articles_lists_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
+def generate_people_segments_intersections():
+    functionstartTime = time.time()
+    print ('* generate_people_segments_intersections')
+
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
+    conn3 = sqlite3.connect(databases_path + 'wikidata.db'); cursor3 = conn3.cursor()
+
+    query_insert = 'INSERT INTO wcdo_intersections (content,set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
     # PEOPLE SEGMENTS (PEOPLE, MALE, FEMALE)
     gender = {'Q6581097':'male','Q6581072':'female'}
     gender_name_count_total = {}
     people_count_total = 0
     query = 'SELECT qitem2, COUNT(*) FROM people_properties GROUP BY qitem2;'
-    cursor.execute(query)
-    for row in cursor.execute(query):
+    cursor3.execute(query)
+    for row in cursor3.execute(query):
         gender_name_count_total[gender[row[0]]]=row[1]
         people_count_total += row[1]
     gender_name_count_total['people']=people_count_total
 
-    values = ('articles','wikidata_article_qitems',,'wikidata_article_qitems','people',gender_name_count_total['people'],100*gender_name_count_total['people']/wikidata_article_qitems_count, measurement_date)
-    cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-    intersection_id = cursor.fetchone()[0]
-    generate_increments(intersection_id,'articles','wikidata_article_qitems',,'wikidata_article_qitems','people', measurement_date)
+    values = ('articles','wikidata_article_qitems',None,'wikidata_article_qitems','people',gender_name_count_total['people'],100*gender_name_count_total['people']/wikidata_article_qitems_count, measurement_date)
+    cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+    intersection_id = cursor2.fetchone()[0]
+    generate_increments(intersection_id,'wikidata_article_qitems',None,'wikidata_article_qitems','people', measurement_date)
 
     values = ('articles','wikidata_article_qitems','people','wikidata_article_qitems','male',gender_name_count_total['male'],100*gender_name_count_total['male']/gender_name_count_total['people'], measurement_date)
-    cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-    intersection_id = cursor.fetchone()[0]
-    generate_increments(intersection_id,'articles','wikidata_article_qitems',,'wikidata_article_qitems','male', measurement_date)
+    cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+    intersection_id = cursor2.fetchone()[0]
+    generate_increments(intersection_id,'wikidata_article_qitems','people','wikidata_article_qitems','male', measurement_date)
 
-    values = ('articles','wikidata_article_qitems',,'wikidata_article_qitems','female',gender_name_count_total['female'],100*gender_name_count_total['female']/gender_name_count_total['people'], measurement_date)
-    cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-    intersection_id = cursor.fetchone()[0]
-    generate_increments(intersection_id,'articles','wikidata_article_qitems',,'wikidata_article_qitems','female', measurement_date)
+    values = ('articles','wikidata_article_qitems','people','wikidata_article_qitems','female',gender_name_count_total['female'],100*gender_name_count_total['female']/gender_name_count_total['people'], measurement_date)
+    cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+    intersection_id = cursor2.fetchone()[0]
+    generate_increments(intersection_id,'wikidata_article_qitems','people','wikidata_article_qitems','female', measurement_date)
 
     print ('wikidata_article_qitems, , wikidata_article_qitems, people, '+measurement_date)
     print ('wikidata_article_qitems, people, wikidata_article_qitems, female, '+measurement_date)
@@ -853,38 +973,37 @@ def generate_all_articles_intersections():
 
     # zero ill: people
     query = 'SELECT COUNT(*) FROM sitelinks INNER JOIN people_properties ON sitelins.qitem = people_properties.qitem2 GROUP BY sitelinks.qitem HAVING (COUNT(qitem) = 1);'
-    cursor.execute(query)
-    zero_ill_people_count = cursor.fetchone()[0]
+    cursor3.execute(query)
+    zero_ill_people_count = cursor3.fetchone()[0]
 
     values = ('articles','wikidata_article_qitems','people','wikidata_article_qitems','zero_ill',zero_ill_people_count,100*zero_ill_people_count/gender_name_count_total['people'], measurement_date)
-    cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-    intersection_id = cursor.fetchone()[0]
-    generate_increments(intersection_id,'articles','wikidata_article_qitems','people','wikidata_article_qitems','zero_ill', measurement_date)
+    cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+    intersection_id = cursor2.fetchone()[0]
+    generate_increments(intersection_id,'wikidata_article_qitems','people','wikidata_article_qitems','zero_ill', measurement_date)
 
     print ('wikidata_article_qitems, people, wikidata_article_qitems, zero_ill, '+measurement_date)
 
     # zero ill: male
     query = 'SELECT COUNT(*) FROM sitelinks INNER JOIN people_properties ON sitelins.qitem = people_properties.qitem2 AND people_properties.qitem2 = "Q6581097" GROUP BY sitelinks.qitem HAVING (COUNT(qitem) = 1);'
-    cursor.execute(query)
-    zero_ill_male_count = cursor.fetchone()[0]
+    cursor3.execute(query)
+    zero_ill_male_count = cursor3.fetchone()[0]
 
     values = ('articles','wikidata_article_qitems','male','wikidata_article_qitems','zero_ill',zero_ill_male_count,100*zero_ill_male_count/gender_name_count_total['people'], measurement_date)
-    cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-    intersection_id = cursor.fetchone()[0]
-    generate_increments(intersection_id,'articles','wikidata_article_qitems','male','wikidata_article_qitems','zero_ill', measurement_date)
+    cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+    intersection_id = cursor2.fetchone()[0]
+    generate_increments(intersection_id,'wikidata_article_qitems','male','wikidata_article_qitems','zero_ill', measurement_date)
 
     print ('wikidata_article_qitems, male, wikidata_article_qitems, zero_ill, '+measurement_date)
 
-
     # zero ill: female
     query = 'SELECT COUNT(*) FROM sitelinks INNER JOIN people_properties ON sitelins.qitem = people_properties.qitem2 AND people_properties.qitem2 = "Q6581072" GROUP BY sitelinks.qitem HAVING (COUNT(qitem) = 1);'
-    cursor.execute(query)
-    zero_ill_female_count = cursor.fetchone()[0]
+    cursor3.execute(query)
+    zero_ill_female_count = cursor3.fetchone()[0]
 
     values = ('articles','wikidata_article_qitems','male','wikidata_article_qitems','zero_ill',zero_ill_female_count,100*zero_ill_female_count/gender_name_count_total['people'], measurement_date)
-    cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-    intersection_id = cursor.fetchone()[0]
-    generate_increments(intersection_id,'articles','wikidata_article_qitems','female','wikidata_article_qitems','zero_ill', measurement_date)
+    cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+    intersection_id = cursor2.fetchone()[0]
+    generate_increments(intersection_id,'wikidata_article_qitems','female','wikidata_article_qitems','zero_ill', measurement_date)
 
     print ('wikidata_article_qitems, female, wikidata_article_qitems, zero_ill, '+measurement_date)
 
@@ -906,16 +1025,16 @@ def generate_all_articles_intersections():
 
         for gender_name, gender_count in gender_name_count.items():
             values = ('articles',languagecode,'wp',languagecode,gender_name,gender_count,100*gender_count/wpnumberofarticles,measurement_date)
-            cursor3.execute(query_insert,values); conn3.commit()
-            cursor3.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode, 'wp', languagecode, gender_name, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode, 'wp', languagecode, gender_name, measurement_date)
 
             values = ('articles',languagecode, gender_name, languagecode, 'wp', gender_count,100*gender_count/gender_name_count_total,measurement_date)
-            cursor3.execute(query_insert,values); conn3.commit()
-            cursor3.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles','wikidata_article_qitems', gender_name, languagecode, 'wp', gender_count, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,'wikidata_article_qitems', gender_name, languagecode, 'wp', gender_count, measurement_date)
 
     print ('languagecode, wp, languagecode, male,'+measurement_date)
     print ('languagecode, wp, languagecode, female,'+measurement_date)
@@ -925,6 +1044,25 @@ def generate_all_articles_intersections():
     print ('languagecode, female, wikidata_article_qitems, female, '+measurement_date)
     print ('languagecode, people, wikidata_article_qitems, people, '+measurement_date)
 
+    print ('* generate_all_articles_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
+def generate_people_ccc_intersections():
+    functionstartTime = time.time()
+    print ('* generate_people_ccc_intersections')
+
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
+    conn3 = sqlite3.connect(databases_path + 'wikidata.db'); cursor3 = conn3.cursor()
+
+    query_insert = 'INSERT INTO wcdo_intersections (content,set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
+
+    language_ccc_count = {}
+    for languagecode in wikilanguagecodes:
+        query = 'SELECT COUNT(*) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'
+        cursor.execute(query)
+        row = cursor.fetchone()
+        language_ccc_count[languagecode]=row[0]
 
     # PEOPLE SEGMENTS AND CCC
     for languagecode in wikilanguagecodes:
@@ -945,16 +1083,16 @@ def generate_all_articles_intersections():
         male_ccc_count=len(male_ccc)
 
         values = ('articles',languagecode, 'male', languagecode, 'ccc', male_ccc_count, 100*male_ccc_count/malecount,measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'male', languagecode, 'ccc', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'male', languagecode, 'ccc', measurement_date)
 
         values = ('articles',languagecode, 'ccc', languagecode, 'male', male_ccc_count,100*male_ccc_count/language_ccc_count[languagecode],measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc', languagecode, 'male', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'ccc', languagecode, 'male', measurement_date)
 
 
         # female
@@ -967,38 +1105,38 @@ def generate_all_articles_intersections():
         female_ccc_count=len(female)
 
         values = ('articles',languagecode, 'female', languagecode, 'ccc', female_ccc_count, 100*female_ccc_count/femalecount,measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'female', languagecode, 'ccc', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'female', languagecode, 'ccc', measurement_date)
 
         values = ('articles',languagecode, 'ccc', languagecode, 'female', female_ccc_count,100*female_ccc_count/language_ccc_count[languagecode],measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc', languagecode, 'female', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'ccc', languagecode, 'female', measurement_date)
 
 
         # people
         people_count=femalecount+malecount
         ccc_peoplecount=male_ccc_count+female_ccc_count
         values = ('articles',languagecode, 'people', languagecode, 'ccc', ccc_peoplecount, 100*ccc_peoplecount/people_count,measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'people', languagecode, 'ccc', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'people', languagecode, 'ccc', measurement_date)
 
         values = ('articles',languagecode, 'ccc', languagecode, 'people', ccc_peoplecount,100*ccc_peoplecount/language_ccc_count[languagecode],measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc', languagecode, 'people', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'ccc', languagecode, 'people', measurement_date)
 
         values = ('articles',languagecode, 'wp', languagecode, 'ccc_people', ccc_peoplecount,100*ccc_peoplecount/wpnumberofarticles[languagecode],measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'wp', languagecode, 'ccc_people', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'ccc_people', measurement_date)
 
     print ('languagecode, male, languagecode, ccc,'+measurement_date)
     print ('languagecode, female, languagecode, ccc,'+measurement_date)
@@ -1010,6 +1148,18 @@ def generate_all_articles_intersections():
 
     print ('languagecode, wp, languagecode, ccc_people,'+measurement_date)
 
+    print ('* generate_people_ccc_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
+def generate_geolocated_segments_intersections():
+    functionstartTime = time.time()
+    print ('* generate_geolocated_segments_intersections')
+
+    conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
+    conn3 = sqlite3.connect(databases_path + 'wikidata.db'); cursor3 = conn3.cursor()
+
+    query_insert = 'INSERT INTO wcdo_intersections (content,set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
     # GEOLOCATED SEGMENTS (COUNTRIES, SUBREGIONS, REGIONS)
     country_names, regions, subregions = load_iso_3166_to_geographical_regions() # iso 3166 to X
@@ -1020,10 +1170,10 @@ def generate_all_articles_intersections():
         iso3166_qitems[row[0]]=row[1]
         geolocated_items_count_total+=row[1]
 
-    values = ('articles','wikidata_article_qitems',,'wikidata_article_qitems','geolocated',geolocated_items_count_total,100*geolocated_items_count_total/wikidata_article_qitems_count, measurement_date)
-    cursor.execute(query_insert,values); conn.commit(); cursor.execute('SELECT last_insert_rowid()')
-    intersection_id = cursor.fetchone()[0]
-    generate_increments(intersection_id,'articles','wikidata_article_qitems',,'wikidata_article_qitems','geolocated', measurement_date)
+    values = ('articles','wikidata_article_qitems',None,'wikidata_article_qitems','geolocated',geolocated_items_count_total,100*geolocated_items_count_total/wikidata_article_qitems_count, measurement_date)
+    cursor2.execute(query_insert,values); conn2.commit(); cursor2.execute('SELECT last_insert_rowid()')
+    intersection_id = cursor2.fetchone()[0]
+    generate_increments(intersection_id,'wikidata_article_qitems',None,'wikidata_article_qitems','geolocated', measurement_date)
 
     print ('wikidata_article_qitems, , wikidata_article_qitems, geolocated, '+measurement_date)
 
@@ -1046,26 +1196,26 @@ def generate_all_articles_intersections():
 
         # countries
         values = ('articles','wikidata_article_qitems','geolocated','countries',iso3166_code,iso3166_count,100*iso3166_count/geolocated_items_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','wikidata_article_qitems','geolocated','countries',iso3166_code, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'wikidata_article_qitems','geolocated','countries',iso3166_code, measurement_date)
 
     # subregions
     for subregion_name, subregion_count in subregions_count_total.items():
         values = ('articles','wikidata_article_qitems','geolocated','subregions',subregion_name,subregion_count,100*subregion_count/geolocated_items_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','wikidata_article_qitems','geolocated','subregions',subregion_name, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'wikidata_article_qitems','geolocated','subregions',subregion_name, measurement_date)
 
     # regions
     for region_name, region_count in regions_count_total.items():
         values = ('articles','wikidata_article_qitems','geolocated','regions',region_name,region_count,100*region_count/geolocated_items_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','wikidata_article_qitems','geolocated','regions',region_name,region_count, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'wikidata_article_qitems','geolocated','regions',region_name,region_count, measurement_date)
 
     print ('wikidata_article_qitems, geolocated, countries, iso3166,'+measurement_date)
     print ('wikidata_article_qitems, geolocated, subregions, subregion_name'+measurement_date)
@@ -1084,16 +1234,16 @@ def generate_all_articles_intersections():
             geolocated_articles_count+=row[1]
 
         values = ('articles','wikidata_article_qitems','geolocated',languagecode,'geolocated',geolocated_articles_count,100*geolocated_articles_count/geolocated_items_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode,'wp','wikidata_article_qitems','geolocated', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,'wikidata_article_qitems','geolocated',languagecode,'geolocated', measurement_date)
 
         values = ('articles',languagecode,'wp','wikidata_article_qitems','geolocated',geolocated_articles_count,100*geolocated_articles_count/wikipedialanguage_numberarticles, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode,'wp','wikidata_article_qitems','geolocated', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode,'wp','wikidata_article_qitems','geolocated', measurement_date)
 
 
         regions_count={}
@@ -1105,47 +1255,47 @@ def generate_all_articles_intersections():
             if iso3166_code not in subregions_count: subregions_count[regions[iso3166_code]]=iso3166_code
             else: subregions_count[regions[iso3166_code]]+=iso3166_code
 
-                # countries
-                values = ('articles',languagecode,'geolocated','countries',iso3166_code,iso3166_count,100*iso3166_count/geolocated_articles_count, measurement_date)
-                cursor.execute(query_insert,values); conn.commit()
-                cursor.execute('SELECT last_insert_rowid()')
-                intersection_id = cursor.fetchone()[0]
-                generate_increments(intersection_id,'articles','wikidata_article_qitems','geolocated','countries',iso3166_code, measurement_date)
+            # countries
+            values = ('articles',languagecode,'geolocated','countries',iso3166_code,iso3166_count,100*iso3166_count/geolocated_articles_count, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode,'geolocated','countries',iso3166_code, measurement_date)
 
-                # countries
-                values = ('articles','countries',iso3166_code,languagecode,'geolocated',iso3166_count,100*iso3166_count/iso3166_qitems[iso3166], measurement_date)
-                cursor.execute(query_insert,values); conn.commit()
-                cursor.execute('SELECT last_insert_rowid()')
-                intersection_id = cursor.fetchone()[0]
-                generate_increments(intersection_id,'articles','countries',iso3166_code,'countries',iso3166_code, measurement_date)
+            # countries
+            values = ('articles','countries',iso3166_code,languagecode,'geolocated',iso3166_count,100*iso3166_count/iso3166_qitems[iso3166], measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,'countries',iso3166_code,languagecode,'geolocated', measurement_date)
 
         # subregions
         for subregion_name, subregion_count in subregions_count_total.items():
             values = ('articles',languagecode,'geolocated','subregions',subregion_name,subregion_count,100*subregion_count/geolocated_articles_count, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles','wikidata_article_qitems','geolocated','subregions',subregion_name, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id, languagecode,'geolocated','subregions',subregion_name, measurement_date)
 
             values = ('articles','subregions', subregion_name, languagecode, 'geolocated', subregion_count,100*subregion_count/subregions_count[subregion_name], measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles','subregions', subregion_name, languagecode, 'geolocated', measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,'subregions', subregion_name, languagecode, 'geolocated', measurement_date)
 
         # regions
         for region_name, region_count in regions_count_total.items():
             values = ('articles',languagecode,'geolocated','regions',region_name,region_count,100*region_count/geolocated_articles_count, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles','wikidata_article_qitems','geolocated','regions',region_name,region_count, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode,'geolocated','regions',region_name,region_count, measurement_date)
 
             values = ('articles','regions',region_name,languagecode,'geolocated',region_count,100*region_count/region_count[region_name], measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles','regions',region_name,languagecode,'geolocated',region_count, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,'regions',region_name,languagecode,'geolocated',region_count, measurement_date)
 
     print ('wikidata_article_qitems, geolocated, languagecode, geolocated'+measurement_date)
     print ('languagecode, wp, wikidata_article_qitems, geolocated'+measurement_date)
@@ -1158,20 +1308,18 @@ def generate_all_articles_intersections():
     print ('subregions, subregion_name, languagecode, geolocated,'+measurement_date)
     print ('regions, region_name, languagecode, geolocated,'+measurement_date)
 
-    print ('* generate_all_articles_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+    print ('* generate_geolocated_segments_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
 def generate_last_month_articles_intersections():
-
-
     functionstartTime = time.time()
-    print ('* generate_all_articles_intersections')
+    print ('* generate_last_month_articles_intersections')
 
     conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
     conn3 = sqlite3.connect(databases_path + 'wikidata.db'); cursor3 = conn3.cursor()
 
-    query_insert = 'INSERT INTO wcdo_intersections (content, entity_1, entity_1_descriptor, entity_2, entity_2_descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
+    query_insert = 'INSERT INTO wcdo_intersections (content, set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
     for languagecode in wikilanguagecodes:
         wpnumberofarticles=wikipedialanguage_numberarticles[languagecode]
@@ -1184,46 +1332,46 @@ def generate_last_month_articles_intersections():
 
         # ALL ARTICLES
         values = ('articles',languagecode, 'wp', languagecode, 'last_month_articles', created_articles_count, 100*created_articles_count/wpnumberofarticles, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'wp', languagecode, 'last_month_articles', measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'last_month_articles', measurement_date)
 
         # CCC
         query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE date_created < '+ (datetime.date.today() - datetime.timedelta(days=30)).strftime('%Y%m%d%H%M%S' + 'AND ccc_binary=1')
-        cursor.execute(query)
-        ccc_articles_created_count = cursor.fetchone()[0]
+        cursor2.execute(query)
+        ccc_articles_created_count = cursor2.fetchone()[0]
 
         cursor.execute('SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;')
         ccc_articles_count = cursor.fetchone()[0]
 
         values = ('articles',languagecode, 'ccc', languagecode, 'last_month_articles', ccc_articles_created_count, 100*ccc_articles_created_count/ccc_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc', languagecode, 'last_month_articles', measurement_date)
+        generate_increments(intersection_id,languagecode, 'ccc', languagecode, 'last_month_articles', measurement_date)
 
         values = ('articles',languagecode, 'last_month_articles',languagecode, 'ccc', ccc_articles_created_count, 100*ccc_articles_created_count/created_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'last_month_articles',languagecode, 'ccc' measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'last_month_articles',languagecode, 'ccc', measurement_date)
 
         # CCC geolocated
         cursor.execute('SELECT count(*) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1 AND ccc_geolocated=1;' + 'AND ccc_binary=1')
         ccc_geolocated_articles_count = cursor.fetchone()[0]
 
         values = ('articles',languagecode, 'ccc_geolocated', languagecode, 'last_month_articles', ccc_geolocated_articles_count, 100*ccc_geolocated_articles_count/ccc_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc_geolocated', languagecode, 'last_month_articles', measurement_date)
+        generate_increments(intersection_id,languagecode, 'ccc_geolocated', languagecode, 'last_month_articles', measurement_date)
 
         values = ('articles',languagecode, 'last_month_articles',languagecode, 'ccc_geolocated', ccc_geolocated_articles_count, 100*ccc_geolocated_articles_count/created_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'last_month_articles',languagecode, 'ccc_geolocated' measurement_date)
+        generate_increments(intersection_id,languagecode, 'last_month_articles',languagecode, 'ccc_geolocated', measurement_date)
 
 
         # CCC keywords
@@ -1232,32 +1380,32 @@ def generate_last_month_articles_intersections():
         ccc_keywords_articles_count = cursor.fetchone()[0]
 
         values = ('articles',languagecode, 'ccc_keywords', languagecode, 'last_month_articles', ccc_keywords_articles_count, 100*ccc_keywords_articles_count/ccc_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'ccc_keywords', languagecode, 'last_month_articles', measurement_date)
+        generate_increments(intersection_id,languagecode, 'ccc_keywords', languagecode, 'last_month_articles', measurement_date)
 
         values = ('articles',languagecode, 'last_month_articles',languagecode, 'ccc_keywords', ccc_keywords_articles_count, 100*ccc_keywords_articles_count/created_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'last_month_articles',languagecode, 'ccc_keywords', measurement_date)
+
+
+        # Not own CCC
+        not_own_ccc_created_count = created_articles_count - ccc_articles_created_count
+
+        values = ('articles',languagecode, 'not_own_ccc', languagecode, 'last_month_articles', ccc_keywords_articles_count, 100*ccc_keywords_articles_count/ccc_articles_count, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'last_month_articles',languagecode, 'ccc_geolocated' measurement_date)
+        generate_increments(intersection_id,languagecode, 'not_own_ccc', languagecode, 'last_month_articles', measurement_date)
 
-
-        # No own CCC
-        no_own_ccc_created_count = created_articles_count - ccc_articles_created_count
-
-        values = ('articles',languagecode, 'no_language_ccc', languagecode, 'last_month_articles', ccc_keywords_articles_count, 100*ccc_keywords_articles_count/ccc_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'no_language_ccc', languagecode, 'last_month_articles', measurement_date)
-
-        values = ('articles',languagecode, 'last_month_articles',languagecode, 'no_language_ccc', no_own_ccc_created_count, 100*no_own_ccc_created_count/created_articles_count, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
-        intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'last_month_articles',languagecode, 'no_language_ccc' measurement_date)
+        values = ('articles',languagecode, 'last_month_articles',languagecode, 'not_own_ccc', not_own_ccc_created_count, 100*not_own_ccc_created_count/created_articles_count, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'last_month_articles',languagecode, 'not_own_ccc', measurement_date)
         
 
         # Other Langs CCC
@@ -1268,10 +1416,10 @@ def generate_last_month_articles_intersections():
             ccc_articles_created_count = cursor.fetchone()[0]
 
             values = ('articles',languagecode, 'last_month_articles',languagecode_2, 'ccc', ccc_articles_created_count, 100*ccc_articles_created_count/created_articles_count, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode, 'last_month_articles',languagecode, 'ccc' measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode, 'last_month_articles',languagecode, 'ccc', measurement_date)
 
 
         # PEOPLE
@@ -1285,10 +1433,10 @@ def generate_last_month_articles_intersections():
         last_month_articles_male_count=len(male)
 
         values = ('articles',languagecode, 'last_month_articles', languagecode, 'male', last_month_articles_male_count,100*last_month_articles_male_count/language_ccc_count[languagecode],measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'last_month_articles', languagecode, 'male', measurement_date)
+        generate_increments(intersection_id,languagecode, 'last_month_articles', languagecode, 'male', measurement_date)
 
 
         # female
@@ -1301,10 +1449,10 @@ def generate_last_month_articles_intersections():
         last_month_female_count=len(female)
 
         values = ('articles',languagecode, 'last_month_articles', languagecode, 'female', last_month_articles_male_count,100*last_month_articles_male_count/language_ccc_count[languagecode],measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'last_month_articles', languagecode, 'female', measurement_date)
+        generate_increments(intersection_id,languagecode, 'last_month_articles', languagecode, 'female', measurement_date)
 
 
         # people
@@ -1312,10 +1460,10 @@ def generate_last_month_articles_intersections():
         ccc_peoplecount=last_month_articles_male_count+last_month_female_count
 
         values = ('articles',languagecode, 'last_month_articles', languagecode, 'people', last_month_articles_male_count,100*ccc_peoplecount/language_ccc_count[languagecode],measurement_date)
-        cursor3.execute(query_insert,values); conn3.commit()
-        cursor3.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode, 'last_month_articles', languagecode, 'people', measurement_date)
+        generate_increments(intersection_id,languagecode, 'last_month_articles', languagecode, 'people', measurement_date)
 
 
         # GEOLOCATED SEGMENTS
@@ -1328,10 +1476,10 @@ def generate_last_month_articles_intersections():
             geolocated_articles_count+=row[1]
 
         values = ('articles',languagecode,'last_month_articles','wikidata_article_qitems','geolocated',geolocated_articles_count,100*geolocated_articles_count/last_month_articles, measurement_date)
-        cursor.execute(query_insert,values); conn.commit()
-        cursor.execute('SELECT last_insert_rowid()')
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles',languagecode,'last_month_articles','wikidata_article_qitems','geolocated', measurement_date)
+        generate_increments(intersection_id,languagecode,'last_month_articles','wikidata_article_qitems','geolocated', measurement_date)
 
         regions_count={}
         subregions_count={}
@@ -1342,28 +1490,28 @@ def generate_last_month_articles_intersections():
             if iso3166_code not in subregions_count: subregions_count[regions[iso3166_code]]=iso3166_code
             else: subregions_count[regions[iso3166_code]]+=iso3166_code
 
-                # countries
-                values = ('articles',languagecode,'last_month_articles','countries',iso3166_code,iso3166_count,100*iso3166_count/last_month_articles, measurement_date)
-                cursor.execute(query_insert,values); conn.commit()
-                cursor.execute('SELECT last_insert_rowid()')
-                intersection_id = cursor.fetchone()[0]
-                generate_increments(intersection_id,'articles',languagecode,'last_month_articles','countries',iso3166_code, measurement_date)
+            # countries
+            values = ('articles',languagecode,'last_month_articles','countries',iso3166_code,iso3166_count,100*iso3166_count/last_month_articles, measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor.fetchone()[0]
+            generate_increments(intersection_id,languagecode,'last_month_articles','countries',iso3166_code, measurement_date)
 
         # subregions
         for subregion_name, subregion_count in subregions_count_total.items():
             values = ('articles',languagecode,'last_month_articles','subregions',subregion_name,subregion_count,100*subregion_count/last_month_articles, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
             intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'last_month_articles','subregions',subregion_name, measurement_date)
+            generate_increments(intersection_id,languagecode,'last_month_articles','subregions',subregion_name, measurement_date)
 
         # regions
         for region_name, region_count in regions_count_total.items():
             values = ('articles',languagecode,'last_month_articles','regions',region_name,region_count,100*region_count/last_month_articles, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
             intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',anguagecode,'last_month_articles','regions',region_name,region_count, measurement_date)
+            generate_increments(intersection_id,languagecode,'last_month_articles','regions',region_name,region_count, measurement_date)
 
     
         # CCC VITAL ARTICLES LISTS
@@ -1381,17 +1529,17 @@ def generate_last_month_articles_intersections():
             lists_count+=last_month_list_count
 
             values = ('articles',languagecode,'last_month_articles','ccc_vital_articles_lists',list_name,last_month_list_count,100*last_month_list_count/last_month_articles, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
             intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'last_month_articles','ccc_vital_articles_lists',list_name, measurement_date)
+            generate_increments(intersection_id,languagecode,'last_month_articles','ccc_vital_articles_lists',list_name, measurement_date)
 
         # all CCC Vital articles lists
         values = ('articles',languagecode,'last_month_articles','ccc','all_ccc_vital_articles',last_month_list_count,100*last_month_list_count/last_month_articles, measurement_date)
-            cursor.execute(query_insert,values); conn.commit()
-            cursor.execute('SELECT last_insert_rowid()')
-            intersection_id = cursor.fetchone()[0]
-            generate_increments(intersection_id,'articles',languagecode,'last_month_articles','all_ccc_vital_articles',list_name, measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor.fetchone()[0]
+        generate_increments(intersection_id,languagecode,'last_month_articles','all_ccc_vital_articles',list_name, measurement_date)
 
 
     print ('languagecode, wp, languagecode, last_month_articles,'+measurement_date)
@@ -1401,8 +1549,8 @@ def generate_last_month_articles_intersections():
     print ('languagecode, last_month_articles, languagecode, ccc_geolocated,'+measurement_date)
     print ('languagecode, ccc_keywords, languagecode, last_month_articles,'+measurement_date)
     print ('languagecode, last_month_articles,languagecode, ccc_keywords,'+measurement_date)
-    print ('languagecode, no_language_ccc, languagecode, last_month_articles,'+measurement_date)
-    print ('languagecode, last_month_articles, languagecode, no_language_ccc,'+measurement_date)
+    print ('languagecode, not_own_ccc, languagecode, last_month_articles,'+measurement_date)
+    print ('languagecode, last_month_articles, languagecode, not_own_ccc,'+measurement_date)
     print ('languagecode, last_month_articles, languagecode_2, ccc,'+measurement_date)
     print ('languagecode, last_month_articles, languagecode, male,'+measurement_date)
     print ('languagecode, last_month_articles, languagecode, female,'+measurement_date)
@@ -1417,29 +1565,118 @@ def generate_last_month_articles_intersections():
     print ('* generate_last_month_articles_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
-
-
 def generate_pageviews_intersections():
-
-
     functionstartTime = time.time()
-    print ('* generate_all_articles_intersections')
+    print ('* generate_pageviews_intersections')
 
     conn = sqlite3.connect(databases_path + 'ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor2 = conn2.cursor()
-    conn3 = sqlite3.connect(databases_path + 'wikidata.db'); cursor3 = conn3.cursor()
+    conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
 
-    query_insert = 'INSERT INTO wcdo_intersections (content, entity_1, entity_1_descriptor, entity_2, entity_2_descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
+    # LANGUAGE PAGEVIEWS AND CCC PAGEVIEWS
+    query_insert = 'INSERT INTO wcdo_intersections (content, set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, rel_reference, measurement_date) VALUES (?,?,?,?,?,?,?,?);'
 
+    all_ccc_lists_items=set()
+    wikipedialanguage_ccclistsitems={}
     for languagecode in wikilanguagecodes:
-        print ('')
+        lists_qitems = []
+        query = 'SELECT qitem FROM ccc_vital_lists_rankings WHERE langcode_original ="'+languagecode+'" AND measurement_date IS (SELECT MAX(measurement_date) FROM ccc_vital_lists_rankings);'
+        for row in cursor2.execute(query):
+            all_ccc_lists_items.add(row[0])
+            lists_qitems.append(row[0])
+            wikipedialanguage_ccclistsitems[languagecode]=lists_qitems
+
+    wikipedialanguage_numberpageviews={}
+    wikipedialanguageccc_numberpageviews={}
+    for languagecode in wikilanguagecodes:
+        query = 'SELECT SUM(num_pageviews) FROM ccc_'+languagecode+'wiki;'
+        cursor.execute(query)
+        wikipedialanguage_numberpageviews[languagecode]=cursor.fetchone()[0]
+
+        query = 'SELECT SUM(num_pageviews) FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;';
+        cursor.execute(query)
+        wikipedialanguageccc_numberpageviews[languagecode]=cursor.fetchone()[0]
+
+        values = ('pageviews',languagecode,'wp',languagecode,'ccc',wikipedialanguageccc_numberpageviews[languagecode],100*wikipedialanguageccc_numberpageviews[languagecode]/wikipedialanguage_numberpageviews[languagecode],measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'ccc', measurement_date)
+
+
+        page_asstring = ','.join( ['?'] * len( lists_qitems ) )
+        query = 'SELECT SUM(num_pageviews) FROM ccc_'+languagecode+'wiki WHERE qitem IN (%);' % page_asstring
+        cursor.execute(query,(wikipedialanguage_ccclistsitems[languagecode]))
+        ccc_lists_pageviews = cursor.fetchone()[0]
+
+        values = ('pageviews',languagecode,'wp',languagecode,'all_ccc_vital_articles',ccc_lists_pageviews,100*ccc_lists_pageviews/wikipedialanguage_numberpageviews[languagecode],measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'all_ccc_vital_articles', measurement_date)
+
+
+        values = ('pageviews',languagecode,'ccc',languagecode,'all_ccc_vital_articles',ccc_lists_pageviews,100*ccc_lists_pageviews/wikipedialanguageccc_numberpageviews[languagecode],measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'ccc', languagecode, 'all_ccc_vital_articles', measurement_date)
+
+
+        page_asstring = ','.join( ['?'] * len( lists_qitems ) )
+        query = 'SELECT SUM(num_pageviews) FROM ccc_'+languagecode+'wiki WHERE qitem IN (%);' % page_asstring
+        cursor.execute(query,(list(all_ccc_lists_items)))
+        all_ccc_lists_pageviews = cursor.fetchone()[0]
+
+        values = ('pageviews',languagecode,'wp','ccc','all_ccc_vital_articles',all_ccc_lists_pageviews,100*all_ccc_lists_pageviews/wikipedialanguage_numberpageviews,measurement_date)
+        cursor2.execute(query_insert,values); conn2.commit()
+        cursor2.execute('SELECT last_insert_rowid()')
+        intersection_id = cursor2.fetchone()[0]
+        generate_increments(intersection_id,languagecode, 'wp', languagecode, 'all_ccc_vital_articles', measurement_date)
+
+
+    print ('languagecode, wp, languagecode, ccc,'+measurement_date)
+    print ('languagecode, wp, languagecode, all_ccc_articles,'+measurement_date)
+    print ('languagecode, ccc, languagecode, all_ccc_articles,'+measurement_date)
+    print ('languagecode, wp, ccc, all_ccc_vital_articles,'+measurement_date)
+
+
+    # LANGUAGES AND LANGUAGES CCC PAGEVIEWS
+    for languagecode_1 in wikilanguagecodes:
+        for languagecode_2 in wikilanguagecodes:
+            query = 'SELECT SUM(ccc_'+languagecode_1+'wiki.num_pageviews) FROM ccc_'+languagecode_1+'wiki INNER JOIN ccc_'+languagecode_2+'wiki ON ccc_'+languagecode_2+'wiki.qitem = ccc_'+languagecode_2+'wiki.qitem WHERE ccc_'+languagecode_2+'wiki.ccc_binary = 1;'
+            cursor.execute(query)
+            row = cursor.fetchone()
+            languagecode_2_ccc_pageviews = row[0]
+
+            values = ('pageviews',languagecode_1,'wp',languagecode_2,'ccc',languagecode_2_ccc_pageviews,100*languagecode_2_ccc_pageviews/wikipedialanguageccc_numberpageviews[languagecode_1],measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1, 'wp', languagecode_2, 'all_ccc_vital_articles', measurement_date)
+
+
+            query = 'SELECT SUM(ccc_'+languagecode_1+'wiki.num_pageviews) FROM ccc_'+languagecode_1+'wiki INNER JOIN ccc_'+languagecode_2+'wiki ON ccc_'+languagecode_2+'wiki.qitem = ccc_'+languagecode_2+'wiki.qitem WHERE ccc_'+languagecode_2+'wiki.qitem IN (%)' % page_asstring
+            cursor.execute(query)
+            row = cursor.fetchone()
+            languagecode_2_ccc_vital_articles_lists_pageviews = row[0]
+
+            values = ('pageviews',languagecode_1,'wp',languagecode_2,'ccc',languagecode_2_ccc_vital_articles_lists_pageviews,100*languagecode_2_ccc_vital_articles_lists_pageviews/wikipedialanguageccc_numberpageviews[languagecode_1],measurement_date)
+            cursor2.execute(query_insert,values); conn2.commit()
+            cursor2.execute('SELECT last_insert_rowid()')
+            intersection_id = cursor2.fetchone()[0]
+            generate_increments(intersection_id,languagecode_1, 'wp', languagecode_2, 'ccc', measurement_date)
+
+    print ('languagecode, wp, languagecode_2, ccc,'+measurement_date)
+    print ('languagecode, wp, languagecode_2, all_ccc_vital_articles,'+measurement_date)
+
+    print ('* generate_pageviews_intersections Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
 
-def generate_increments(cur_intersection_id, entity_1, entity_1_descriptor, entity_2, entity_2_descriptor, measurement_date):
+def generate_increments(cur_intersection_id, set1, set1descriptor, set2, set2descriptor, measurement_date):
 
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
-    query = 'SELECT abs_value, rel_value, measurement_date FROM wcdo_intersections WHERE entity_1 = ?, entity_1_descriptor=? entity_2=? entity_2_descriptor=? ORDER BY measurement_date DESC'
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
+    query = 'SELECT abs_value, rel_value, measurement_date FROM wcdo_intersections WHERE set1 = ?, set1descriptor=? set2=? set2descriptor=? ORDER BY measurement_date DESC'
 
     measurement_dates = []
     abs_values = []
@@ -1486,7 +1723,7 @@ def generate_ccc_vital_articles_lists(languagecode, languagecode_target, content
 
     # Databases connections
     conn = sqlite3.connect('ccc_current.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect('wcdo_data.db'); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect('wcdo_stats.db'); cursor2 = conn2.cursor()
     conn3 = sqlite3.connect('wikidata.db'); cursor3 = conn3.cursor()
 
     # DEFINE CONTENT TYPE
@@ -1903,7 +2140,7 @@ def generate_ccc_vital_articles_lists(languagecode, languagecode_target, content
                 cursor.execute(query_insert,values); conn.commit()
                 cursor.execute('SELECT last_insert_rowid()')
                 intersection_id = cursor.fetchone()[0]
-                generate_increments(intersection_id,'articles',list_origin,list_name,langcode,'wp', measurement_date)
+                generate_increments(intersection_id,list_origin,list_name,langcode,'wp', measurement_date)
 
 
     print (origin+', list_name, languagecode_2, wp, '+measurement_date)
@@ -1913,7 +2150,7 @@ def generate_ccc_vital_articles_lists(languagecode, languagecode_target, content
         cursor.execute(query_insert,values); conn.commit()
         cursor.execute('SELECT last_insert_rowid()')
         intersection_id = cursor.fetchone()[0]
-        generate_increments(intersection_id,'articles','languagecode_1','list_name_all_computed','languagecode_2','wp', measurement_date)
+        generate_increments(intersection_id,'languagecode_1','list_name_all_computed','languagecode_2','wp', measurement_date)
 
     print (origin+', list_name_all_computed, languagecode_2, wp, '+measurement_date)
 
@@ -1987,7 +2224,7 @@ def generate_ccc_vital_articles_lists(languagecode, languagecode_target, content
 
 
 def delete_last_iteration_ccc_vital_articles_lists():
-    conn = sqlite3.connect('wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect('wcdo_stats.db'); cursor = conn.cursor()
 
     query = 'DELETE FROM ccc_vital_lists_features WHERE measurement_date IN (SELECT MIN(measurement_date) FROM ccc_vital_lists_features)'
     cursor.execute(query); conn.commit()
@@ -2000,7 +2237,7 @@ def delete_last_iteration_ccc_vital_articles_lists():
 
 
 def delete_last_iteration_increments():
-    conn = sqlite3.connect('wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect('wcdo_stats.db'); cursor = conn.cursor()
 
     query = 'DELETE FROM wcdo_increments WHERE measurement_date IN (SELECT MIN(measurement_date) FROM ccc_vital_lists_features)'
     cursor.execute(query); conn.commit()

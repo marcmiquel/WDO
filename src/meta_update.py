@@ -48,7 +48,6 @@ def main():
     publish_wcdo_update_meta_pages()
 
 
-
 ######################################################################
 
 # MAIN
@@ -258,8 +257,8 @@ def obtain_proximity_wikipedia_languages_lists(languagecode):
     upper9lower10 = wikipedialanguage_numberarticles_sorted[i-9:i]+wikipedialanguage_numberarticles_sorted[i:i+11]
 
     # CLOSEST
-    conn = sqlite3.connect('wcdo_data.db'); cursor = conn.cursor()
-    query = 'SELECT rel_value, entity_2 FROM wcdo_intersections WHERE entity_1 = "'+languagecode+'" AND entity_1_descriptor = "ccc" AND entity_2_descriptor = "wp";'
+    conn = sqlite3.connect('wcdo_stats.db'); cursor = conn.cursor()
+    query = 'SELECT rel_value, set2 FROM wcdo_intersections WHERE set1 = "'+languagecode+'" AND set1descriptor = "ccc" AND set2descriptor = "wp";'
     for row in cursor.execute(query):
     closest19 = []
     i = 1
@@ -384,7 +383,7 @@ def make_table_langs_ccc_segments(wiki_path):
 
     # OBTAIN AND FORMAT THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
 
 
@@ -396,7 +395,7 @@ def make_table_langs_ccc_segments(wiki_path):
     df = df.set_index(0)
 
     # CCC %
-    query = 'SELECT entity_1, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "wp" AND entity_2_descriptor = "ccc" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "wp" AND set2descriptor = "ccc" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     rank_dict = {}; i=1
     lang_dict = {}
     abs_rel_value_dict = {}
@@ -410,21 +409,21 @@ def make_table_langs_ccc_segments(wiki_path):
     df['ccc_number_articles'] = pd.Series(abs_rel_value_dict)
 
     # CCC GL % 
-    query = 'SELECT entity_1, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "wp" AND entity_2_descriptor = "ccc_geolocated" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "wp" AND set2descriptor = "ccc_geolocated" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
     df['geolocated_number_articles'] = pd.Series(abs_rel_value_dict)
 
     # CCC KW %
-    query = 'SELECT entity_1, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "wp" AND entity_2_descriptor = "ccc_keywords" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "wp" AND set2descriptor = "ccc_keywords" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
     df['keyword_title'] = pd.Series(abs_rel_value_dict)
 
     # CCC People %
-    query = 'SELECT entity_1, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "wp" AND entity_2_descriptor = "ccc_people" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "wp" AND set2descriptor = "ccc_people" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -432,14 +431,14 @@ def make_table_langs_ccc_segments(wiki_path):
 
 
     # CCC Female %
-    query = 'SELECT entity_1, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "ccc" AND entity_2_descriptor = "female" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "ccc" AND set2descriptor = "female" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     female_abs_value_dict = {}
     for row in cursor.execute(query):
         female_abs_value_dict[row[0]]=row[1]
     df['female_ccc'] = pd.Series(female_abs_value_dict)
 
     # CCC Male %
-    query = 'SELECT entity_1, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "ccc" AND entity_2_descriptor = "male" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC'
+    query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "ccc" AND set2descriptor = "male" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC'
     male_abs_value_dict = {}
     for row in cursor.execute(query):
         male_abs_value_dict[row[0]]=row[1]
@@ -537,7 +536,7 @@ def make_table_langs_ccc_territories_ccc_segments(languagecode, page_titles_qite
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
     query = 'SELECT DISTINCT main_territory FROM ccc_'+languagecode+'wiki;'
 #    print (query)
     qitems = []
@@ -564,7 +563,7 @@ def make_table_langs_ccc_territories_ccc_segments(languagecode, page_titles_qite
 
 
     # CCC
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "ccc" AND entity_2 = "ccc" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "ccc" AND set2 = "ccc" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
     rank_dict = {}; i=1
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
@@ -576,7 +575,7 @@ def make_table_langs_ccc_territories_ccc_segments(languagecode, page_titles_qite
 
 
     # GL
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "ccc" AND entity_2 = "ccc_geolocated" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "ccc" AND set2 = "ccc_geolocated" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -584,7 +583,7 @@ def make_table_langs_ccc_territories_ccc_segments(languagecode, page_titles_qite
 
 
     # KW
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1_descriptor = "ccc" AND entity_2 = "ccc_keywords" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1descriptor = "ccc" AND set2 = "ccc_keywords" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -679,7 +678,7 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
 
     # COUNTRIES
     # language queries
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = '+languagecode+' AND entity_1_descriptor = "geolocated" AND entity_2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1 = '+languagecode+' AND set1descriptor = "geolocated" AND set2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
     rank_dict = {}; i=1
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
@@ -693,7 +692,7 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
     df['Nº'] = pd.Series(rank_dict)
     df['Language GL (%)'] = pd.Series(abs_rel_value_dict)
 
-    query = 'SELECT entity_2_descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE entity_1 = '+languagecode+' AND entity_1_descriptor = "geolocated" AND entity_2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) AND period = "monthly";'
+    query = 'SELECT set2descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE set1 = '+languagecode+' AND set1descriptor = "geolocated" AND set2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) AND period = "monthly";'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -701,13 +700,13 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
 
 
     # all qitems queries
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = "wikidata_article_qitems" AND entity_1_descriptor = "geolocated" AND entity_2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1 = "wikidata_article_qitems" AND set1descriptor = "geolocated" AND set2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
     df['All GL Qitems (%)'] = pd.Series(abs_rel_value_dict)
 
-    query = 'SELECT entity_2_descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE entity_1 = "wikidata_article_qitems" AND entity_1_descriptor = "geolocated" AND entity_2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE set1 = "wikidata_article_qitems" AND set1descriptor = "geolocated" AND set2 = "countries" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -767,7 +766,7 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
 
     # SUBREGIONS
     # language queries
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = '+languagecode+' AND entity_1_descriptor = "geolocated" AND entity_2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1 = '+languagecode+' AND set1descriptor = "geolocated" AND set2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
     rank_dict = {}; i=1
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
@@ -781,7 +780,7 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
     df['Nº'] = pd.Series(rank_dict)
     df['Language GL (%)'] = pd.Series(abs_rel_value_dict)
 
-    query = 'SELECT entity_2_descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE entity_1 = '+languagecode+' AND entity_1_descriptor = "geolocated" AND entity_2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) AND period = "monthly";'
+    query = 'SELECT set2descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE set1 = '+languagecode+' AND set1descriptor = "geolocated" AND set2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) AND period = "monthly";'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -790,13 +789,13 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
 
 
     # all qitems query
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = "wikidata_article_qitems" AND entity_1_descriptor = "geolocated" AND entity_2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1 = "wikidata_article_qitems" AND set1descriptor = "geolocated" AND set2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
     df['All GL Qitems (%)'] = pd.Series(abs_rel_value_dict)
 
-    query = 'SELECT entity_2_descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE entity_1 = "wikidata_article_qitems" AND entity_1_descriptor = "geolocated" AND entity_2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE set1 = "wikidata_article_qitems" AND set1descriptor = "geolocated" AND set2 = "subregions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -850,7 +849,7 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
 
     # REGIONS (continents)
     # language queries
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = '+languagecode+' AND entity_1_descriptor = "geolocated" AND entity_2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1 = '+languagecode+' AND set1descriptor = "geolocated" AND set2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) rel_value DESC;'
     rank_dict = {}; i=1
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
@@ -865,7 +864,7 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
     df['Language GL (%)'] = pd.Series(abs_rel_value_dict)
 
 
-    query = 'SELECT entity_2_descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE entity_1 = '+languagecode+' AND entity_1_descriptor = "geolocated" AND entity_2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) AND period = "monthly";'
+    query = 'SELECT set2descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE set1 = '+languagecode+' AND set1descriptor = "geolocated" AND set2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) AND period = "monthly";'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -873,13 +872,13 @@ def make_table_langs_geolocated_articles_segments(wiki_path, languagecode):
 
 
     # all qitems query
-    query = 'SELECT entity_2_descriptor, abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = "wikidata_article_qitems" AND entity_1_descriptor = "geolocated" AND entity_2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_value, rel_value FROM wcdo_intersections WHERE set1 = "wikidata_article_qitems" AND set1descriptor = "geolocated" AND set2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
     df['All GL Qitems (%)'] = pd.Series(abs_rel_value_dict)
 
-    query = 'SELECT entity_2_descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE entity_1 = "wikidata_article_qitems" AND entity_1_descriptor = "geolocated" AND entity_2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
+    query = 'SELECT set2descriptor, abs_increment, rel_increment FROM wcdo_increments INNER JOIN wcdo_intersections ON intersection_id=cur_intersection_id WHERE set1 = "wikidata_article_qitems" AND set1descriptor = "geolocated" AND set2 = "regions" AND content = "articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY rel_value DESC;'
     abs_rel_value_dict = {}
     for row in cursor.execute(query):
         abs_rel_value_dict[row[0]]=' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(row[2])+'%)</small>')
@@ -941,7 +940,7 @@ def make_table_langs_ccc_langs(wiki_path): # SPREAD
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
 
     #   QUESTION: How well each language edition CCC is spread in other language editions?
@@ -955,7 +954,7 @@ def make_table_langs_ccc_langs(wiki_path): # SPREAD
     language_dict = {}
     for languagecode in wikilanguagecodes:
         print (languagecode)
-        query = 'SELECT abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = ? AND entity_1_descriptor="wp" AND entity_2 = ? AND entity_2_descriptor = "ccc";'
+        query = 'SELECT abs_value, rel_value FROM wcdo_intersections WHERE set1 = ? AND set1descriptor="wp" AND set2 = ? AND set2descriptor = "ccc";'
         cursor.execute(query,(languagecode,languagecode))
         row = cursor.fetchone()
         value = row[1]
@@ -965,7 +964,7 @@ def make_table_langs_ccc_langs(wiki_path): # SPREAD
         if value2 == None: value2 = 0
         ccc_percent_wp=ccc_number_articles+' <small>'+'('+str(value2)+'%)</small>'
 
-        query = 'SELECT entity_2, abs_value, rel_value FROM wcdo_intersections WHERE entity_1='+languagecode+' AND entity_1_descriptor="wp" AND entity_2_descriptor = "ccc" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY abs_value DESC;'
+        query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections WHERE set1='+languagecode+' AND set1descriptor="wp" AND set2descriptor = "ccc" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY abs_value DESC;'
 
 
         ranking = 7
@@ -1087,7 +1086,7 @@ def make_table_langs_langs_ccc(wiki_path): # COVERAGE
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
     
     # QUESTION: How well each language edition covers the CCC of each other language edition?
@@ -1100,7 +1099,7 @@ def make_table_langs_langs_ccc(wiki_path): # COVERAGE
     ccc_articles_dict={}
     for languagecode in wikilanguagecodes:
         print (languagecode)
-        query = 'SELECT abs_value, rel_value FROM wcdo_intersections WHERE entity_1 = ? AND entity_1_descriptor="wp" AND entity_2 = ? AND entity_2_descriptor = "ccc";'
+        query = 'SELECT abs_value, rel_value FROM wcdo_intersections WHERE set1 = ? AND set1descriptor="wp" AND set2 = ? AND set2descriptor = "ccc";'
         cursor.execute(query,(languagecode,languagecode))
         row = cursor.fetchone()[0]
         ccc_articles_dict[languagecode]=ccc_number_articles
@@ -1109,7 +1108,7 @@ def make_table_langs_langs_ccc(wiki_path): # COVERAGE
     language_dict={}
     for languagecode in wikilanguagecodes:
 
-        query = 'SELECT entity_2, abs_value, rel_value FROM wcdo_intersections WHERE entity_1='+languagecode+' AND entity_1_descriptor="ccc" AND entity_2_descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY abs_value DESC;'
+        query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections WHERE set1='+languagecode+' AND set1descriptor="ccc" AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY abs_value DESC;'
 
         ranking = 7
         i = 1
@@ -1238,11 +1237,11 @@ def make_table_lang_countries_ccc_vital_articles_lists(languagecode, wiki_path):
 
         # United States (English speaking territories)
 
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
     language_covering = languagecode
     country_names = load_iso_3166_to_geographical_regions()[0]
 
-    query = 'SELECT entity_1_descriptor, entity_1, rel_value, abs_value FROM wcdo_intersections WHERE entity_2 = ? AND entity_2_descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) GROUP BY entity_1_descriptor DESC ORDER BY entity_1;'
+    query = 'SELECT set1descriptor, set1, rel_value, abs_value FROM wcdo_intersections WHERE set2 = ? AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) GROUP BY set1descriptor DESC ORDER BY set1;'
 
     row_dict = {}
     language_dict = {}
@@ -1354,7 +1353,7 @@ def make_table_lang_langs_ccc_vital_articles_lists(languagecode, wiki_path):
     # FOR WHEN CREATING THE PAGE:
     # https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/English_Wikipedia/Countries_CCC_Languages_CCC_Vital_articles_lists_(coverage)
 
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
     language_covering = languagecode
 
@@ -1364,7 +1363,7 @@ def make_table_lang_langs_ccc_vital_articles_lists(languagecode, wiki_path):
     # Language Covered, Wiki, Editors,Featured, Geolocated, Keywords, First 3Y, Last Y, Women, Men, Pageviews, Talk Edits, Lists Coverage Index, Covered articles sum.
     # Lists Coverage Index is the percentage of articles covered from these lists.
 
-    query = 'SELECT entity_1_descriptor, entity_1, rel_value, abs_value FROM wcdo_intersections WHERE entity_2 = ? AND entity_2_descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) GROUP BY entity_1_descriptor DESC ORDER BY entity_1;'
+    query = 'SELECT set1descriptor, set1, rel_value, abs_value FROM wcdo_intersections WHERE set2 = ? AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) GROUP BY set1descriptor DESC ORDER BY set1;'
 
     row_dict = {}
     language_dict = {}
@@ -1484,7 +1483,7 @@ def make_table_langs_lang_ccc_vital_articles_lists(langcode):
 
     language_covered = languagecode
 
-     query = 'SELECT entity_1_descriptor, entity_2, rel_value, abs_value FROM wcdo_intersections WHERE entity_1 = ? AND entity_2_descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) GROUP BY entity_1_descriptor DESC ORDER BY entity_1;'
+     query = 'SELECT set1descriptor, set2, rel_value, abs_value FROM wcdo_intersections WHERE set1 = ? AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) GROUP BY set1descriptor DESC ORDER BY set1;'
 
 
     row_dict = {}
@@ -1498,6 +1497,8 @@ def make_table_langs_lang_ccc_vital_articles_lists(langcode):
             spread_list_articles_sum=0
             for x,y in row_dict.items(): spread_list_articles_sum += y
             list_spread_index = round(spread_list_articles_sum/1000,2) # if we took into account the list of editors 1000, the number would be 2000.
+
+            # ALERT REWRITE... this is perhaps not 1000, it really depends on the number of articles from each language.
 
             row_dict['languagename']=languages.loc[languagecode_covering]['languagename']
             row_dict['Wiki']=languagecode_covering
@@ -1517,9 +1518,9 @@ def make_table_langs_lang_ccc_vital_articles_lists(langcode):
         current_languagecode_covering = languagecode_covering
 
 
-    column_list_dict = {'languagename':'Language','Wiki':'Wiki','CCC_Vital_articles_Top_1000':'Editors 1000', 'CCC_Vital_articles_Top_100':'Editors 100', 'CCC_Vital_articles_featured':'Featured', 'CCC_Vital_articles_geolocated':'Geolocated', 'CCC_Vital_articles_keywords':'Keywords', 'CCC_Vital_articles_first_years':'First 3Y', 'CCC_Vital_articles_last_year':'Last Y', 'CCC_Vital_articles_women':'Women', 'CCC_Vital_articles_men':'Men', 'CCC_Vital_articles_pageviews':'Pageviews', 'CCC_Vital_articles_discussions':'Talk Edits','list_spread_index':'List Spread Idx.','spread_list_articles_sum':'Sum Spread Articles'}
+    column_list_dict = {'languagename':'Language','Wiki':'Wiki','CCC_Vital_articles_editors':'Editors', 'CCC_Vital_articles_featured':'Featured', 'CCC_Vital_articles_geolocated':'Geolocated', 'CCC_Vital_articles_keywords':'Keywords', 'CCC_Vital_articles_first_years':'First 3Y', 'CCC_Vital_articles_last_year':'Last Y', 'CCC_Vital_articles_women':'Women', 'CCC_Vital_articles_men':'Men', 'CCC_Vital_articles_pageviews':'Pageviews', 'CCC_Vital_articles_discussions':'Talk Edits','list_spread_index':'Lists Spread Idx.','spread_list_articles_sum':'Sum Spread Articles'}
 
-    column_list = ['languagename','Wiki','CCC_Vital_articles_Top_1000','CCC_Vital_articles_Top_100','CCC_Vital_articles_featured','CCC_Vital_articles_geolocated','CCC_Vital_articles_keywords','CCC_Vital_articles_first_years','CCC_Vital_articles_last_year','CCC_Vital_articles_women','CCC_Vital_articles_men','CCC_Vital_articles_pageviews','CCC_Vital_articles_discussions','list_spread_index','spread_list_articles_sum']
+    column_list = ['languagename','Wiki','CCC_Vital_articles_editors','CCC_Vital_articles_featured','CCC_Vital_articles_geolocated','CCC_Vital_articles_keywords','CCC_Vital_articles_first_years','CCC_Vital_articles_last_year','CCC_Vital_articles_women','CCC_Vital_articles_men','CCC_Vital_articles_pageviews','CCC_Vital_articles_discussions','list_spread_index','spread_list_articles_sum']
 
     # HTML (from dataframe)
     df=pd.Dataframe.from_dict(language_dict) # I don't know what is the index here...
@@ -1593,12 +1594,11 @@ def make_table_langs_lang_ccc_vital_articles_lists(langcode):
 
 def make_viz_languages_ccc_absolute_relative_scatter_plot():
 #   QUESTION: What is the extent of Cultural Context Content in all language editions?
-
     print ('* make_viz_languages_ccc_absolute_relative_scatter_plot')
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
     query = 'SELECT * FROM wcdo_intersection'
 
@@ -1636,7 +1636,7 @@ def make_viz_langs_lang_ccc_scatter_plot(languagecode, wiki_path): # culture gap
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
     
     # obtain the data from table: ccc_gaps.
 
@@ -1658,7 +1658,7 @@ def make_viz_lang_ccc_langs_scatter_plot(languagecode, wiki_path): # culture gap
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
     
     # obtain the data from table: ccc_gaps. això abans....
 
@@ -1685,7 +1685,7 @@ def make_viz_all_wikipedias_all_articles_countries_pie_chart(wiki_path):
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
 
     # obtain data from table: ccc_entire_project
 
@@ -1698,7 +1698,7 @@ def make_viz_all_wikipedias_all_articles_countries_pie_chart(wiki_path):
     # El mateix per regions. (x3)
 
 
-    # This should be obtained from ccc_entire_project table from wcdo_data.db
+    # This should be obtained from ccc_entire_project table from wcdo_stats.db
 
     # ALERTA: això també podria ser per una llengua concreta.
 
@@ -1805,7 +1805,7 @@ def make_viz_ccc_last_month_articles_langs_ccc_over_time_line_chart(languagecode
 
     # OBTAIN THE DATA.
     print ('obtain the data.')
-    conn = sqlite3.connect(databases_path + 'wcdo_data.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor()
     
     # obtain the data from table: ccc_bridges.
 
@@ -1835,9 +1835,9 @@ def make_viz_ccc_geolocated_segments_over_time_line_chart():
 """
 'ca' '' 'country' 'france', wcdo_intersections.abs_value, wcdo_intersections.rel_value, wcdo_increments.abs_increment, wcdo_increments.rel_increment, 'quarter'
 
-SELECT wcdo_intersections.intersection_id, covering_entity, covering_entity_descriptor, covered entity, covered_entity_descriptor, abs_value, rel_value, measurement_date, abs_increment, rel_increment, period
+SELECT wcdo_intersections.intersection_id, covering_set, covering_set_descriptor, covered set, covered_set_descriptor, abs_value, rel_value, measurement_date, abs_increment, rel_increment, period
 FROM wcdo_intersections INNER JOIN wcdo_increments ON wcdo_intersections.intersection_id = wcdo_increments.intersection_id 
-WHERE wcdo_intersections.covering_entity='ca' AND wcdo_intersections.covering_entity_descriptor='' AND wcdo_intersections.covered_entity='countries' AND wcdo_intersections.covered_entity_descriptor='France' AND period='quarter'
+WHERE wcdo_intersections.covering_set='ca' AND wcdo_intersections.covering_set_descriptor='' AND wcdo_intersections.covered_set='countries' AND wcdo_intersections.covered_set_descriptor='France' AND period='quarter'
 """
 
 def make_viz_all_wikipedia_all_articles_regions_over_time_line_chart():
