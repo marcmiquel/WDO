@@ -4,7 +4,7 @@
 The [__Wikipedia Cultural Diversity Obsevatory (WCDO)__](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory) is a research project whose purpose is to raise awareness on Wikipedia’s current state of cultural diversity, __(1) providing datasets__, __(2) sites with visualizations and statistics__, and __(3) pointing out solutions to improve__ intercultural coverage and __knowledge inequalities__ among languages and geographical places.
 
 
-## Data: Cultural Context Content datasets
+## Data: Cultural Context Content datasets and WCDO stats
 Cultural Context Content is the group of articles in a Wikipedia language edition that relates to the editors' geographical and cultural context (places, traditions, language, politics, agriculture, biographies, events, etcetera.). Therefore, they are articles related to the territories where the language is spoken because it is indigenous or it is official.
 
 The [method](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content) to obtain this group of articles is divided into two steps.
@@ -20,10 +20,11 @@ The method is build with:
 The datasets are generated on a monthly basis at wcdo.wmflabs.org in CSV [(more info)](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content#Datasets).
 One sample of the generated CCC datasets is stored in the [datasets_sample folder](https://github.com/marcmiquel/WCDO/tree/master/datasets_sample), and the historical archive is in [wcdo.wmflabs.org/datasets](http://wcdo.wmflabs.org/datasets/).
 
-
-## Site: Meta page (WCDO home) and external website (WCDO visualizations)
 In order to be able to answer questions on Wikipedia cultural diversity, it is necessary to compute several statistics based on CCC and other groups of articles.
 * `stats_generation.py` computes these statistics and ranks the articles in order to create valuable lists of articles for each Wikipedia language edition. It stores the results in `wcdo_stats.db` on a monthly basis so it can be used to create tables and graphs.
+
+## Site: Meta page (WCDO home) and external website (WCDO visualizations)
+These are the scripts that create the tables and visualizations for the WCDO, both the meta page and the external website visualizations.
 
 * `meta_updates.py` presents most of the results through tables in the (WCDO meta pages)[https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory], with results for all languages and for each individually. This is done using [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot) - To post and update mediawiki pages.
 
