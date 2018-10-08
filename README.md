@@ -27,14 +27,12 @@ In order to be able to answer questions on Wikipedia cultural diversity, it is n
 
 * `meta_updates.py` presents most of the results through tables in the (WCDO meta pages)[https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory], with results for all languages and for each individually. 
 
-This is done using:
-- [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot) - To post and update mediawiki pages.
-- [Dash](https://bokeh.pydata.org) - To represent the stats.
+This is done using [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot) - To post and update mediawiki pages.
 
-In the near future, the lists of articles [(now presented in static HTML, e.g. List of 100 articles from the Romanian CCC that have been edited by the highest number of editors and its existance in Danish Wikipedia)](http://wcdo.wmflabs.org/archive/2018-07/Wikipedia_Cultural_Diversity_Observatory/Romanian_Wikipedia/CCC_Vital_articles_Top_100/ro_da.html) are going to be automatically presented through a Flask app.
+* `dash_apps.py` creates all the tables and visualizations which are available at (wcdo.wmflabs.org)[http://wcdo.wmflabs.org].
+It uses [Dash](https://bokeh.pydata.org) and Plotly.
 
-
-## Resarch: Main papers and presentations
+## Research: Main papers and presentations
 So far one paper have been published and several talks have been given on the usefulness of a Cultural Context Content dataset and the importance of exchanging content across languaeg editions in order to reduce the knowledge inequalities.
 * Miquel-Ribé, M., & Laniado, D. (2018). Wikipedia Culture Gap: Quantifying Content Imbalances Across 40 Language Editions. Frontiers in Physics ([pdf](https://github.com/marcmiquel/WCDO/blob/master/research/mmiquel_laniado_ccc_gaps.pdf)).
 * Miquel Ribé, M. (2017) Identity-based motivation in digital engagement: the influence of community and cultural identity on participation in Wikipedia (Doctoral dissertation, Universitat Pompeu Fabra).
