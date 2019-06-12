@@ -10,7 +10,7 @@ Cultural Context Content is the group of articles in a Wikipedia language editio
 The [method](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content) to obtain this group of articles is divided into two steps.
 
 * `language_territories_mapping.py` creates the first version of the database language_territories_mapping.csv with the territories that speak a language because it is either official or native.
-* `ccc_selection.py` uses this database as a reference, retrieves and processes data from  __Wikidata JSON dump__ and the Wikipedia langauge editions databases __(MySQL replicas)__ in order to create the final CCC dataset.
+* `ccc_selection.py` uses this database as a reference, retrieves and processes data from  __Wikidata JSON dump__ and the Wikipedia language editions databases __(MySQL replicas)__ in order to create the final CCC dataset. This is run with a cron executing a bash script on a monthly basis (ccc_selection.sh).
 
 The method is build with:
 - [Python 3](https://www.python.org/download/releases/3.0/) - To manage the data.
