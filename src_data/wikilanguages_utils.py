@@ -3,8 +3,13 @@
 # time
 import time
 import datetime
+import dateutil
+import calendar
 # system
 import os
+import sys
+import re
+import csv
 # databases
 import MySQLdb as mdb, MySQLdb.cursors as mdb_cursors
 import sqlite3
@@ -21,7 +26,7 @@ databases_path = '/srv/wcdo/databases/'
 # Loads language_territories_mapping.csv file
 def load_wikipedia_languages_territories_mapping():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();  
 
     query = 'SELECT WikimediaLanguagecode, languagenameEnglishethnologue, territoryname, territorynameNative, QitemTerritory, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, officialnationalorregional, region, subregion, intermediateregion FROM wikipedia_languages_territories_mapping;'
 
@@ -43,7 +48,7 @@ def load_wikipedia_languages_territories_mapping():
 def load_wiki_projects_information():
     # in case of extending the project to other WMF sister projects, it would be necessary to revise these columns and create a new file where a column would specify whether it is a language edition, a wikictionary, etc.
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
 
     query = 'SELECT languagename, Qitem, WikimediaLanguagecode, Wikipedia, WikipedialanguagearticleEnglish, languageISO, languageISO3, languageISO5, languageofficialnational, languageofficialregional, languageofficialsinglecountry, nativeLabel, numbercountriesOfficialorRegional, region, subregion, intermediateregion FROM wiki_projects;'
 
@@ -56,7 +61,7 @@ def load_wiki_projects_information():
 
 def load_language_pairs_territory_status():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
 
     query = 'SELECT qitem,territoryname_english, territoryname_higher, ISO3166, ISO3166_2, language_lower_name, language_higher_name, wikimedia_lower, wikimedia_higher, type_overlap, status_lower, status_higher, equal_status, indigenous_lower, indigenous_higher FROM wikipedia_language_pairs_territory_status WHERE equal_status=0;'
 
@@ -77,13 +82,13 @@ def load_all_territories_information():
     # This comes from Ethnologue and complemented.
 
 
-def load_wikipedia_language_editions_numberofarticles(wikilanguagecode, ccc):
+def load_wikipedia_language_editions_numberofarticles(wikilanguagecode, db):
     wikipedialanguage_numberarticles = {}
 
-    if ccc=='temp': 
-        database = 'ccc_temp.db';
+    if db=='temp': 
+        database = 'wikipedia_diversity_temp.db';
     else:
-        database = 'ccc.db'
+        database = 'wikipedia_diversity.db'
 
     print ('database in use in load_wikipedia_language_editions_numberofarticles: '+database)
 
@@ -93,7 +98,7 @@ def load_wikipedia_language_editions_numberofarticles(wikilanguagecode, ccc):
     # Obtaining CCC for all WP
     for languagecode in wikilanguagecode:
         try:
-            query = 'SELECT COUNT(*) FROM ccc_'+languagecode+'wiki;'
+            query = 'SELECT COUNT(*) FROM '+languagecode+'wiki;'
             cursor.execute(query)
             number = cursor.fetchone()[0]
             count+= number
@@ -102,7 +107,7 @@ def load_wikipedia_language_editions_numberofarticles(wikilanguagecode, ccc):
             print ('this language is not in the database yet: '+languagecode)
 
     print ('wikipedialanguage_numberarticles loaded.')
-    print ('this is the total number of articles in the CCC dataset: '+str(count))
+    print ('this is the total number of articles in the Diversity Database: '+str(count))
     return wikipedialanguage_numberarticles
 
 
@@ -111,13 +116,33 @@ def load_dicts_page_ids_qitems(printme, languagecode):
     page_titles_qitems = {}
     page_titles_page_ids = {}
 
-    conn = sqlite3.connect(databases_path + 'ccc_temp.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cursor = conn.cursor()
+#    conn = sqlite3.connect(databases_path + 'ccc.db'); cursor = conn.cursor()
+    
+    a='1'
+    try:
+        query = 'SELECT 1 FROM '+languagecode+'wiki;'
+        cursor.execute(query)
+        a='0'
+    except:
+        print ('sqlite3.OperationalError: no such table: '+languagecode)
+    if a=='1':
+        return (page_titles_qitems, page_titles_page_ids)
 
-    query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
-    for row in cursor.execute(query):
-        page_title=row[0].replace(' ','_')
-        page_titles_page_ids[page_title]=row[2]
-        page_titles_qitems[page_title]=row[1]
+    i=1
+    while (i!=0):
+        try:
+            query = 'SELECT page_title, qitem, page_id FROM '+languagecode+'wiki;'
+#            query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
+            for row in cursor.execute(query):
+                page_title=row[0].replace(' ','_')
+                page_titles_page_ids[page_title]=row[2]
+                page_titles_qitems[page_title]=row[1]
+            i = 0
+        except:
+            print('Database is lock. We try again.')
+            time.sleep(120)
+
 
     if printme == 1:
         print ('language: '+languagecode)
@@ -157,7 +182,7 @@ def load_territories_names_from_language_country(ISO3166, languagecode, territor
 
 def load_iso_3166_to_geographical_regions():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
 
     query = 'SELECT alpha_2, name, region, sub_region FROM country_regions;'
 
@@ -174,9 +199,40 @@ def load_iso_3166_to_geographical_regions():
     return country_names, regions, subregions
 
 
+def load_countries_subdivisions_from_language(languagecode,territories):
+    subdivisions=territories.loc[languagecode].ISO31662
+    if isinstance(subdivisions,str): subdivisions = [subdivisions]
+    else: subdivisions = list(set(subdivisions))
+
+    return subdivisions
+
+
+def load_iso_31662_to_subdivisions():
+
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    query = 'SELECT territoryname, ISO31662 FROM wikipedia_languages_territories_mapping;'
+    subdivisions = pd.read_sql_query(query, conn)
+
+    subdivisions2 = subdivisions.set_index(['ISO31662'])
+    ISO31662_subdivisions_dict = subdivisions2.territoryname.to_dict()
+    for isocode in list(ISO31662_subdivisions_dict.keys()):
+        subdivision = ISO31662_subdivisions_dict[isocode]
+        if subdivision == None or subdivision == '':
+            del ISO31662_subdivisions_dict[isocode]
+
+    subdivisions3 = subdivisions.set_index(['territoryname'])
+    subdivisions_ISO31662_dict = subdivisions3.ISO31662.to_dict()
+    for subdivision in list(subdivisions_ISO31662_dict.keys()):
+        isocode = subdivisions_ISO31662_dict[subdivision]
+        if isocode == None or isocode == '':
+            del subdivisions_ISO31662_dict[subdivision]
+
+    return ISO31662_subdivisions_dict, subdivisions_ISO31662_dict
+
+
 def load_world_subdivisions():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
     query = 'SELECT name, subdivision_code FROM world_subdivisions;'
 
     world_subdivisions = {}
@@ -188,7 +244,7 @@ def load_world_subdivisions():
 
 def load_world_subdivisions_ip2location():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
     query = 'SELECT subdivision_name, subdivision_code FROM ISO3166_2_ip2location;'
 
     world_subdivisions = {}
@@ -201,7 +257,7 @@ def load_world_subdivisions_ip2location():
 
 def load_world_subdivisions_multilingual():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
     query = 'SELECT subdivision_name, subdivision_code FROM multilingual_ISO3166_2;'
 
     world_subdivisions = {}
@@ -220,7 +276,7 @@ def load_language_pairs_apertium(wikilanguagecodes):
 #    r = requests.get("https://cxserver.wikimedia.org/v1/list/languagepairs", timeout=0.5)
 #    print (r.text)
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
 
     languagecode_translated_from={}
 
@@ -288,10 +344,12 @@ def load_all_countries_qitems():
     SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
     }'''
 
-
     url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
-    #print (data)
+#    url = 'https://query.wikidata.org/sparql'
+    data = requests.get(url,headers={'User-Agent': 'https://wikitech.wikimedia.org/wiki/User:Marcmiquel'}, params={'query': query, 'format': 'json'})
+#    print (data)
+    data = data.json()
+#    print (data)
 
     for item in data['results']['bindings']:
 
@@ -422,6 +480,87 @@ def load_all_countries_qitems():
     return (iso_qitem, label_qitem)
 
 
+
+# It returns the pairs of other values introduced as country (usually former countries) in wikidata and their current country
+def get_old_current_countries_pairs(languagecode,regional):
+
+    territories = load_wikipedia_languages_territories_mapping()
+    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    (iso_qitem, label_qitem) = load_all_countries_qitems()
+
+    if languagecode == '':
+        country_qitems = list(label_qitem.values())
+
+    elif languagecode != '' and regional == '':
+        try: countries_language = set(territories.loc[languagecode]['ISO3166'].tolist())
+        except: 
+            try: countries_language = set(); countries_language.add(territories.loc[languagecode]['ISO3166'])
+            except: pass
+
+        countries_language = list(set(countries_language)&set(iso_qitem.keys())) # these iso3166 codes
+        country_qitems = []
+        for country in countries_language: country_qitems.append(iso_qitem[country])
+
+    elif languagecode != '' and regional == 'regional':
+        try: country_qitems = territories.loc[territories['regional'] == 'no'].loc[languagecode]['QitemTerritory'].tolist()
+        except: 
+            try: country_qitems = list(); country_qitems.append(territories.loc[territories['regional'] == 'no'].loc[languagecode]['QitemTerritory'])
+            except:
+                print ('there are no entire countries where the '+languagecode+' is official')
+                return
+
+    page_asstring = ','.join( ['?'] * (len(country_qitems)) ) # total 
+    query = 'SELECT qitem, page_title FROM sitelinks WHERE langcode ="enwiki" AND qitem IN (SELECT DISTINCT country_properties.qitem2 FROM country_properties WHERE qitem2 NOT IN (%s))' % page_asstring
+
+    qitems = []
+    i = 0
+    for row in cursor.execute(query, country_qitems):
+        i+=1
+#        print (row)
+        qitem=row[0]
+        page_title=row[1].replace(' ','_')
+#        print (qitem,page_title)
+        qitems.append(qitem)
+#    print ('This is the number of not current countries: '+str(len(qitems)))
+
+    old_country_qitems = {}
+
+    """
+    # COUNTRY PROPERTY
+    query = 'SELECT qitem, qitem2 FROM country_properties WHERE qitem IN (%s)' % ','.join( ['?'] * (len(qitems)) )
+    query+= ' AND qitem2 IN (%s)' % ','.join( ['?'] * (len(country_qitems)) )
+    for row in cursor.execute(query, qitems + country_qitems):
+        old_country_qitems[row[0]] = row[1]
+    """
+
+#    old_country_qitems = {}
+    # PART OF PROPERTY
+    query = 'SELECT qitem, qitem2 FROM part_of_properties WHERE qitem IN (%s)' % ','.join( ['?'] * (len(qitems)) )
+    query+= ' AND qitem2 IN (%s)' % ','.join( ['?'] * (len(country_qitems)) )
+    for row in cursor.execute(query, qitems + country_qitems):
+        old_country_qitems[row[0]] = row[1]
+
+#    old_country_qitems = {}
+    # LOCATION PROPERTY
+    query = 'SELECT qitem, qitem2 FROM location_properties WHERE qitem IN (%s)' % ','.join( ['?'] * (len(qitems)) )
+    query+= ' AND qitem2 IN (%s)' % ','.join( ['?'] * (len(country_qitems)) )
+    for row in cursor.execute(query, qitems + country_qitems):
+        old_country_qitems[row[0]] = row[1]
+
+#    old_country_qitems = {}
+    # COORDINATES
+    query = 'SELECT qitem, iso3166 FROM geolocated_property WHERE qitem IN (%s)' % ','.join( ['?'] * (len(qitems)) )
+    for row in cursor.execute(query, qitems):
+        qitem2 = iso_qitem[row[1]]
+        if qitem2 in country_qitems:
+            old_country_qitems[row[0]] = qitem2
+
+#    print('This is the number of pairs of old countries with current countries: '+str(len(old_country_qitems)))
+
+    return old_country_qitems
+
+
+
 # It returns three lists with 20 languages according to different criteria.
 def obtain_proximity_wikipedia_languages_lists(languagecode, wikipedialanguage_numberarticles, top_val, upperlower_vals, closest_val):
 
@@ -480,7 +619,7 @@ def obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilangu
 
 def obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, num):
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
 
     query = ('CREATE TABLE IF NOT EXISTS obtain_closest_for_all_languages ('+
     'langcode text,'+
@@ -583,7 +722,12 @@ def extract_check_new_wiki_projects():
 
     
     url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
-    data = requests.get(url, params={'query': query, 'format': 'json'}).json()
+#    url = 'https://query.wikidata.org/sparql'
+
+    data = requests.get(url,headers={'User-Agent': 'https://wikitech.wikimedia.org/wiki/User:Marcmiquel'}, params={'query': query, 'format': 'json'})
+    print (data)
+    data = data.json()
+
     #print (data)
 
     extracted_languages = []
@@ -708,6 +852,132 @@ def extract_check_new_wiki_projects():
     return newlanguages
 
 
+def get_months_queries():
+
+    def datespan(startDate, endDate, delta=datetime.timedelta(days=1)):
+        currentDate = startDate
+        while currentDate < endDate:
+            yield currentDate
+            currentDate += delta
+
+    periods_accum = {}
+    periods_monthly = {}
+
+
+    """
+    # calculate last month
+    last_month_date = datetime.date.today().replace(day=1) - datetime.timedelta(days=61)
+    first_day = last_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S')
+    last_day = last_month_date.replace(day = calendar.monthrange(last_month_date.year, last_month_date.month)[1]).strftime('%Y%m%d%H%M%S')
+    month_condition = 'date_created >= "'+ first_day +'" AND date_created < "'+last_day+'"'
+    print (month_condition)
+    """
+
+    for day in datespan(datetime.date(2001, 1, 16), datetime.date.today(),delta=datetime.timedelta(days=30)):
+        month_period = day.strftime('%Y-%m')
+
+        first_day = day.replace(day = 1).strftime('%Y%m%d%H%M%S')
+        last_day = day.replace(day = calendar.monthrange(day.year, day.month)[1]).strftime('%Y%m%d%H%M%S')
+
+#        print ('monthly:')
+        month_condition = 'date_created >= "'+ first_day +'" AND date_created < "'+last_day+'"'
+        periods_monthly[month_period]=month_condition
+#        print (month_condition)    
+
+#        print ('accumulated: ')
+        if month_period == datetime.date.today().strftime('%Y-%m'):
+            month_condition = 'date_created < '+last_day + ' OR date_created IS NULL'
+        else:
+            month_condition = 'date_created < '+last_day
+
+        periods_accum[month_period]=month_condition
+#        print (month_condition)
+
+    return periods_monthly,periods_accum
+
+
+def get_current_cycle_year_month():
+    try:
+        pathf = databases_path+'wikidata.db'
+        current_cycle_date = time.strftime('%Y%m%d%H%M%S', time.gmtime(os.path.getmtime(pathf)))
+        current_cycle_date = datetime.datetime.strptime(current_cycle_date,'%Y%m%d%H%M%S')-dateutil.relativedelta.relativedelta(months=1)
+        current_cycle = current_cycle_date.strftime('%Y-%m')
+        print ('wikidata.db exists.')
+    except:
+        pathf = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
+        current_cycle_date = time.strftime('%Y%m%d%H%M%S', time.gmtime(os.path.getmtime(pathf)))
+        current_cycle_date = datetime.datetime.strptime(current_cycle_date,'%Y%m%d%H%M%S')-dateutil.relativedelta.relativedelta(months=1)
+        current_cycle = current_cycle_date.strftime('%Y-%m')
+        print ('wikidata.db does not exist.')
+    print (current_cycle)
+
+    return current_cycle
+
+
+def is_insert(line):
+    return 'INSERT INTO' in line or False
+
+def get_values(line):
+    return line.partition(' VALUES ')[2]
+
+def get_table_name(line):
+    match = re.search('INSERT INTO `([0-9_a-zA-Z]+)`', line)
+    if match:
+        return match.group(1)
+    else:
+        print(line)
+
+def get_columns(line):
+    match = re.search('INSERT INTO `.*` \(([^\)]+)\)', line)
+    if match:
+        return list(map(lambda x: x.replace('`', '').strip(), match.group(1).split(',')))
+
+def values_sanity_check(values):
+    assert values
+    assert values[0] == '('
+    # Assertions have not been raised
+    return True
+
+def parse_values(values):
+    rows = []
+    latest_row = []
+
+    reader = csv.reader([values], delimiter=',',
+                        doublequote=False,
+                        escapechar='\\',
+                        quotechar="'",
+                        strict=True
+    )
+
+    for reader_row in reader:
+        for column in reader_row:
+            if len(column) == 0 or column == 'NULL':
+                latest_row.append(chr(0))
+                continue
+            if column[0] == "(":
+                new_row = False
+                if len(latest_row) > 0:
+                    if latest_row[-1][-1] == ")":
+                        latest_row[-1] = latest_row[-1][:-1]
+                        new_row = True
+                if new_row:
+                    latest_row = ['' if field == '\x00' else field for field in latest_row]
+
+                    rows.append(latest_row)
+                    latest_row = []
+                if len(latest_row) == 0:
+                    column = column[1:]
+            latest_row.append(column)
+        if latest_row[-1][-2:] == ");":
+            latest_row[-1] = latest_row[-1][:-2]
+            latest_row = ['' if field == '\x00' else field for field in latest_row]
+            rows.append(latest_row)
+
+        return rows
+
+
+
+
 
 ############################################################################
 
@@ -723,3 +993,5 @@ def finish_email(startTime, filename, title):
     except Exception as err:
         print ('* Task aborted after: ' + str(datetime.timedelta(seconds=time.time() - startTime)))
         sys.stdout=None; send_email_toolaccount(title + ' aborted because of an error', open(filename, 'r').read()+'err')
+
+

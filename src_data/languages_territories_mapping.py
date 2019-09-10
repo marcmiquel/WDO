@@ -2,7 +2,7 @@
 # This is the ROSETTA STONE of the project.
 
 import wikilanguages_utils
-import ethl_utils
+import eth_utils
 
 from string import ascii_lowercase
 import time
@@ -26,7 +26,6 @@ if sys.stdout.encoding is None: sys.stdout = codecs.open("/dev/stdout", "w", 'ut
 # INSTRUCTIONS: ****************************************************************************************************************
 # MAIN
 def main():
-
 
 
 """
@@ -69,8 +68,6 @@ def main():
   export_countries_subdivisions_language_characteristics_to_complement('P1448',0)
   export_countries_subdivisions_language_characteristics_to_complement('P2936',0)
   export_countries_subdivisions_language_characteristics_to_complement('P37',0)
-
-
 """
 
 
@@ -2990,7 +2987,7 @@ def export_language_characteristics_to_complement(property_update,number):
 
     elif property_update == 'P625':
       # TO GIVE THEM LOCATION
-      query = 'SELECT DISTINCT qitem, latitude, longitude FROM all_languages_wikidata INNER JOIN wals_languages ON languageISO3 = iso_code AND languageISO3 != ""' # els que no tenen wals code amb el seu wals code.
+      query = 'SELECT DISTINCT qitem, latitude, longitude, als_code FROM all_languages_wikidata INNER JOIN wals_languages ON languageISO3 = iso_code AND languageISO3 != "" AND als_code != ""' # els que no tenen wals code amb el seu wals code.
 
     elif property_update == 'P1705':
       # TO GIVE THEM NATIVE LABEL
@@ -3034,7 +3031,8 @@ def export_language_characteristics_to_complement(property_update,number):
         value = row[1]
 
         if property_update == 'P31' and number == 'language':
-          string = qitem+'\t'+property_update+'\t'+'Q34770'+'\n'
+          string = qitem+'\t'+property_update+'\t'+'Q34770'+'\t'+'S248'+'\t'+'Q14790'+'\n'
+
 #          string = qitem+'\t'+property_update+'\t'+'Q34770'+'\t'+'S854'+'\t'+'"https://www.ethnologue.com/language/'+value+'"\n'
 
         elif property_update == 'P31' and number == 'macrolanguage':
@@ -3071,8 +3069,7 @@ def export_language_characteristics_to_complement(property_update,number):
           string = qitem+'\t'+property_update+'\t'+value+'\t'+languagestatus[row[2]]+'\tS854\t'+'"https://www.ethnologue.com/language/'+row[3]+'"\n'
 
         elif property_update == 'P625':
-          string = qitem+'\t'+property_update+'\t@'+row[1]+'/'+row[2]+'\n'
-
+          string = qitem+'\t'+property_update+'\t@'+row[1]+'/'+row[2]+'\tS854\t'+'"https://wals.info/languoid/lect/wals_code_'+row[3]+'"\n'
 
         elif property_update == 'P1098':
 
@@ -3114,11 +3111,25 @@ def export_countries_language_characteristics_to_complement(property_update,numb
 
 
     elif property_update == 'P2936':
+      query = 'SELECT DISTINCT ISO3166, qitem FROM all_countries_wikidata;'
+      iso_qitem = {}
+      for row in cursor.execute(query):
+        code = str(row[0])
+        qitem = row[1]
+        iso_qitem[code]=qitem
+
       # TO GIVE THEM A LANGUAGE USED
-      query = 'SELECT DISTINCT all_countries_wikidata.qitem, all_languages_wikidata.Qitem, population, language_countries_mapping.language_status_code, all_languages_wikidata.languageISO3 FROM language_countries_mapping INNER JOIN all_languages_wikidata ON language_countries_mapping.language_code_ISO639_3 = all_languages_wikidata.languageISO3 INNER JOIN all_countries_wikidata ON all_countries_wikidata.ISO3166 = language_countries_mapping.ISO3166;'
+      query = 'SELECT DISTINCT language_countries_mapping.ISO3166, all_languages_wikidata.Qitem, language_countries_mapping.population, language_countries_mapping.language_status_code, all_languages_wikidata.languageISO3 FROM language_countries_mapping INNER JOIN all_languages_wikidata ON language_countries_mapping.language_code_ISO639_3 = all_languages_wikidata.languageISO3 ORDER BY 1;'
 
 
     elif property_update == 'P37':
+      query = 'SELECT DISTINCT ISO3166, qitem FROM all_countries_wikidata;'
+      iso_qitem = {}
+      for row in cursor.execute(query):
+        code = str(row[0])
+        qitem = row[1]
+        iso_qitem[code]=qitem
+
       # TO GIVE THEM AN OFFICIAL LANGUAGE
       query = 'SELECT DISTINCT all_countries_wikidata.qitem, all_languages_wikidata.Qitem, all_languages_wikidata.languageISO3 FROM language_countries_mapping INNER JOIN all_languages_wikidata ON language_countries_mapping.language_code_ISO639_3 = all_languages_wikidata.languageISO3 INNER JOIN all_countries_wikidata ON all_countries_wikidata.ISO3166 = language_countries_mapping.ISO3166 WHERE language_status_code IN ("1","2");'
 
@@ -3142,14 +3153,10 @@ def export_countries_language_characteristics_to_complement(property_update,numb
           string = qitem+'\t'+property_update+'\t'+row[2]+':"'+value+'"\n'
 
         elif property_update == 'P2936':
+#          string = iso_qitem[str(row[0])]+'\t'+property_update+'\t'+row[1]+'\tP1098\t'+str(row[2])+'\tP3823\t'+languagestatus[row[3]]+'\tS854\t'+'"https://www.ethnologue.com/language/'+row[4]+'"\n'
 
-          if old_qitem != qitem and old_qitem!='':
-            string = old_qitem+'\t'+property_update+'\t'+value+'\t'+'P1098\t'+str(valor)+'\tP3823\t'+languagestatus[row[3]]+'\n'#+'\tS854\t'+'"https://www.ethnologue.com/language/'+old_iso+'"\n'
-            valor = 0
+          string = iso_qitem[str(row[0])]+'\t'+property_update+'\t'+row[1]+'\n'#+'P1098\t'+str(row[2])+'\tP3823\t'+languagestatus[row[3]]+'\tS854\t'+'"https://www.ethnologue.com/language/'+row[4]+'"\n'
 
-          valor += int(row[2])
-          old_qitem = qitem
-          old_iso = row[4]
 
         elif property_update == 'P37':
           string = qitem+'\t'+property_update+'\t'+value+'\tS854\t'+'"https://www.ethnologue.com/language/'+row[2]+'"\n'
@@ -3185,6 +3192,7 @@ def export_countries_subdivisions_language_characteristics_to_complement(propert
 
 #      query = 'SELECT DISTINCT all_countries_subdivisions_wikidata.qitem, all_languages_wikidata.Qitem, language_code_ISO639_3, population FROM all_countries_subdivisions_wikidata INNER JOIN language_territories_mapping ON all_countries_subdivisions_wikidata.qitem = language_territories_mapping.qitem INNER JOIN all_languages_wikidata ON language_territories_mapping.language_code_ISO639_3 = all_languages_wikidata.languageISO3 ORDER BY 3')
 
+# HEY: HERE THEY ARE SUBDIVISIONS. THE QUERY NEEDS A CONDICION TO AVOID COUNTRIES. REGIONAL = YES.
     elif property_update == 'P37':
       # TO GIVE THEM AN OFFICIAL LANGUAGE
       query = 'SELECT language_territories_mapping.qitem, all_languages_wikidata.Qitem, all_languages_wikidata.languageISO3 FROM language_territories_mapping INNER JOIN all_languages_wikidata ON language_territories_mapping.language_code_ISO639_3 = all_languages_wikidata.languageISO3 AND language_status_code IN ("1","2")'
@@ -3213,18 +3221,14 @@ def export_countries_subdivisions_language_characteristics_to_complement(propert
 
 
         elif property_update == 'P2936':
-
-          if old_qitem != qitem and old_qitem!='':
-            string = old_qitem+'\t'+property_update+'\t'+value+'\t'+'P1098\t'+str(valor)+'\tP3823\t'+languagestatus[row[3]]+'\n'#+'\tS854\t'+'"https://www.ethnologue.com/language/'+old_iso+'"\n'
-            valor = 0
-
-          valor += int(row[2])
-          old_qitem = qitem
-          old_iso = row[4]
+#          string = row[0]+'\t'+property_update+'\t'+row[1]+'\tP1098\t'+str(row[2])+'\tP3823\t'+languagestatus[row[3]]+'\tS854\t'+'"https://www.ethnologue.com/language/'+row[4]+'"\n'
+          string = qitem+'\t'+property_update+'\t'+value+'\n'#
 
 
         elif property_update == 'P37':
-          string = qitem+'\t'+property_update+'\t'+value+'\tS854\t'+'"https://www.ethnologue.com/language/'+row[2]+'"\n'
+#          string = qitem+'\t'+property_update+'\t'+value+'\tS854\t'+'"https://www.ethnologue.com/language/'+row[2]+'"\n'
+
+          string = qitem+'\t'+property_update+'\t'+value+'\n'#+'S854\t'+'"https://www.ethnologue.com/language/'+row[2]+'"\n'
 
         else:
           string = qitem+'\t'+property_update+'\t'+value+'\n'
