@@ -45,6 +45,12 @@ import xml.etree.ElementTree as etree
 # MAIN
 def main():
 
+    check_language_relevance_features()
+    return
+    copy_language_relevance_features()
+    
+    return
+
     for languagecode in ['en']: 
     # for languagecode in sorted(wikilanguagecodes,reverse=True): 
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
@@ -1181,6 +1187,55 @@ def check_language_relevance_features():
                 print(languagecode+' '+feature+' '+str(count))
             if count == 0 or count== None:
                 print(languagecode+' '+feature+' MISSING!')
+
+        print ('\n')
+
+
+def copy_language_relevance_features():
+
+    features = ['num_inlinks','num_outlinks','num_bytes','num_references','num_edits','num_editors','num_discussions','num_pageviews','num_wdproperty','num_interwiki','num_images','num_edits_last_month','featured_article','wikirank']
+
+    conn = sqlite3.connect(databases_path + 'ccc.db'); cursor = conn.cursor()
+
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+
+    for languagecode in wikilanguagecodes:
+        print(languagecode)
+
+        for feature in features:
+            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
+            cursor2.execute(query)
+            value = cursor2.fetchone()
+            if value != None: 
+                count = value[0]
+            if count != 0: 
+                print(languagecode+' '+feature+' '+str(count))
+            if count == 0 or count== None:
+                print(languagecode+' '+feature+' MISSING!')
+
+                params = []
+                query = 'SELECT '+feature+', qitem, page_id FROM ccc_'+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
+    #            query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
+                try:
+                    for row in cursor.execute(query):
+                        params.append((row[0],row[1],row[2]))
+                except:
+                    continue
+
+                if len(params)!=0:
+                    print ('In the old table we found: '+str(len(params)))
+                    query = 'UPDATE '+languagecode+'wiki SET '+feature+' = ? WHERE qitem=? AND page_id=?'
+                    cursor2.executemany(query,params);
+                    conn2.commit()
+
+                    query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
+                    cursor2.execute(query)
+                    value = cursor2.fetchone()
+                    if value != None: 
+                        count = value[0]
+                    if count != 0: 
+                        print(languagecode+' '+feature+' '+str(count))
+                        print ('FILLED WITH OTHER DATA.')
 
         print ('\n')
 

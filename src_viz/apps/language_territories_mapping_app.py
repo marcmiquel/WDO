@@ -7,7 +7,14 @@ from dash_apps import *
 dash_app1 = Dash(__name__, server = app, url_base_pathname= webtype + '/language_territories_mapping/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 dash_app1.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
 
-df = pd.read_csv(databases_path + 'language_territories_mapping.csv',sep='\t',na_filter = False)
+
+conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();  
+
+query = 'SELECT WikimediaLanguagecode, languagenameEnglishethnologue, territoryname, territorynameNative, QitemTerritory, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, officialnationalorregional, region, subregion, intermediateregion FROM wikipedia_languages_territories_mapping;'
+
+df = pd.read_sql_query(query, conn)
+
+
 #df = df[['territoryname','territorynameNative','QitemTerritory','WikimediaLanguagecode','demonym','demonymNative','ISO3166','ISO31662']]
 
 df.WikimediaLanguagecode = df['WikimediaLanguagecode'].str.replace('-','_')
@@ -36,8 +43,10 @@ dash_app1.layout = html.Div([
     the territory, territory in native language, demonyms in native language, ISO 3166 and ISO 3166-2, whereas 
     the full database includes the Qitem for the language, language names in Native languages among other information. 
     Additionally, the full table is extended with the database country_regions.csv, which presents an equivalence 
-    table between countries, world regions (continents) and subregions (see country_regions.csv in the github).'''.replace('  ', ''),
-    containerProps={'textAlign':'center'}),
+    table between countries, world regions (continents) and subregions (see country_regions.csv in the github).'''.replace('  ', '')),
+
+
+#    containerProps={'textAlign':'center'}),
     dt.DataTable(
         columns=['Wiki','Language','WD Qitem','Territory (Local)','Demonyms (Local)','ISO3166','ISO31662'],
         rows=df.to_dict('records'),
@@ -45,6 +54,13 @@ dash_app1.layout = html.Div([
         sortable=True,
         id='datatable-languageterritories'
     ),
+
+    dcc.Markdown(
+    '''Tags: #languages #territories #culturaldiversity #wikipedias'''.replace('  ', '')),
+
+
+#    containerProps={'textAlign':'center'}),
+
     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
 
 ], className="container")

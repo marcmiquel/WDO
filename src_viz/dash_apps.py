@@ -13,7 +13,7 @@ import dash_table_experiments as dt
 from dash.dependencies import Input, Output, State
 # viz
 import plotly
-import plotly.plotly as py
+import chart_studio.plotly as py
 import plotly.figure_factory as ff
 # data
 import urllib
@@ -36,11 +36,11 @@ import wikilanguages_utils
 ##### RESOURCES #####
 databases_path = '/srv/wcdo/databases/'
 
-territories = wikilanguages_utils.load_languageterritories_mapping()
-languages = wikilanguages_utils.load_wiki_projects_information(territories);
+territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
+languages = wikilanguages_utils.load_wiki_projects_information();
 
 wikilanguagecodes = languages.index.tolist()
-wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'old')
+wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')
 for languagecode in wikilanguagecodes:
     if languagecode not in wikipedialanguage_numberarticles: wikilanguagecodes.remove(languagecode)
 
@@ -53,8 +53,7 @@ for languagecode in wikilanguagecodes:
 	lang_name = languages.loc[languagecode]['languagename']+' ('+languagecode+')'
 	language_names[lang_name] = languagecode
 
-lists_dict = {'Editors':'editors','Featured':'featured','Geolocated':'geolocated','Keywords':'keywords','Women':'women','Men':'men','Created First Three Years':'created_first_three_years','Created Last Year':'created_last_year','Pageviews':'pageviews','Discussions':'discussions'}
-list_dict_inv = {v: k for k, v in lists_dict.items()}
+
 
 closest_langs = wikilanguages_utils.obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, 4)
 
@@ -62,16 +61,29 @@ country_names, regions, subregions = wikilanguages_utils.load_iso_3166_to_geogra
 
 country_names_inv = {v: k for k, v in country_names.items()}
 
-#print (country_names)
+ISO31662_subdivisions_dict, subdivisions_ISO31662_dict = wikilanguages_utils.load_iso_31662_to_subdivisions()
 
+#print (country_names)
 language_countries = {}
 for languagecode in wikilanguagecodes:
-	countries = wikilanguages_utils.load_countries_from_language(languagecode,territories)
-	countries_from_lang = {}
-#	countries_from_lang['all']='all'
-	for country in countries:
-		countries_from_lang[country_names[country]+' ('+country.lower()+')']=country.lower()
-	language_countries[languagecode] = countries_from_lang
+    countries = wikilanguages_utils.load_countries_from_language(languagecode,territories)
+    countries_from_lang = {}
+#   countries_from_lang['all']='all'
+    for country in countries:
+        countries_from_lang[country_names[country]+' ('+country.lower()+')']=country.lower()
+    language_countries[languagecode] = countries_from_lang
+
+language_subdivisions = {}
+for languagecode in wikilanguagecodes:
+    subdivisions = wikilanguages_utils.load_countries_subdivisions_from_language(languagecode,territories)
+    subdivisions_from_lang = {}
+
+    for subdivision in subdivisions:
+        if subdivision!=None and subdivision!='':
+            subdivisions_from_lang[ISO31662_subdivisions_dict[subdivision]+' ('+subdivision.lower()+')']=subdivision.lower()
+    language_subdivisions[languagecode] = subdivisions_from_lang
+
+
 
 
 conn = sqlite3.connect(databases_path + 'top_ccc_articles.db'); cursor = conn.cursor()
@@ -90,6 +102,7 @@ title_addenda = ' - Wikipedia Cultural Diversity Observatory (WCDO)'
 external_stylesheets = ['https://wcdo.wmflabs.org/assets/bWLwgP.css']
 external_scripts = ['https://wcdo.wmflabs.org/assets/gtag.js']
 webtype = ''
+
 
 
 
@@ -114,7 +127,13 @@ from apps.list_of_wikipedias_territories_by_ccc_apps import *
 from apps.ccc_coverage_spread_apps import *
 from apps.ccc_pageviews_apps import *
 from apps.top_ccc_app import *
+
+
+from apps.missing_ccc_app import *
 from apps.top_ccc_coverage_spread_apps import *
+
+from apps.stubs_app import *
+
 
 print ('\n\n\n*** START WCDO APP:'+str(datetime.datetime.now()))
 

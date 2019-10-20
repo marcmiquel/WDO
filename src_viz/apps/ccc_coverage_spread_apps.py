@@ -2,12 +2,17 @@ import sys
 sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
+# M'imagino que en funció d'un paràmetre /ccc_coverage/lang=? podríem arribar a fer un dashboard personalitzat pels del cover i pels del spread.
+
+
+
+
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app4 = Dash(__name__, server = app, url_base_pathname= webtype + '/ccc_coverage/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
-dash_app4.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
+#dash_app4.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
 
 conn = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor = conn.cursor() 
-conn2 = sqlite3.connect(databases_path + 'ccc_old.db'); cursor2 = conn2.cursor() 
+conn2 = sqlite3.connect(databases_path + 'ccc.db'); cursor2 = conn2.cursor() 
 
 avg_iw = {}
 for languagecode in wikilanguagecodes:
@@ -91,23 +96,27 @@ for row in cursor.execute(query):
     languagecode_covering = cur_languagecode_covering
 
 
-column_list_dict = {'language':'Language', 'WP articles':'Articles','avg_iw':'No CCC IW','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','relative_coverage_index':'R.Coverage','total_coverage_index':'T.Coverage','coverage_articles_sum':'Covered Art.'}
-column_list = ['Language','Articles','No CCC IW','nº1','nº2','nº3','nº4','nº5','R.Coverage','T.Coverage','Covered Art.','Region','Subregion']
+column_list_dict = {'language':'Language', 'WP articles':'Articles','avg_iw':'No-CCC IW','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','relative_coverage_index':'R.Coverage','total_coverage_index':'T.Coverage','coverage_articles_sum':'Covered Art.'}
+column_list = ['Language','Articles','No-CCC IW','nº1','nº2','nº3','nº4','nº5','R.Coverage','T.Coverage','Covered Art.','Region','Subregion']
 
 df=pd.DataFrame.from_dict(language_dict,orient='index')
 
 df['Region']=languages.region
 for x in df.index.values.tolist():
-    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].split(';')[0]
+#    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].split(';')[0]
+    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].replace(';',', ')
 
 df['Subregion']=languages.subregion
 for x in df.index.values.tolist():
-    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].split(';')[0]
-
+#    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].split(';')[0]
+    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].replace(';',', ')
+    
 df=df.rename(columns=column_list_dict)
 
 df = df[column_list] # selecting the parameters to export
 df = df.fillna('')
+
+df = df.sort_values('Language')
 
 
 title = "Wikipedia Language Editions' CCC Coverage"
@@ -121,19 +130,20 @@ dash_app4.layout = html.Div([
         The following table is particularly useful in order to understand the content culture gap between 
         language editions, that is the imbalances across languages editions in content representing each 
         language cultural context. Specifically, it shows how well each language edition covers the other 
-        language editions CCC by counting the CCC covered articles, i.e. articles from other language CCC 
-        that exist in one particular language edition.
+        language editions CCC by counting the number of CCC articles they have available.
 
         Languages are sorted in alphabetic order by their Wikicode, and the columns present the following 
-        statistics: the number of articles in the Wikipedia language edition (**Articles**), the **first 
+        statistics: the number of articles in the Wikipedia language edition (**Articles**), the average number of interwiki links of not own CCC articles (**No-CCC IW**), the **first 
         five other languages CCC** in terms of most articles covered and the percentage of coverage computed 
         according to the total number of CCC articles of those language edition, the relative coverage 
         (**R. Coverage**) of all languages CCC computed as the average of each language edition CCC percentage 
         of coverage, the total coverage (**T. Coverage**) of all languages CCC computed as the percentage of 
         coverage of all the articles that belong to other language editions CCC, and the total number of articles 
         covered (**Covered Art.**) that belong other language editions CCC.
-        '''.replace('  ', ''),
-    containerProps={'textAlign':'center'}),
+        '''.replace('  ', '')),
+
+
+#    containerProps={'textAlign':'center'}),
     dt.DataTable(
         rows=df.to_dict('records'),
         columns = column_list,
@@ -147,6 +157,10 @@ dash_app4.layout = html.Div([
     dcc.Graph(
         id='graph-ccccoverage'
     ),
+    dcc.Markdown(
+    '''Tags: #gaps #ccc #coverage'''.replace('  ', '')),
+#    containerProps={'textAlign':'center'}),
+
     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
 
 ], className="container")
@@ -336,24 +350,27 @@ for row in cursor.execute(query):
 
 
 
-column_list_dict = {'language':'Language', 'CCC articles':'CCC art.','links_zero':'CCC no IW','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','relative_spread_index':'R.Spread','total_spread_index':'T.Spread','spread_articles_sum':'Spread Art.'}
+column_list_dict = {'language':'Language', 'CCC articles':'CCC art.','links_zero':'CCC% no IW','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','relative_spread_index':'R.Spread','total_spread_index':'T.Spread','spread_articles_sum':'Spread Art.'}
 
-columns = ['Language','CCC art.','CCC no IW','nº1','nº2','nº3','nº4','nº5','R.Spread','T.Spread','Spread Art.','Region','Subregion']
+columns = ['Language','CCC art.','CCC% no IW','nº1','nº2','nº3','nº4','nº5','R.Spread','T.Spread','Spread Art.','Region','Subregion']
 
 df=pd.DataFrame.from_dict(language_dict,orient='index')
 
 df['Region']=languages.region
 for x in df.index.values.tolist():
-    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].split(';')[0]
+#    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].split(';')[0]
+    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].replace(';',', ')
 
 df['Subregion']=languages.subregion
 for x in df.index.values.tolist():
-    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].split(';')[0]
+#    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].split(';')[0]
+    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].replace(';',', ')
 
 df=df.rename(columns=column_list_dict)
 
 df = df[columns] # selecting the parameters to export
 df = df.fillna('')
+df = df.sort_values('Language')
 
 title = "Wikipedia Language Editions' CCC Spread"
 dash_app5.title = title+title_addenda
@@ -367,19 +384,17 @@ dash_app5.layout = html.Div([
         The following table is particularly useful in order to understand the content **culture gap** 
         between language editions, that is the imbalances across languages editions in content representing 
         cultural context. Specifically, it shows which language CCC is more popular among all Wikipedia 
-        language editions by counting the CCC spread articles, i.e. articles from one language CCC that 
-        exist in other language editions. 
+        language editions by counting in each language edition the number of CCC articles spread across the other languages. 
 
         Languages are sorted in alphabetic order by their Wikicode, and the columns present the following 
-        statistics: (**CCC %**) the number of CCC articles and the percentage it occupies in the language 
-        computed in relation to their total number of articles, the **first five other languages** with more 
-        spread articles from the language CCC and the percentage they occupy computed in relation to their 
-        corresponding total number of articles, the relative spread (**R. Spread**) of a language CCC across 
+        statistics: (**CCC art.**) the number of CCC articles and the percentage it occupies in the language 
+        computed in relation to their total number of articles, the percentage of articles in a language CCC with no interwiki links (**CCC% no IW**), the **first five other languages** covering more 
+         articles from the language CCC and the percentage they occupy in relation to their total number of articles, the relative spread (**R. Spread**) of a language CCC across 
         all the other languages computed as the average of the percentage they occupy in each other language 
         edition, the total spread (**T. Spread**) of a CCC across all the other languages computed as the 
         percentage in relation to all languages articles (not counting the own), and finally, the total number 
-        of language CCC articles (Spread Art.) that exists across all the other language editions.'''.replace('  ', ''),
-    containerProps={'textAlign':'center'}),
+        of language CCC articles (Spread Art.) that exists across all the other language editions.'''.replace('  ', '')),
+#    containerProps={'textAlign':'center'}),
 
     dt.DataTable(
         rows=df.to_dict('records'),
@@ -395,6 +410,11 @@ dash_app5.layout = html.Div([
     dcc.Graph(
         id='graph-cccspread'
     ),
+
+    dcc.Markdown(
+    '''Tags: #gaps #ccc #spread'''.replace('  ', '')),
+#    containerProps={'textAlign':'center'}),
+
     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
 
 ], className="container")
@@ -447,7 +467,7 @@ def app5_update_figure(rows, selected_row_indices):
         'name':'',
         'hovertext':'articles',
         'x': dff['Language'],
-        'y': dff['CCC no IW'],
+        'y': dff['CCC% no IW'],
         'type': 'bar',
         'marker': marker
     }, 3, 1)

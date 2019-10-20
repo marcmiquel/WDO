@@ -48,10 +48,11 @@ import gc
 def main():
 
 
-    create_wikipedia_missing_ccc_db()
-#    wikilanguagecodes = ['es','en']
+    # create_wikipedia_missing_ccc_db()
+#    wikilanguagecodes = ['es','en','fr']
 
-    for languagecode in wikilanguagecodes:
+    
+    for languagecode in wikilanguagecodes[wikilanguagecodes.index('sk'):]:
         print('\n* '+languages.loc[languagecode]['languagename']+' '+languagecode)
 
         try:
@@ -68,34 +69,34 @@ def main():
             print (languages.loc[languagecode]['languagename']+' language is not overlapped with other Wikipedia languages of higher status.')
             languagecodes_higher = []
 
-        if len(languagecodes_higher) > 0:
-            label_missing_ccc_articles_keywords(languagecode,languagecodes_higher)
+        # if len(languagecodes_higher) > 0:
+        #     label_missing_ccc_articles_keywords(languagecode,languagecodes_higher)
 
-        # WIKIDATA PROPERTIES
-        label_missing_ccc_articles_geolocation_wd(languagecode,languagecodes_higher)
-        label_missing_ccc_articles_country_wd(languagecode,languagecodes_higher)
-        label_missing_ccc_articles_location_wd(languagecode,languagecodes_higher)
-        label_missing_ccc_articles_language_strong_wd(languagecode,languagecodes_higher)
+        # # WIKIDATA PROPERTIES
+        # label_missing_ccc_articles_geolocation_wd(languagecode,languagecodes_higher)
+        # label_missing_ccc_articles_country_wd(languagecode,languagecodes_higher)
+        # label_missing_ccc_articles_location_wd(languagecode,languagecodes_higher)
+        # label_missing_ccc_articles_language_strong_wd(languagecode,languagecodes_higher)
 
-        # DEPENDENT ON THE PREVIOUS RESULTS
-        label_missing_ccc_articles_part_of_properties_wd(languagecode,languagecodes_higher)
-        label_missing_ccc_articles_created_by_properties_wd(languagecode,languagecodes_higher)
+        # # DEPENDENT ON THE PREVIOUS RESULTS
+        # label_missing_ccc_articles_part_of_properties_wd(languagecode,languagecodes_higher)
+        # label_missing_ccc_articles_created_by_properties_wd(languagecode,languagecodes_higher)
 
-        # INTRODUCE THE FEATURES OF THE ORIGINAL LANGUAGE AND OTHERS
-        copy_features_into_missing_ccc_from_original_lang(languagecode)
+        # # INTRODUCE THE FEATURES OF THE ORIGINAL LANGUAGE AND OTHERS
+        # copy_features_into_missing_ccc_from_original_lang(languagecode)
 
         copy_features_into_missing_ccc_from_language_pairs(languagecode, languagecodes_higher)
         copy_features_into_missing_ccc_from_non_language_pairs(languagecode, languagecodes_higher)
 
         # INTRODUCE THE LABELS
-        copy_labels_into_missing_ccc(languagecode, languagecodes_higher)
+        # copy_labels_into_missing_ccc(languagecode, languagecodes_higher)
 
 
-    # EXTEND LINKS TO AND FROM ORIGINAL CCC
-    for languagecode in wikilanguagecodes:
-        print (languagecode)
-        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_titles_qitems)
+    # # EXTEND LINKS TO AND FROM ORIGINAL CCC
+    # for languagecode in wikilanguagecodes:
+    #     print (languagecode)
+    #     (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+    #     extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_titles_qitems)
 
 
 ################################################################
@@ -1127,7 +1128,7 @@ def copy_features_into_missing_ccc_from_original_lang(languagecode):
 def copy_features_into_missing_ccc_from_language_pairs(languagecode,languagecodes_higher):
 
     function_name = 'copy_features_into_missing_ccc_from_language_pairs '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+#    if create_function_account_db(function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -1136,7 +1137,7 @@ def copy_features_into_missing_ccc_from_language_pairs(languagecode,languagecode
 
     if len(languagecodes_higher) == 0: 
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)
+        # create_function_account_db(function_name, 'mark', duration)
         return
 
 #    print('\n* '+languages.loc[languagecode]['languagename']+' '+languagecode)
@@ -1241,14 +1242,14 @@ def copy_features_into_missing_ccc_from_language_pairs(languagecode,languagecode
 
         # this function gets all the features from the original ccc_xwiki tables and copies them into the articles in the missing_ccc tables.
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+#    create_function_account_db(function_name, 'mark', duration)
 
 
 # This function sets the feature "non-language pairs" which shows which articles are missing in the language CCC but are not available either in a language-pair but in another language.
 def copy_features_into_missing_ccc_from_non_language_pairs(languagecode, languagecodes_higher):
 
     function_name = 'copy_features_into_missing_ccc_from_non_language_pairs '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+#    if create_function_account_db(function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -1480,7 +1481,7 @@ def copy_features_into_missing_ccc_from_non_language_pairs(languagecode, languag
 
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+#    create_function_account_db(function_name, 'mark', duration)
 
 
 # Introduce the label in the original language, the biggest with overlapping, otherwise in english.

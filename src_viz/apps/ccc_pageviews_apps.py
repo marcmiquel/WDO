@@ -119,8 +119,9 @@ dash_app6.layout = html.Div([
         of the own CCC articles as well as that from the CCC articles originary from other language editions.
 
         Languages are sorted in alphabetic order by their name, and the columns present the following 
-        statistics: the number of articles in the Wikipedia language edition (**Articles**), the percentage of CCC articles (**CCC art %**), the number of pageviews (**Pageviews**), the percentage of pageviews dedicated to CCC articles (**CCC %**), the percentage of pageviews dedicated to the language edition Top CCC articles (**Top CCC %**) (taking into account the first hundred articles from each list), the percentage of pageviews dedicated to all the Top CCC articles from all language editions (**All Top%**) including the own, and the percentage of pageviews dedicated to the **first five other language CCC**. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', ''),
-    containerProps={'textAlign':'center'}),
+        statistics: the number of articles in the Wikipedia language edition (**Articles**), the percentage of CCC articles (**CCC art %**), the number of pageviews (**Pageviews**), the percentage of pageviews dedicated to CCC articles (**CCC %**), the percentage of pageviews dedicated to the language edition Top CCC articles (**Top CCC %**) (taking into account the first hundred articles from each list), the percentage of pageviews dedicated to all the Top CCC articles from all language editions (**All Top%**) including the own, and the percentage of pageviews dedicated to the **first five other language CCC**. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
+
+#    containerProps={'textAlign':'center'}),
     dt.DataTable(
         rows=df.to_dict('records'),
         columns = column_list,
@@ -135,6 +136,10 @@ dash_app6.layout = html.Div([
     dcc.Graph(
         id='graph-cccpageviews'
     ),
+    dcc.Markdown(
+    '''Tags: #representation #ccc #pageviews'''.replace('  ', '')),
+
+#    containerProps={'textAlign':'center'}),
     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
 
 ], className="container")

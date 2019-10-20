@@ -5,7 +5,9 @@ from dash_apps import *
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app28 = Dash(__name__, server = app, url_base_pathname = webtype + '/missing_ccc_articles/', external_stylesheets=external_stylesheets ,external_scripts=external_scripts)
 
-dash_app28.config.supress_callback_exceptions = True
+dash_app28.config['suppress_callback_exceptions']=True
+
+#dash_app28.config.supress_callback_exceptions = True
 
 dash_app28.title = 'Missing CCC'+title_addenda
 dash_app28.layout = html.Div([
@@ -19,10 +21,18 @@ source_lang_dict = {}
 for languagecode in wikilanguagecodes:
     lang_name = languages.loc[languagecode]['languagename']+' ('+languagecode+')'
     source_lang_dict[lang_name] = languagecode
+
+source_lang_list = list(sorted(source_lang_dict))
+source_lang_list.insert(0,'No territorial coexistance')
+source_lang_list.insert(0,'Territorial coexistance')
+source_lang_list.insert(0,'All languages')
+
 source_lang_dict['Territorial coexistance'] = 'coexist'
 source_lang_dict['No territorial coexistance'] = 'nocoexist'
+source_lang_dict['All languages'] = 'all'
 
-missing_incomplete_dict = {'Missing articles':'missing','Incomplete articles':'incomplete'}
+
+missing_incomplete_dict = {'Incomplete articles':'incomplete','Missing articles':'missing'}
 
 topic_dict={'All':'all','People':'people','Women':'women','Men':'men','Folk':'folk','Earth':'earth','Monuments and Buildings':'monuments_and_buildings','Music Creations and Organizations':'music_creations_and_organizations','Sports and Teams':'sport_and_teams','Food':'food','Paintings':'paintings','GLAM':'glam','Books':'books','Clothing and Fashion':'clothing_and_fashion','Industry':'industry'}
 
@@ -34,7 +44,7 @@ features_dict = {'Number of Editors':'num_editors','Number of Edits':'num_edits'
 
 features_dict_inv= {v: k for k, v in features_dict.items()}
 
-columns_dict = {'num':'Nº','source_lang':'Language', 'page_title':'Title', 'page_title_original_lang': 'Title Target Lang.', 'qitem':'Qitem', 'labellang':'Label (Lang)','Number of Bytes Target Lang.':'num_bytes_original_lang'}
+columns_dict = {'num':'Nº','source_lang':'Language', 'page_title':'Title', 'page_title_original_lang': 'Title Target Lang.', 'qitem':'Qitem', 'labellang':'Lang Label','Number of Bytes Target Lang.':'num_bytes_original_lang'}
 columns_dict.update(features_dict_inv)
 
 
@@ -63,28 +73,47 @@ def dash_app28_build_layout(params):
 
 
         # TOPIC
-        type = params['type'] # incomplete or missing
-        if type == "None":
-            type = "missing"
+        if 'type' in params:
+            type_ = params['type'] # incomplete or missing
+            if type_ == "None":
+                type_ = "missing"
+        else:
+            type_ = "missing"
 
-        ccc_segment = params['ccc_segment']
 
-        topic = params['topic']
+        if 'ccc_segment' in params:
+            ccc_segment = params['ccc_segment']
+        else:
+            ccc_segment = 'none'
+
+        if 'topic' in params:
+            topic = params['topic']
+        else:
+            topic = 'none'
 
 
         # SOURCE lANGUAGE
-        source_lang=params['source_lang'].lower() #
+        if 'source_lang' in params:
+            source_lang=params['source_lang'].lower() #
+        else:
+            source_lang= 'none'
 
-        order_by = params['order_by']
+        if 'order_by' in params:
+            order_by = params['order_by']
+        else:
+            order_by = 'none'
 
-        limit = params['limit']
+        if 'limit' in params:
+            limit = params['limit']
+        else:
+            limit = 'none'
 
 
         # CREATING THE QUERY
         query = 'SELECT '
 
 
-        if type == 'missing' or type == "none":
+        if type_ == 'missing' or type_ == "none":
             columns = ['num','source_lang','page_title','num_editors','num_pageviews','num_interwiki','num_bytes']
 
             query += 'languagecode as source_lang, REPLACE(page_title,"_"," ") as page_title, '
@@ -99,7 +128,7 @@ def dash_app28_build_layout(params):
             query += 'FROM '+target_lang+'wiki '
             query += 'WHERE page_title_original_lang IS NULL '
 
-        elif type == 'incomplete':
+        elif type_ == 'incomplete':
             columns = ['num','source_lang','page_title','page_title_original_lang','num_bytes','num_bytes_original_lang','num_editors','num_pageviews','num_inlinks']
 
             query += 'languagecode as source_lang, REPLACE(page_title,"_"," ") as page_title, REPLACE(page_title_original_lang,"_"," ") as page_title_original_lang, '
@@ -145,7 +174,7 @@ def dash_app28_build_layout(params):
         elif source_lang == 'nocoexist':
             query += 'AND non_language_pairs == 1 '
 
-        elif source_lang != "none":
+        elif source_lang != "none" and source_lang != "all":
             query += 'AND languagecode = "'+source_lang+'" '
 
         query += 'AND (num_inlinks_from_original_CCC!=0 OR num_outlinks_to_original_CCC!=0) '
@@ -160,7 +189,7 @@ def dash_app28_build_layout(params):
         else:
             query += 'LIMIT '+str(limit)+';'
 
-        print(query)
+#        print(query)
         df = pd.read_sql_query(query, conn)#, parameters)
         df = df.fillna(0)
 
@@ -175,9 +204,21 @@ def dash_app28_build_layout(params):
 
         # PAGE CASE 2: PARAMETERS WERE INTRODUCED AND THERE ARE NO RESULTS
         if len(df) == 0:
-            text = ''
-            # text = '''In this page, you can consult the Missing CCC articles lists... 
-            # It is possible to query any list by changing the URL parameters. You need to specify.....'''
+
+            text = '''
+            In this page, you can consult a list of articles that could and might need to exist or be extended in a language CCC (i.e. part of their local content), and instead, they only exist in other Wikipedia language editions or they are more developed in terms of Bytes.
+
+            It is possible to query any list by changing the URL parameters or by using the following menus. You first need to select the target language (where you would like to improve local content representation). 
+            Additionally, if you want to aim at specific part of a language context, you can select the target country and target region - they are optional and allow you to filter for a specific area. For instance, for Target language French, whose language context encompasses several countries, Target country and Target region could be France and Québec.
+
+            It is also possible to filter the content according to several purposes. Search type allows you decide whether you want articles ‘missing’ in the target language and existing in the source languages or simply less complete (by default it is incomplete), CCC segment allows you to select some specific part of the CCC, and Topic allows you to select a among the following topics (all, people, women, men, folk, earth, monuments and buildings, music creations and organizations, sports and teams, food, paintings, GLAM, books, clothing and fashion and industry).
+
+            Finally, it is necessary to select the source languages from which you want to obtain articles. It is possible to select all languages (this is the default), those with which the source language coexists in the same territority (i.e. Welsh coexists with English), those with which the source language does not coexists with, and a specific language from all the Wikipedia language editions. The last two options are Order by feature and Limit the results, which allow you to sort the results according to a specific feature and limit the number of entries to a specific number (by default 100).
+
+
+            This tool is in Alpha version - you may find bugs. In this case, please e-mail us at tools.wcdo@tools.wmflabs.org.
+            '''
+
 
             layout = html.Div([
                 html.H3('Missing CCC Articles', style={'textAlign':'center'}),
@@ -187,21 +228,21 @@ def dash_app28_build_layout(params):
                 html.Br(),
 
                 dcc.Markdown(
-                    text.replace('  ', '')),
-
+                    text.replace('  ', ''),
+                containerProps={'textAlign':'center'}),
 
                 html.H5('Select the Wikipedia'),
 
                 html.Div(
-                html.P('Target Language'),
+                html.P('Target language'),
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
-                html.P('Target Country (Optional)'),
+                html.P('Target country'),
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
-                html.P('Target Region (Optional)'),
+                html.P('Target region'),
                 style={'display': 'inline-block','width': '200'}),
 
 
@@ -247,7 +288,7 @@ def dash_app28_build_layout(params):
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
-                html.P('CCC Segment'),
+                html.P('CCC segment'),
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
@@ -258,7 +299,7 @@ def dash_app28_build_layout(params):
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='type',
-                    options=[{'label': i, 'value': missing_incomplete_dict[i]} for i in sorted(missing_incomplete_dict)],
+                    options=[{'label': i, 'value': missing_incomplete_dict[i]} for i in sorted(missing_incomplete_dict, reverse=True)],
                     value='none',
                     placeholder="Type of gap",
                     style={'width': '190'}
@@ -270,7 +311,7 @@ def dash_app28_build_layout(params):
                     id='ccc_segment',
                     options=[{'label': i, 'value': ccc_segment_dict[i]} for i in sorted(ccc_segment_dict)],
                     value='none',
-                    placeholder="Select a CCC Segment",           
+                    placeholder="Select a CCC segment (optional)",           
                     style={'width': '190'}
                  ), style={'display': 'inline-block','width': '200'}),
 
@@ -280,7 +321,7 @@ def dash_app28_build_layout(params):
                     id='topic',
                     options=[{'label': i, 'value': topic_dict[i]} for i in sorted(topic_dict)],
                     value='none',
-                    placeholder="Select a topic",           
+                    placeholder="Select a topic (optional)",           
                     style={'width': '190'}
                  ), style={'display': 'inline-block','width': '200'}),
 
@@ -288,7 +329,7 @@ def dash_app28_build_layout(params):
                 html.Br(),
 
 
-                html.H5('Choose source of content'),
+                html.H5('Choose the source of content'),
 
                 html.Div(
                 html.P('Source language(s)'),
@@ -306,7 +347,7 @@ def dash_app28_build_layout(params):
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='source_lang',
-                    options=[{'label': i, 'value': source_lang_dict[i]} for i in sorted(source_lang_dict)],
+                    options=[{'label': i, 'value': source_lang_dict[i]} for i in source_lang_list],
                     value='none',
                     placeholder="Source language",
                     style={'width': '190'}
@@ -318,7 +359,7 @@ def dash_app28_build_layout(params):
                     id='order_by',
                     options=[{'label': i, 'value': features_dict[i]} for i in sorted(features_dict)],
                     value='none',
-                    placeholder="Order by",           
+                    placeholder="Order by (optional)",           
                     style={'width': '190'}
                  ), style={'display': 'inline-block','width': '200'}),
 
@@ -377,8 +418,8 @@ def dash_app28_build_layout(params):
                     df_row.append(html.A(str(rows[col]), href='https://'+title+'.wikipedia.org/wiki/'+title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
 
 
-                elif col == 'Label (Lang)':
-                    label = rows['Label (Lang)']
+                elif col == 'Lang Label':
+                    label = rows['Lang Label']
                     if label == 0: label = ''
                     df_row.append(label)
 
@@ -396,26 +437,35 @@ def dash_app28_build_layout(params):
         df1.columns = columns
 
 
-        # if country == 'all':
-        #     title = 'Top 500 CCC articles list "'+list_dict_inv[list_name] + '" from '+language_origin+' CCC in '+language_target+' Wikipedia'
-        #     country_origin = ' '
-        # else:
-        #     country_origin = country_names[country]
-        #     title = 'Top 500 CCC articles list "'+list_dict_inv[list_name]+'" from '+country_origin+' ('+language_origin+' CCC) in '+language_target+' Wikipedia'
-        #     country_origin = '('+country_origin+')'
-    #    dash_app287.title = title+title_addenda
+        if type_ == 'incomplete': typ = 'Incomplete'
+        if type_ == 'missing' or type_ == "none": typ = 'Missing'
+        title = typ+' CCC Articles in '+target_language+' Wikipedia'
 
+        if ccc_segment.lower() != "none": 
+            title = title + ' on CCC segment '+ccc_segment
+            if topic != "none": title = title + ' and'
+        if topic.lower() != "none": 
+            title = title + ' on '+topic
+
+        dash_app28.title = title+title_addenda
 
         # LAYOUT
         col_len = len(columns)
         # columns[1]=language_origin+' '+columns[1]
         # columns[col_len-1]=language_target+columns[col_len-1]
 
-        title = 'Missing CCC Articles'
-        text = ''
-        # text = '''
-        # The following table shows the Missing CCC articles list for '''+target_language+''' CCC '''+target_country+''' and its article availability in '''+target_language+''' Wikipedia.
-        # '''
+
+        if type_ == 'missing': typ = 'that might need to exist in '
+        if type_ == 'incomplete' or type == "none": typ = 'that might be more complete in '
+
+        text = '''
+        The following table shows the first '''+limit+''' articles '''+typ+target_language+''' Wikipedia local content (CCC). 
+
+        Articles are sorted by number of pageviews. The rest of columns present complementary features that are explicative of the article rellevance (number of editors, Bytes or Interwiki links). It is possible to add an extra column with other features by using Order by feature. The column named Lang Label shows for each article the Wikidata related Qitem Label in the target language when it exists, otherwise in English or the source language. Finally, the last column (Qitem) provides a link to Wikidata.
+
+            This tool is in Alpha version - you may find bugs. In this case, please e-mail us at tools.wcdo@tools.wmflabs.org.
+        '''
+
 
         countries_sel = language_countries[target_lang]
 
@@ -438,15 +488,15 @@ def dash_app28_build_layout(params):
                 html.H5('Select the Wikipedia'),
 
                 html.Div(
-                html.P('Target Language'),
+                html.P('Target language'),
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
-                html.P('Target Country (Optional)'),
+                html.P('Target country'),
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
-                html.P('Target Region (Optional)'),
+                html.P('Target region'),
                 style={'display': 'inline-block','width': '200'}),
 
 
@@ -488,11 +538,11 @@ def dash_app28_build_layout(params):
                 html.H5('Filter by content'),
 
                 html.Div(
-                html.P('Search Type'),
+                html.P('Search type'),
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
-                html.P('CCC Segment'),
+                html.P('CCC segment'),
                 style={'display': 'inline-block','width': '200'}),
 
                 html.Div(
@@ -503,7 +553,7 @@ def dash_app28_build_layout(params):
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='type',
-                    options=[{'label': i, 'value': missing_incomplete_dict[i]} for i in sorted(missing_incomplete_dict)],
+                    options=[{'label': i, 'value': missing_incomplete_dict[i]} for i in sorted(missing_incomplete_dict, reverse=True)],
                     value='none',
                     placeholder="Type of gap",
                     style={'width': '190'}
@@ -515,7 +565,7 @@ def dash_app28_build_layout(params):
                     id='ccc_segment',
                     options=[{'label': i, 'value': ccc_segment_dict[i]} for i in sorted(ccc_segment_dict)],
                     value='none',
-                    placeholder="Select a CCC Segment",           
+                    placeholder="Select a CCC segment (optional)",           
                     style={'width': '190'}
                  ), style={'display': 'inline-block','width': '200'}),
 
@@ -525,7 +575,7 @@ def dash_app28_build_layout(params):
                     id='topic',
                     options=[{'label': i, 'value': topic_dict[i]} for i in sorted(topic_dict)],
                     value='none',
-                    placeholder="Select a topic",           
+                    placeholder="Select a topic (optional)",           
                     style={'width': '190'}
                  ), style={'display': 'inline-block','width': '200'}),
 
@@ -533,7 +583,7 @@ def dash_app28_build_layout(params):
                 html.Br(),
 
 
-                html.H5('Choose source of content'),
+                html.H5('Choose the source of content'),
 
                 html.Div(
                 html.P('Source language(s)'),
@@ -551,7 +601,7 @@ def dash_app28_build_layout(params):
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='source_lang',
-                    options=[{'label': i, 'value': source_lang_dict[i]} for i in sorted(source_lang_dict)],
+                    options=[{'label': i, 'value': source_lang_dict[i]} for i in source_lang_list],
                     value='none',
                     placeholder="Source language",
                     style={'width': '190'}
@@ -563,7 +613,7 @@ def dash_app28_build_layout(params):
                     id='order_by',
                     options=[{'label': i, 'value': features_dict[i]} for i in sorted(features_dict)],
                     value='none',
-                    placeholder="Order by",           
+                    placeholder="Order by (optional)",           
                     style={'width': '190'}
                  ), style={'display': 'inline-block','width': '200'}),
 
@@ -597,157 +647,161 @@ def dash_app28_build_layout(params):
 
         # PAGE 1: FIRST PAGE. NOTHING STARTED YET.
 
-        text = ''
-        # text = '''
-        # In this page, you can consult .
+        text = '''
+        In this page, you can consult a list of articles that could and might need to exist or be extended in a language CCC (i.e. part of their local content), and instead, they only exist in other Wikipedia language editions or they are more developed in terms of Bytes.
 
-        # '''    
+        It is possible to query any list by changing the URL parameters or by using the following menus. You first need to select the target language (where you would like to improve local content representation). 
+        Additionally, if you want to aim at specific part of a language context, you can select the target country and target region - they are optional and allow you to filter for a specific area. For instance, for Target language French, whose language context encompasses several countries, Target country and Target region could be France and Québec.
+
+        It is also possible to filter the content according to several purposes. Search type allows you decide whether you want articles ‘missing’ in the target language and existing in the source languages or simply less complete (by default it is incomplete), CCC segment allows you to select some specific part of the CCC, and Topic allows you to select a among the following topics (all, people, women, men, folk, earth, monuments and buildings, music creations and organizations, sports and teams, food, paintings, GLAM, books, clothing and fashion and industry).
+
+        Finally, it is necessary to select the source languages from which you want to obtain articles. It is possible to select all languages (this is the default), those with which the source language coexists in the same territority (i.e. Welsh coexists with English), those with which the source language does not coexists with, and a specific language from all the Wikipedia language editions. The last two options are Order by feature and Limit the results, which allow you to sort the results according to a specific feature and limit the number of entries to a specific number (by default 100).'''
+
+
 
         layout = html.Div([
             html.H3('Missing CCC Articles', style={'textAlign':'center'}),
-            dcc.Markdown(text.replace('  ', '')),#,containerProps={'textAlign':'center'}),
+            dcc.Markdown(text.replace('  ', ''),containerProps={'textAlign':'center'}),
 
-    #            html.Br(),
+            html.H5('Select the Wikipedia'),
 
-                html.H5('Select the Wikipedia'),
+            html.Div(
+            html.P('Target language'),
+            style={'display': 'inline-block','width': '200'}),
 
-                html.Div(
-                html.P('Target Language'),
-                style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            html.P('Target country'),
+            style={'display': 'inline-block','width': '200'}),
 
-                html.Div(
-                html.P('Target Country (Optional)'),
-                style={'display': 'inline-block','width': '200'}),
-
-                html.Div(
-                html.P('Target Region (Optional)'),
-                style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            html.P('Target region'),
+            style={'display': 'inline-block','width': '200'}),
 
 
-                html.Br(),
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='target_lang',
-                    options=[{'label': i, 'value': target_lang_dict[i]} for i in sorted(target_lang_dict)],
-                    value='none',
-                    placeholder="Select a language",
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
-        #        dcc.Link('Query',href=""),
+            html.Br(),
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='target_lang',
+                options=[{'label': i, 'value': target_lang_dict[i]} for i in sorted(target_lang_dict)],
+                value='none',
+                placeholder="Select a language",
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
+    #        dcc.Link('Query',href=""),
 
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='target_country',
-                    options=[{'label': i, 'value': country_names_inv[i]} for i in sorted(country_names_inv)],
-                    value='none',
-                    placeholder="Select a country (optional)",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='target_country',
+                options=[{'label': i, 'value': country_names_inv[i]} for i in sorted(country_names_inv)],
+                value='none',
+                placeholder="Select a country (optional)",           
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
 
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='target_region',
-                    options=[{'label': i, 'value': subdivisions_ISO31662_dict[i]} for i in sorted(subdivisions_ISO31662_dict)],
-                    value='none',
-                    placeholder="Select a region (optional)",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='target_region',
+                options=[{'label': i, 'value': subdivisions_ISO31662_dict[i]} for i in sorted(subdivisions_ISO31662_dict)],
+                value='none',
+                placeholder="Select a region (optional)",           
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
 
 
-                html.Br(),
+            html.Br(),
 
 
 
 
-                html.H5('Filter by content'),
+            html.H5('Filter by content'),
 
-                html.Div(
-                html.P('Type of gap'),
-                style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            html.P('Type of gap'),
+            style={'display': 'inline-block','width': '200'}),
 
-                html.Div(
-                html.P('CCC Segment'),
-                style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            html.P('CCC segment'),
+            style={'display': 'inline-block','width': '200'}),
 
-                html.Div(
-                html.P('Topic'),
-                style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            html.P('Topic'),
+            style={'display': 'inline-block','width': '200'}),
 
-                html.Br(),
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='type',
-                    options=[{'label': i, 'value': missing_incomplete_dict[i]} for i in sorted(missing_incomplete_dict)],
-                    value='none',
-                    placeholder="Type of gap",
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
-
-
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='ccc_segment',
-                    options=[{'label': i, 'value': ccc_segment_dict[i]} for i in sorted(ccc_segment_dict)],
-                    value='none',
-                    placeholder="Select a CCC Segment",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+            html.Br(),
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='type',
+                options=[{'label': i, 'value': missing_incomplete_dict[i]} for i in sorted(missing_incomplete_dict, reverse=True)],
+                value='none',
+                placeholder="Type of gap",
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
 
 
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='topic',
-                    options=[{'label': i, 'value': topic_dict[i]} for i in sorted(topic_dict)],
-                    value='none',
-                    placeholder="Select a topic",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='ccc_segment',
+                options=[{'label': i, 'value': ccc_segment_dict[i]} for i in sorted(ccc_segment_dict)],
+                value='none',
+                placeholder="Select a CCC segment (optional)",           
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
 
 
-                html.Br(),
-
-                html.H5('Choose source of content'),
-
-                html.Div(
-                html.P('Source language(s)'),
-                style={'display': 'inline-block','width': '200'}),
-
-                html.Div(
-                html.P('Order by feature'),
-                style={'display': 'inline-block','width': '200'}),
-
-                html.Div(
-                html.P('Limit the results'),
-                style={'display': 'inline-block','width': '200'}),
-
-                html.Br(),
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='source_lang',
-                    options=[{'label': i, 'value': source_lang_dict[i]} for i in sorted(source_lang_dict)],
-                    value='none',
-                    placeholder="Source language",
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='topic',
+                options=[{'label': i, 'value': topic_dict[i]} for i in sorted(topic_dict)],
+                value='none',
+                placeholder="Select a topic (optional)",           
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
 
 
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Dropdown)(
-                    id='order_by',
-                    options=[{'label': i, 'value': features_dict[i]} for i in sorted(features_dict)],
-                    value='none',
-                    placeholder="Order by",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+            html.Br(),
 
-                html.Div(
-                dash_apps.apply_default_value(params)(dcc.Input)(
-                    id='limit',                    
-                    placeholder='Enter a value...',
-                    type='text',
-                    value='100',
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+            html.H5('Choose the source of content'),
+
+            html.Div(
+            html.P('Source language(s)'),
+            style={'display': 'inline-block','width': '200'}),
+
+            html.Div(
+            html.P('Order by feature'),
+            style={'display': 'inline-block','width': '200'}),
+
+            html.Div(
+            html.P('Limit the results'),
+            style={'display': 'inline-block','width': '200'}),
+
+            html.Br(),
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='source_lang',
+                options=[{'label': i, 'value': source_lang_dict[i]} for i in source_lang_list],
+                value='none',
+                placeholder="Source language",
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
+
+
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Dropdown)(
+                id='order_by',
+                options=[{'label': i, 'value': features_dict[i]} for i in sorted(features_dict)],
+                value='none',
+                placeholder="Order by (optional)",           
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
+
+            html.Div(
+            dash_apps.apply_default_value(params)(dcc.Input)(
+                id='limit',                    
+                placeholder='Enter a value...',
+                type='text',
+                value='100',
+                style={'width': '190'}
+             ), style={'display': 'inline-block','width': '200'}),
 
 
             html.A(html.Button('Query Results!'),
@@ -755,6 +809,31 @@ def dash_app28_build_layout(params):
         ], className="container")
 
     return layout
+
+
+
+@dash_app28.callback(
+    Output('target_country', 'options'),
+    [Input('target_lang', 'value')])
+def set_countries(target_lang):
+    if target_lang != None:
+        countries_sel = language_countries[target_lang]
+        return [{'label': i, 'value': countries_sel[i]} for i in sorted(countries_sel)]
+    else:
+        return
+
+
+@dash_app28.callback(
+    Output('target_region', 'options'),
+    [Input('target_lang', 'value')])
+def set_countries(target_lang):
+    if target_lang != None:
+        subdivisions_sel = language_subdivisions[target_lang]
+        return [{'label': i, 'value': subdivisions_sel[i]} for i in sorted(subdivisions_sel)]
+    else:
+        return
+
+
 
 
 # callback update URL

@@ -7,8 +7,9 @@ from dash_apps import *
 # https://wcdo.wmflabs.org/languages_top_ccc_articles_coverage/?lang=ca
 dash_app8 = Dash(__name__, server = app, url_base_pathname= webtype + '/languages_top_ccc_articles_coverage/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 dash_app8.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
+dash_app8.config['suppress_callback_exceptions']=True
 
-dash_app8.config.supress_callback_exceptions = True
+#dash_app8.config.supress_callback_exceptions = True
 
 dash_app8.title = 'Languages Top 100 CCC article lists coverage'+title_addenda
 dash_app8.layout = html.Div([
@@ -71,7 +72,6 @@ def dash_app8_build_layout(params):
             if languagecode_covered not in wikilanguagecodes: continue
 
             if old_languagecode_covered!=languagecode_covered and old_languagecode_covered!='':
-                print (old_languagecode_covered)
 
                 row_dict['languagename']=html.A(languages.loc[old_languagecode_covered]['languagename'], href='https://en.wikipedia.org/wiki/'+languages.loc[old_languagecode_covered]['WikipedialanguagearticleEnglish'].split('/')[4].replace(' ','_'), target="_blank", style={'text-decoration':'none'})
                 row_dict['Wiki']=html.A(old_languagecode_covered.replace('_','-'), href='https://'+old_languagecode_covered.replace('_','-')+'.wikipedia.org/wiki/', target="_blank", style={'text-decoration':'none','font-weight': 'bold','color':'#000000'})
@@ -112,8 +112,8 @@ def dash_app8_build_layout(params):
 
             link = html.Abbr(link,title=column_list_dict[list_name]+' List',style={'text-decoration':'none'})
 
-            url = '/top_ccc_articles/?list='+list_name+'&lang_origin='+languagecode_covered+'&country_origin=all&lang_target='+language_covering
-            row_dict[list_name]= html.A(link, href=url, style={'text-decoration':'none'}) # target="_blank", 
+            url = '/top_ccc_articles/?list='+list_name+'&source_lang='+languagecode_covered+'&source_country=all&target_lang='+language_covering+'&order_by=none&filter=None'
+            row_dict[list_name]= html.A(link, href=url, target="_blank", style={'text-decoration':'none'}) # target="_blank", 
 
             old_languagecode_covered = languagecode_covered
             list_top.remove(list_name)
@@ -151,7 +151,7 @@ def dash_app8_build_layout(params):
 
         language_cover = languages.loc[language_covering]['languagename']
         title = 'Languages Top 100 CCC articles lists coverage by '+language_cover+' Wikipedia'
-        dash_app8.title = title+title_addenda
+#        dash_app8.title = title+title_addenda
 
         text = '''This page shows some statistics that explain how well '''+language_cover+''' Wikipedia language edition covers the Top 100 of the Top CCC articles lists from other Wikipedia language editions. It is updated on a monthly basis (between updates there may be changes and the table may not reflect them).
 
@@ -164,7 +164,7 @@ def dash_app8_build_layout(params):
                 **The challenge is to reach 100 articles covered (Sum Covered Articles) from each language CCC!**
                 '''
 
-        dash_app8.layout = html.Div([
+        layout = html.Div([
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
                 text.replace('  ', ''), containerProps={'textAlign':'center'}),
@@ -201,7 +201,7 @@ def dash_app8_build_layout(params):
 
     else:
         title = 'Languages Top 100 CCC articles lists coverage'
-        dash_app8.title = title+title_addenda
+#        dash_app8.title = title+title_addenda
 
         text = '''This page shows some statistics that explain how well a Wikipedia language edition covers the Top 100 of the Top CCC articles lists from other Wikipedia language editions. It is updated on a monthly basis (between updates there may be changes and the table may not reflect them).
 
@@ -212,7 +212,7 @@ def dash_app8_build_layout(params):
                 **The challenge is to reach 100 articles covered (Sum Covered Articles) from each language CCC!**
                 '''
 
-        dash_app8.layout = html.Div([
+        layout = html.Div([
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
                 text.replace('  ', ''), containerProps={'textAlign':'center'}),
@@ -238,7 +238,7 @@ def dash_app8_build_layout(params):
 
             ], className="container")        
 
-    return dash_app8.layout
+    return layout
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
@@ -250,7 +250,8 @@ def dash_app8_build_layout(params):
 dash_app9 = Dash(__name__, server = app, url_base_pathname= webtype + '/countries_top_ccc_articles_coverage/', external_stylesheets=external_stylesheets ,external_scripts=external_scripts)
 dash_app9.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
 
-dash_app9.config.supress_callback_exceptions = True
+#dash_app9.config.supress_callback_exceptions = True
+dash_app9.config['suppress_callback_exceptions']=True
 
 dash_app9.title = 'Countries Top 100 CCC article lists coverage'+title_addenda
 dash_app9.layout = html.Div([
@@ -308,6 +309,8 @@ def dash_app9_build_layout(params):
 
         for row in cursor.execute(query):
 
+            print (row)
+
             covered = row[1]
             if '(' not in covered: continue
 
@@ -317,25 +320,39 @@ def dash_app9_build_layout(params):
                 country_language = language_name+' CCC ('+ country_name+')'
     #            country_language = country_name+' ('+language_name+' CCC)'
 
-                territorynames = wikilanguages_utils.load_territories_names_from_language_country(country_covered, languagecode_covered, territories)
-                territorynames_label = ", ".join(territorynames)
-                territorynames_label+= '.'
+                try:
+                    print (country_covered, languagecode_covered, covered)
 
-                abbr_label = html.Abbr(country_language,title='Territories: '+territorynames_label)
+                    territorynames = wikilanguages_utils.load_territories_names_from_language_country(country_covered, languagecode_covered, territories)
+                    territorynames_label = ", ".join(territorynames)
+                    territorynames_label+= '.'
+                    print (territorynames_label)
 
-                row_dict['Country']=abbr_label
-                row_dict['List Coverage Idx.']=round(list_coverage_index/10,1)
 
-                value = int(df_cv.loc[old_covered]['abs_value'])
-                if value < 99: color = html.Div(str(value), style={'color': 'red','font-weight': 'bold'})
-                else: color = html.Div(str(value), style={'color': 'green','font-weight': 'bold'})
-                row_dict['Sum Covered Articles']=color
 
-    #            print (row_dict)
-                for remaining_list in list_top:
-                    row_dict[list_dict[remaining_list]] = '0/0'
+                    abbr_label = html.Abbr(country_language,title='Territories: '+territorynames_label)
 
-                country_dict[country_language]=row_dict
+                    row_dict['Country']=abbr_label
+                    row_dict['List Coverage Idx.']=round(list_coverage_index/10,1)
+
+                    value = int(df_cv.loc[old_covered]['abs_value'])
+                    if value < 99: color = html.Div(str(value), style={'color': 'red','font-weight': 'bold'})
+                    else: color = html.Div(str(value), style={'color': 'green','font-weight': 'bold'})
+                    row_dict['Sum Covered Articles']=color
+
+        #            print (row_dict)
+                    for remaining_list in list_top:
+                        row_dict[list_dict[remaining_list]] = '0/0'
+
+                    country_dict[country_language]=row_dict
+
+
+
+                except:
+                    territorynames_label = ''
+                    print ('this is not covered anymore: '+country_language)
+#                    continue
+
 
                 row_dict={}
                 list_coverage_index=0
@@ -347,9 +364,10 @@ def dash_app9_build_layout(params):
 
             list_coverage_index += percentage
 
-            if covered!='':
+            if covered != '':
                 parts=covered.split('_')
                 country_covered = parts[0]
+
                 if len(parts)==3:
                     languagecode_covered = parts[1].replace('(','')+'_'+parts[2].replace(')','')
                 elif len(parts)==4:
@@ -362,6 +380,7 @@ def dash_app9_build_layout(params):
                 df_country = df_countries.loc[covered]
                 df_country = df_country.set_index('set1descriptor')
 
+
             total_list = df_country.loc[list_name,'abs_value']
             if total_list == 100:
                 link = str(num_articles) + '%'
@@ -370,18 +389,30 @@ def dash_app9_build_layout(params):
 
             link = html.Abbr(link,title=list_dict[list_name]+' List',style={'text-decoration':'none'})
 
-            url = 'https://wcdo.wmflabs.org/top_ccc_articles/?list='+list_name+'&lang_origin='+languagecode_covered+'&country_origin='+country_covered+'&lang_target='+languagecode_covering
+            url = 'https://wcdo.wmflabs.org/top_ccc_articles/?list='+list_name+'&source_lang='+languagecode_covered+'&source_country='+country_covered+'&target_lang='+languagecode_covering+'&order_by=none&filter=None'
 
             row_dict[list_dict[list_name]]= html.A(link, href=url, target="_blank", style={'text-decoration':'none'})
             row_dict['World Subregion'] = subregions[country_covered]
+
+            print (covered,old_covered)
+            print ('chicken')
 
             old_covered = covered
             list_top.remove(list_name)
 
 
+
+
+    
+
+
+
+
+
         # last iteration
         language_name = languages.loc[languagecode_covered]['languagename']
         country_name = country_names[country_covered]
+
     #    country_language = country_name+' ('+language_name+' CCC)'
         country_language = language_name+' CCC ('+ country_name+')'
 
@@ -401,7 +432,7 @@ def dash_app9_build_layout(params):
 
         language_cover = languages.loc[languagecode_covering]['languagename']
         title = 'Countries Top 100 CCC article lists coverage by '+language_cover+' Wikipedia'
-        dash_app9.title = title+title_addenda
+#        dash_app9.title = title+title_addenda
         text = '''
                 This page shows some statistics that explain how well '''+language_cover+'''' Wikipedia language edition covers the Top 100 CCC articles lists generated for the countries associated to each language edition (when it is a region or several regions located in the same country, it appears as one row with the country name). It is updated on a monthly basis (between updates there may be changes and the table may not reflect them).
 
@@ -419,7 +450,7 @@ def dash_app9_build_layout(params):
             
                 _Please, be aware this interface is in its Beta phase. If it does not respond to your queries, refresh the page several times until you see Updating..._.\
                 '''
-        dash_app9.layout = html.Div([
+        layout = html.Div([
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', ''),
             containerProps={'textAlign':'center'}),
@@ -453,13 +484,19 @@ def dash_app9_build_layout(params):
                         row[col]
                         ) for col in columns
                 ]) for i,row in sorted(country_dict.items())]
-            )
+            ),
+
+            dcc.Markdown('''Tags: #sharing #ccc #culturaldiversity'''.replace('  ', ''),
+            containerProps={'textAlign':'center'}),
+
+            html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
+
             ], className="container")
 
     else:
 
         title = 'Countries Top 100 CCC article lists coverage'
-        dash_app9.title = title+title_addenda
+#        dash_app9.title = title+title_addenda
         text = '''
                 This page shows some statistics that explain how well a Wikipedia language edition covers the Top 100 CCC articles lists generated for the countries associated to each language edition (when it is a region or several regions located in the same country, it appears as one row with the country name). It is updated on a monthly basis (between updates there may be changes and the table may not reflect them).
 
@@ -471,7 +508,7 @@ def dash_app9_build_layout(params):
 
                 **The challenge is to reach 100 articles covered (Sum Covered Articles) from each country!**
                 '''
-        dash_app9.layout = html.Div([
+        layout = html.Div([
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', ''),
             containerProps={'textAlign':'center'}),
@@ -505,12 +542,19 @@ def dash_app9_build_layout(params):
                         row[col]
                         ) for col in columns
                 ]) for i,row in sorted(country_dict.items())]
-            )
+            ),
+
+            dcc.Markdown('''Tags: #sharing #countries #ccc #culturaldiversity'''.replace('  ', ''),
+            containerProps={'textAlign':'center'}),
+
+            html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
+
+
             ], className="container")
 
 
 
-    return dash_app9.layout
+    return layout
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
@@ -520,9 +564,10 @@ def dash_app9_build_layout(params):
 dash_app10 = Dash(__name__, server = app, url_base_pathname= webtype + '/languages_top_ccc_articles_spread/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 dash_app10.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
 
-dash_app10.config.supress_callback_exceptions = True
+#dash_app10.config.supress_callback_exceptions = True
+dash_app10.config['suppress_callback_exceptions']=True
 
-title = 'Top 100 CCC article lists spread across the rest of Wikipedias'
+title = 'Top 100 CCC article lists spread across the Wikipedias'
 dash_app10.title = title+title_addenda
 
 conn2 = sqlite3.connect(databases_path + 'wcdo_stats.db'); cursor2 = conn2.cursor()
@@ -614,10 +659,10 @@ def dash_app10_build_layout(params):
 
             link = html.Abbr(link,title=column_list_dict[list_name]+' List',style={'text-decoration':'none'})
 
-            url = '/top_ccc_articles/?list='+list_name+'&lang_origin='+languagecode_spread+'&lang_target='+languagecode_spreadin+'&country=all'
+            url = '/top_ccc_articles/?list='+list_name+'&source_lang='+languagecode_spread+'&target_lang='+languagecode_spreadin+'&country=all'+'&order_by=none&filter=None'
 
     #        row_dict[list_name]= dcc.Markdown('['+link+']('+url+'){:target="_blank"}')
-            row_dict[list_name]= html.A(link, href=url, style={'text-decoration':'none'}) # target="_blank",
+            row_dict[list_name]= html.A(link, href=url, target="_blank", style={'text-decoration':'none'}) # target="_blank",
 
             old_languagecode_spreadin = languagecode_spreadin
 
@@ -652,7 +697,7 @@ def dash_app10_build_layout(params):
         language_spread = languages.loc[languagecode_spread]['languagename']
 
         title = language_spread+' Wikipedia Top 100 CCC article lists spread across the rest of Wikipedias'
-        dash_app10.title = title+title_addenda
+#        dash_app10.title = title+title_addenda
 
         text = '''
                 This page shows some statistics that explain how well the first '''+language_spread+''' Wikipedia Top 100 CCC articles are spread across the other language editions. It is updated on a monthly basis (between updates there may be changes and the table may not reflect them).
@@ -666,10 +711,10 @@ def dash_app10_build_layout(params):
                 **The challenge is to reach 100 articles (Sum Spread Articles) in each other Wikipedia language edition!**
                 '''
 
-        dash_app10.layout = html.Div([
+        layout = html.Div([
             html.H3(title, style={'textAlign':'center'}),
-            dcc.Markdown(text.replace('  ', ''),
-            containerProps={'textAlign':'center'}),
+            dcc.Markdown(text.replace('  ', '')),
+#            containerProps={'textAlign':'center'}),
 
             html.H5('Select the language'),
 
@@ -703,7 +748,7 @@ def dash_app10_build_layout(params):
             ], className="container")
     else:
         title = 'Any Wikipedia Top 100 CCC article lists spread across the rest of Wikipedias'
-        dash_app10.title = title+title_addenda
+#        dash_app10.title = title+title_addenda
 
         text = '''
                 This page shows some statistics that explain how well the first Wikipedia Top 100 CCC articles are spread across the other language editions. It is updated on a monthly basis (between updates there may be changes and the table may not reflect them).
@@ -713,7 +758,7 @@ def dash_app10_build_layout(params):
                 The Top CCC articles lists are: list of CCC articles with most pageviews during the last month (**Pageviews**), list of CCC articles with most number of editors (**Editors**), list of CCC articles with most edits in talk pages (**Discussions**), list of CCC articles created during the first three years and with most edits (**First 3Y. A. Edits**) and list of CCC articles created during the last year and with most edits (**Last Y. A. Edits**), list of CCC articles with featured article distinction (**Featured**), most bytes and references (weights: 0.8, 0.1 and 0.1 respectively), list of CCC articles with geolocation with most links coming from CCC (**Geolocated**), list of CCC articles with keywords on title with most bytes (**Keywords**), list of CCC articles categorized in Wikidata as women with most edits (**Women**) and list of CCC articles categorized in Wikidata as men with most edits (**Men**).
                 '''
 
-        dash_app10.layout = html.Div([
+        layout = html.Div([
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', ''),
             containerProps={'textAlign':'center'}),
@@ -741,6 +786,6 @@ def dash_app10_build_layout(params):
             ], className="container")
 
 
-    return dash_app10.layout
+    return layout
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###

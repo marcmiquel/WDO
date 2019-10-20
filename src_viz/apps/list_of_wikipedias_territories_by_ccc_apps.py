@@ -53,8 +53,10 @@ dash_app2.layout = html.Div([
     dcc.Markdown(
     '''This page contains a list of all the current Wikipedia language editions ordered by their number of articles from their Cultural Context Content dataset that relate to territories where the language is spoken as official or as indigeneous.
 
-    For each language edition, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC GL (%)** as the number of articles from CCC that are geolocated, **KW Title (%)** as the number of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', ''),
-    containerProps={'textAlign':'center'}),
+    For each language edition, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC GL (%)** as the number of articles from CCC that are geolocated, **KW Title (%)** as the number of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
+#    containerProps={'textAlign':'center'}),
+
+
     dt.DataTable(
         rows=df.to_dict('records'),
         columns = ['Nº','Language','Wiki','Articles','CCC art.','CCC %','Subregion','Region'],
@@ -68,6 +70,11 @@ dash_app2.layout = html.Div([
     dcc.Graph(
         id='graph-cccextent'
     ),
+    dcc.Markdown(
+    '''Tags: #representation #ccc'''.replace('  ', '')),
+
+#    containerProps={'textAlign':'center'}),
+
     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
 
 ], className="container")
@@ -191,8 +198,10 @@ dash_app3.layout = html.Div([
     dcc.Markdown(
     '''This page contains each Wikipedia language edition Cultural Context Content divided in its territories according to the language territories mapping. Articles are assigned to territories according to the different strategies that have been used to include them into CCC. The label Not Assigned is for those articles which were not possible to classify.
 
-    For each territory, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC GL (%)** as the number of articles from CCC that are geolocated, **KW Title (%)** as the number of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', ''),
-    containerProps={'textAlign':'center'}),
+    For each territory, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC GL (%)** as the number of articles from CCC that are geolocated, **KW Title (%)** as the number of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
+ 
+
+#   containerProps={'textAlign':'center'}),
 
     dt.DataTable(
         rows=df.to_dict('records'),
@@ -207,6 +216,11 @@ dash_app3.layout = html.Div([
     dcc.Graph(
         id='graph-cccextent-qitem'
     ),
+    dcc.Markdown(
+    '''Tags: #representation #ccc'''.replace('  ', '')),
+
+
+#    containerProps={'textAlign':'center'}),
     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
 
 ], className="container")

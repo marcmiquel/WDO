@@ -47,8 +47,12 @@ import gc
 # MAIN
 def main():
 
+    create_update_qitems_ccc_table()
 
 
+
+
+    return
 #    switch_ccc_binary_to_ccc_last_cycle_binary()
     execution_block_wikidata_topics()
     execution_block_ccc_features()
@@ -183,6 +187,9 @@ def execution_block_classifying_ccc():
 
 #    retrieving_ccc_surelist_list()
 
+    create_update_qitems_ccc_table()
+
+
 
 def execution_block_extract_datasets():
 
@@ -251,8 +258,8 @@ def label_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qit
             ISO3166codes[ISO3166]=qitem
         if territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['regional']=='yes':
             ISO31662 = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO31662']
-            ISO31662codes[ISO31662]=qitem
-
+            if ISO31662 != '':
+                ISO31662codes[ISO31662]=qitem
 
     # with a subdivision name you get a ISO 31662 (without the ISO3166 part), that allows you to get a Qitem
     subdivisions = wikilanguages_utils.load_world_subdivisions_multilingual()
@@ -315,34 +322,34 @@ def label_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qit
         iso31662=''; 
         try: iso31662=iso3166+'-'+subdivisions[admin1].split('-')[1]
         except: pass
-#        print (page_title,page_id,admin1,iso3166,iso31662)
+        # print (page_title,page_id,admin1,iso3166,iso31662)
 
         qitem=''
         # try both country code and admin1, at the same time, just in case there is desambiguation ('Punjab' in India (IN) and in Pakistan (PK) for 'pa' language)
         try: 
             qitem=territories[(territories.ISO3166 == iso3166) & (territories.territoryname == admin1)].loc[languagecode]['QitemTerritory']
-#            print (qitem); print ('name and country')
+            # print (qitem); print ('name and country')
         except: 
             pass
         try:
             # try to get qitem from country code.        
             if qitem == '':
-
                 try:
                     qitem = ISO3166codes[iso3166]
-    #                print (qitem); print ('country')
+                    # print (qitem); print ('country')
                     # try to get qitem from admin1: in territorynames, territorynamesNative and subdivisions.
                 except:
                     try:
                         qitem=territorynames[admin1]
-    #                    print (qitem); print ('territorynames in English.')
+                        # print (qitem); print ('territorynames in English.')
                     except: 
                         try:
                             qitem=territorynamesNative[admin1]
-    #                        print (qitem); print ('territorynames in Native.')
+                            # print (qitem); print ('territorynames in Native.')
                         except: 
                             try:
                                 qitem=ISO31662codes[iso31662]
+                                # print (qitem); print ('ISO31662codes.')
                             except:
                                 pass
         except:
@@ -352,7 +359,7 @@ def label_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qit
         if qitem!='': 
             ccc_geolocated = 1
             ccc_binary = 1
-#            print ((page_id,page_title,coordinates,qitem)); print ('*** IN! ENTRA!\n')
+            # print ((page_id,page_title,coordinates,qitem)); print ('*** IN! ENTRA!\n')
         else: 
             ccc_geolocated = -1
             ccc_binary = 0
@@ -414,7 +421,9 @@ def label_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
             ISO3166codes[ISO3166]=qitem
         if territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['regional']=='yes':
             ISO31662 = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO31662']
-            ISO31662codes[ISO31662]=qitem
+            if ISO31662 != '':
+                ISO31662codes[ISO31662]=qitem
+
         allISO3166.append(territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO3166'])
     allISO3166 = list(set(allISO3166))
 #    print (allISO3166)
@@ -487,6 +496,12 @@ def label_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
             ccc_geolocated = -1
             ccc_binary = 0
 #            print ('### NO!\n')
+
+        # if page_title == 'Nefertiti':
+        #     print (ccc_binary, ccc_geolocated, 'Nefertiti')
+        #     input('')
+
+
         try:
 #            print ((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
             ccc_geolocated_items.append((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
@@ -2722,6 +2737,52 @@ def retrieving_ccc_surelist_list():
     create_function_account_db(function_name, 'mark', duration)
 
 
+
+def create_update_qitems_ccc_table():
+
+    function_name = 'create_update_qitems_ccc_table'
+    if create_function_account_db(function_name, 'check','')==1: return
+
+    functionstartTime = time.time()
+
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+    query = 'DROP TABLE IF EXISTS qitems_lang_ccc;'
+    cursor.execute(query)
+    conn.commit()
+
+    query = ('CREATE table if not exists qitems_lang_ccc ('+
+    'qitem text primary key,'+
+    'langs text'+')')
+    cursor.execute(query)
+    conn.commit()
+
+    qitems_langs = {} 
+    for languagecode in wikilanguagecodes:
+        query = 'SELECT qitem FROM '+languagecode+'wiki WHERE ccc_binary = 1;'
+        for row in cursor.execute(query): 
+            qitem = row[0]
+            try:
+                langs = qitems_langs[qitem]
+                qitems_langs[qitem] = qitems_langs[qitem] + '"\t"' + languagecode+'"'
+            except:
+                qitems_langs[qitem] = '"'+languagecode+'"'
+
+    params = []
+    for qitem, langs in qitems_langs.items():
+        params.append((qitem, langs))
+
+    query = 'INSERT OR IGNORE INTO qitems_lang_ccc (qitem, langs) values (?,?)'
+    cursor.executemany(query, params); # to top_diversity_articles.db
+    conn.commit()
+
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    create_function_account_db(function_name, 'mark', duration)
+
+
+
+
 def restore_ccc_binary_create_old_ccc_binary(languagecode,file):
 #    print("start the CCC selection restore to the original ccc binary for language: "+languagecode)
 
@@ -2866,14 +2927,14 @@ def extract_ccc_tables_to_files():
         conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
         # These are the folders.
-        superfolder = datasets_path+year_month
+        superfolder = datasets_path+cycle_year_month
         languagefolder = superfolder+'/'+languagecode+'wiki/'
-        latestfolder = datasets_path+'/latest/'
+        latestfolder = datasets_path+'latest/'
         if not os.path.exists(languagefolder): os.makedirs(languagefolder)
         if not os.path.exists(latestfolder): os.makedirs(latestfolder)
 
         # These are the files.
-        ccc_filename_archived = languagecode + 'wiki_' + str(datetime.date.today()).replace('-','')+'_ccc.csv' # (e.g. 'cawiki_20180215_ccc.csv')
+        ccc_filename_archived = languagecode + 'wiki_' + str(cycle_year_month.replace('-',''))+'_ccc.csv' # (e.g. 'cawiki_20180215_ccc.csv')
         ccc_filename_latest = languagecode + 'wiki_latest_ccc.csv.bz2' # (e.g. cawiki_latest_ccc.csv)
 
         # These are the final paths and files.
@@ -2935,7 +2996,7 @@ def extract_ccc_google_schema_json():
 
     functionstartTime = time.time()
 
-    current = year_month
+    current = cycle_year_month
     data = {
       "@context":"http://schema.org/",
       "@type":"Dataset",
@@ -2970,7 +3031,7 @@ def extract_ccc_google_schema_json():
             "encodingFormat":"CSV",
          },
       ],
-      "temporalCoverage":"2001-01-01/2018-"+year_month
+      "temporalCoverage":"2001-01-01/2018-"+cycle_year_month
     }
 
     with open(datasets_path+'/latest/'+'CCC_datasets.json', 'w') as f:
