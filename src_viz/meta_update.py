@@ -53,6 +53,77 @@ def main():
 ######################################################################
 
 
+# In this function we create the table language_territories_mapping. # CEE Spring.
+def make_table_links_CEE():
+    territories = wikilanguages_utils.load_languageterritories_mapping()
+    languages_df = wikilanguages_utils.load_wiki_projects_information(territories);
+
+    languages = ['en','az','ba','be','be-tarask','bs','bg','crh','de','el','eo','et','hr','hsb','hu','hy','ka','kk','lt','lv','mk','myv','pl','ro','ru','sh','sq','sr','tr','tt','uk']
+
+    langu = ['az','ba','be','be_x_old','bs','bg','crh','de','el','et','hr','hsb','hu','hy','ka','kk','lt','lv','mk','myv','pl','ro','ru','sh','sq','sr','tr','tt','uk']
+
+    rows_langs = {'az':'Azerbaijan','ba':'Bashkortostan','be':'Belarus','be_x_old':'Belarus','bs':'Bosnia and Herzegovina','bg':'Bulgaria','crh':'','de':'Austria','eo':'','el':'Greece','et':'Estonia','hr':'Croatia','hsb':'Germany','hu':'Hungary','hy':'Armenia','ka':'Georgia','kk':'Kazakhstan','lt':'Lithuania','lv':'Latvia','mk':'Macedonia','myv':'Russia','pl':'Poland','ro':'','ru':'Russia','sh':'','sq':'Albania','sr':'Serbia','tr':'Turkey','tt':'Tatarstan','uk':'Ukrania'}
+
+    country_iso = {'Azerbaijan':'AZ','Belarus':'BY','Bosnia and Herzegovina':'BA','Bulgaria':'BG','Austria':'AT','Greece':'GR','Estonia':'EE','Croatia':'HR','Germany':'DE','Hungary':'HU','Armernia':'AM','Georgia':'GE','Kazakhstan':'KZ','Lithuania':'LT','Latvia':'LV','Macedonia':'MK','Russia':'RU','Poland':'PL','Albania':'AL','Serbia':'SR','Turkey':'TR'}
+
+    lists = ['editors', 'featured', 'geolocated', 'keywords', 'women', 'men', 'created_first_three_years', 'created_last_year', 'pageviews', 'discussions']
+
+    lists_dict = {'editors':'Editors', 'featured':'Featured', 'geolocated':'Geolocated', 'keywords':'Keywords', 'women':'Women', 'men':'Men', 'created_first_three_years':'Created First Three Years', 'created_last_year':'Created Last Year', 'pageviews':'Pageviews', 'discussions':'Discussions'}
+
+    columns_final = ['List']+languages
+
+
+    df_columns_list = columns_final
+
+    wikitext = ''
+
+    for language in langu:
+
+        wikitext+= "==="+languages_df.loc[language]['languagename']+"===\n"
+
+        class_header_string = '{| border="1" cellpadding="2" cellspacing="0" style="width:100%; background: #f9f9f9; border: 1px solid #aaaaaa; border-collapse: collapse; white-space: nowrap; text-align: right" class="sortable"\n'
+
+        header_string = '!'
+        for x in range(0,len(df_columns_list)):
+            if x == len(df_columns_list)-1: add = ''
+            else: add = '!!'
+            header_string = header_string + df_columns_list[x] + add
+
+        header_string = header_string + '\n'
+
+        rows = ''
+
+        for lista in lists:
+            midline = '|-\n'
+            row_string = '|'
+            row_string += lists_dict[lista]+'||'
+
+            for row in languages:
+                if row == 'uk': add = ''
+                else: add = '||'
+                # create the URL
+                string = "https://wcdo.wmflabs.org/top_ccc_articles/?list="+lista
+                string += "&target_lang="+row
+                string += "&source_lang="+language
+
+                if rows_langs[language] in country_iso:
+                    string += "&source_country=" + country_iso[rows_langs[language]].lower()
+
+                URL = '['+string+' '+'‌‌ '+']'
+
+                row_string = row_string + str(URL) + add # here is the value
+
+            row_string = midline + row_string + '\n'
+            rows = rows + row_string
+
+        closer_string = '|}'
+
+        wiki_table_string = class_header_string + header_string + rows + closer_string
+        wikitext += wiki_table_string+'\n\n'
+
+    return wikitext
+
+
 def publish_missing_ccc_articles_lists():
 
     glow_langs = ['sd','id', 'jv', 'su', 'hi', 'ta', 'te', 'mr', 'kn', 'ml', 'or', 'pa', 'sa', 'gu', 'en', 'ar', 'es']

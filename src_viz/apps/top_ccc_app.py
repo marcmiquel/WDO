@@ -29,13 +29,12 @@ You need to choose a *source language* from which you want to retrieve articles 
 
 
 text_default2 = '''
-* Lists of CCC articles based on relevance: most pageviews during the last month (**Pageviews**), most number of editors (**Editors**), most number of edits (**Edits**), most number of edits during the last month (**Edited Last Month**), most number of edits in talk pages (**Discussions**), created during the first three years and with most edits (**First 3Y.**), created during the last year and with most edits **Last Y.**), the highest Wikirank (**Wikirank**), featured article distinction (**Featured**) most bytes and references (weights: 0.8, 0.1 and 0.1 respectively), most number of images (**Images**), most bytes and references (weights: 0.8, 0.1 and 0.1 respectively), most number of properties in Wikidata (**WD Properties**), most number of number of Interwiki links (**Interwiki**), least number of interwiki and most number of editors (*Least Interwiki Most Editors*), and least number interwiki and most number of properties (*Least Interwiki Most With Wikidata Properties*).
+* Lists of CCC articles based on relevance: most pageviews during the last month (**Pageviews**), most number of editors (**Editors**), most number of edits (**Edits**), most number of edits during the last month (**Edited Last Month**), most number of edits in talk pages (**Discussions**), created during the first three years and with most edits (**First 3Y.**), created during the last year and with most edits **Last Y.**), the highest Wikirank (**Wikirank**), featured article distinction (**Featured**) most bytes and references (weights: 0.8, 0.1 and 0.1 respectively), most number of images (**Images**), most bytes and references (weights: 0.8, 0.1 and 0.1 respectively), most number of properties in Wikidata (**WD Properties**), most number of number of Interwiki links (**Interwiki**), least number of interwiki and most number of editors (**Least Interwiki Most Editors**), and least number interwiki and most number of properties (**Least Interwiki Most With Wikidata Properties**).
 * Lists of CCC articles based on localness characteristics: geolocation with the most number of links coming from CCC (**Geolocated**), and keywords on title with the largest number of bytes (**Keywords**).
 * Lists of CCC articles and diversity topics: With WD properties related to women and with most edits (**Women**), and with WD properties related to men and with most edits (**Men**).
 * Lists of CCC articles and with most pageviews during the last month and **"Wiki Loves"** topics based on WD properties: *Books*, *Clothing and fashion*, *Earth*, *Folk*, *Food*, *GLAM*, *Industry*, *Monuments and buildings*, *Music creation and organizations*, *Paintings* and *Sports and teams*.
 
-'''    
-
+'''
 
 
 covered = {'Existing articles':'existing', 'Non-existing articles':'non-existing'}
@@ -48,7 +47,7 @@ def dash_app7_build_layout(params):
     list_dict_inv = {v: k for k, v in lists_dict.items()}
 
 
-    if len(params)!=0 and params['source_lang'].lower()!='none' and params['target_lang']:
+    if len(params)!=0 and params['source_lang'].lower()!='none' and params['target_lang']!='none':
 
 
         if params['list'].lower()=='none':
@@ -83,7 +82,7 @@ def dash_app7_build_layout(params):
 
         conn = sqlite3.connect(databases_path + 'top_ccc_articles.db'); cur = conn.cursor()
 
-        columns_dict = {'position':'Nº','page_title_original':'Article Title','num_editors':'Editors','num_edits':'Edits','num_pageviews':'Pageviews','num_bytes':'Bytes','num_images':'Images','wikirank':'Wikirank','num_references':'References','num_inlinks':'Inlinks','num_wdproperty':'Wikidata Properties','num_interwiki':'Interwiki Links','featured_article':'Featured Article','num_discussions':'Discussion Edits','date_created':'Creation Date','num_inlinks_from_CCC':'Inlinks from CCC','related_languages':'Related Languages','page_title_target':' Article Title'}
+        columns_dict = {'position':'Nº','page_title_original':'Article Title','num_editors':'Editors','num_edits':'Edits','num_pageviews':'Pageviews','num_bytes':'Bytes','num_images':'Images','wikirank':'Wikirank','num_references':'References','num_inlinks':'Inlinks','num_wdproperty':'Wikidata Properties','num_interwiki':'Interwiki Links','featured_article':'Featured Article','num_discussions':'Discussions','date_created':'Creation Date','num_inlinks_from_CCC':'Inlinks from CCC','related_languages':'Related Languages','page_title_target':' Article Title'}
 
         # COLUMNS
         query = 'SELECT r.qitem, f.page_title_original, '
@@ -127,15 +126,15 @@ def dash_app7_build_layout(params):
 
         if list_name == 'discussions': 
             query+='f.num_discussions, f.num_pageviews, f.num_edits, f.num_bytes, f.num_references, f.featured_article, f.num_wdproperty, f.num_interwiki, '
-            columns+= ['Discussion Edits','Pageviews','Edits','Bytes','References','Featured Article','Wikidata Properties','Interwiki Links']
+            columns+= ['Discussions','Pageviews','Edits','Bytes','References','Featured Article','Wikidata Properties','Interwiki Links']
 
         if list_name == 'edits': 
             query+='f.num_edits, f.num_bytes, f.num_discussions, f.num_pageviews, f.num_references, f.num_wdproperty, f.num_interwiki, '
-            columns+= ['Edits','Discussion Edits','Bytes','Pageviews','References','Wikidata Properties','Interwiki Links']
+            columns+= ['Edits','Discussions','Bytes','Pageviews','References','Wikidata Properties','Interwiki Links']
 
         if list_name == 'edited_last_month': 
             query+='f.num_edits, f.num_bytes, f.num_discussions, f.num_pageviews, f.num_references, f.num_wdproperty, f.num_interwiki, '
-            columns+= ['Edits','Bytes','Discussion Edits','Pageviews','References','Wikidata Properties','Interwiki Links']
+            columns+= ['Edits','Bytes','Discussions','Pageviews','References','Wikidata Properties','Interwiki Links']
 
         if list_name == 'images': 
             query+='f.num_images, f.num_bytes, f.num_edits, f.num_pageviews, f.num_references, f.featured_article, f.num_wdproperty, f.num_interwiki, '
@@ -212,7 +211,7 @@ def dash_app7_build_layout(params):
                 columns+= [feat]
                 query+= 'f.'+order_by+', '
 
-        print (columns)
+#        print (columns)
 
         # NEW LISTS
         query += 'f.num_inlinks_from_CCC, f.date_created, p.page_title_target, p.generation_method, p0.page_title_target pt0, p0.generation_method pg0, p1.page_title_target pt1, p1.generation_method pg1, p2.page_title_target pt2, p2.generation_method pg2, p3.page_title_target pt3, p3.generation_method pg3 '
@@ -243,13 +242,15 @@ def dash_app7_build_layout(params):
             query += 'ORDER BY r.position ASC;'
 
 
-        print (query)
+#        print (query)
 
         df = pd.read_sql_query(query, conn)#, parameters)
         df = df.fillna(0)
 
 
         if len(df) == 0: # there are no results.
+
+            # PAGE NO RESULTS
 
             layout = html.Div([
                 html.H3('Top CCC articles lists', style={'textAlign':'center'}),
@@ -268,28 +269,27 @@ def dash_app7_build_layout(params):
 
 
 #                containerProps={'textAlign':'center'}),
+                html.Br(),
 
                 html.H5('Select the parameters'),
 
                 html.Div(
                 html.P('Source language'),
-                style={'display': 'inline-block','width': '200'}),
+                style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
                 html.P('Source country'),
-                style={'display': 'inline-block','width': '200'}),
+                style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
                 html.P('List'),
-                style={'display': 'inline-block','width': '200'}),
+                style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
                 html.P('Target language'),
-                style={'display': 'inline-block','width': '200'}),
+                style={'display': 'inline-block','width': '200px'}),
 
                 html.Br(),
-
-                html.Div(
 
 
                 html.Div(
@@ -298,25 +298,27 @@ def dash_app7_build_layout(params):
                     options=[{'label': i, 'value': language_names[i]} for i in sorted(language_names)],
                     value='none',
                     placeholder="Select a source language",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+                    style={'width': '190px'}
+                 ), style={'display': 'inline-block','width': '200px'}),
+
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='source_country',
-                    options=[{'label': i, 'value': country_names_inv[i]} for i in sorted(country_names_inv)],
+#                    options=[{'label': i, 'value': country_names_inv[i]} for i in sorted(country_names_inv)],
                     value='none',
                     placeholder="Select a source country (optional)",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+                    style={'width': '190px'}
+                 ), style={'display': 'inline-block','width': '200px'}),
 
+                html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='list',
                     options=[{'label': i, 'value': lists_dict[i]} for i in sorted(lists_dict)],
                     value='none',
                     placeholder="Select a list",
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+                    style={'width': '190px'}
+                 ), style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -324,20 +326,19 @@ def dash_app7_build_layout(params):
                     options=[{'label': i, 'value': language_names[i]} for i in sorted(language_names)],
                     value='none',
                     placeholder="Select a language",
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
-        #        dcc.Link('Query',href=""),
-
+                    style={'width': '190px'}
+                 ), style={'display': 'inline-block','width': '200px'}),
+                #        dcc.Link('Query',href=""),
 
                 html.Br(),
 
                 html.Div(
                 html.P('Order by'),
-                style={'display': 'inline-block','width': '200'}),
+                style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
-                html.P('exclude'),
-                style={'display': 'inline-block','width': '200'}),
+                html.P('Exclude'),
+                style={'display': 'inline-block','width': '200px'}),
 
                 html.Br(),
 
@@ -348,8 +349,8 @@ def dash_app7_build_layout(params):
                     options=[{'label': i, 'value': features_dict[i]} for i in sorted(features_dict)],
                     value='none',
                     placeholder="Order by (optional)",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
+                    style={'width': '190px'}
+                 ), style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -357,13 +358,13 @@ def dash_app7_build_layout(params):
                     options=[{'label': i, 'value': covered[i]} for i in sorted(covered)],
                     value='none',
                     placeholder="Exclude (optional)",           
-                    style={'width': '190'}
-                 ), style={'display': 'inline-block','width': '200'}),
-
+                    style={'width': '190px'}
+                 ), style={'display': 'inline-block','width': '200px'}),
 
 
                 html.A(html.Button('Query Results!'),
                     href=''),
+
             ], className="container")
 
             return layout
@@ -391,7 +392,7 @@ def dash_app7_build_layout(params):
         k = 0
         df=df.rename(columns=columns_dict)
 
-        df.to_json(r'/srv/wcdo/src_viz/downloads/top_ccc_lists/'+filename+'.json',orient='split')
+#        df.to_json(r'/srv/wcdo/src_viz/downloads/top_ccc_lists/'+filename+'.json',orient='split')
 
 
         df_list = list()
@@ -437,6 +438,11 @@ def dash_app7_build_layout(params):
                     df_row.append(html.A( rows['Edits'], href='https://'+source_lang+'.wikipedia.org/w/index.php?title='+rows['Article Title'].replace(' ','_')+'&action=history', target="_blank", style={'text-decoration':'none'}))
                     worksheet.write_url(pos, 'https://'+source_lang+'.wikipedia.org/w/index.php?title='+rows['Article Title'].replace(' ','_')+'&action=history', string=str(rows['Edits']))
 
+                elif col == 'Discussions':
+                    df_row.append(html.A( rows['Discussions'], href='https://'+source_lang+'.wikipedia.org/wiki/Talk:'+rows['Article Title'].replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    worksheet.write_url(pos, 'https://'+source_lang+'.wikipedia.org/wiki/Talk:'+rows['Article Title'].replace(' ','_'), string=str(rows['Discussions']))
+
+
                 elif col == 'Wikirank':
                     df_row.append(html.A( rows['Wikirank'], href='https://wikirank.net/'+source_lang+'/'+rows['Article Title'], target="_blank", style={'text-decoration':'none'}))
                     worksheet.write_url(pos, 'https://wikirank.net/'+source_lang+'/'+rows['Article Title'], string=str(rows['Wikirank']))
@@ -479,7 +485,7 @@ def dash_app7_build_layout(params):
                     worksheet.write(pos, text_ex)
 
                 elif col == 'Bytes':
-                    print (rows[col])
+#                    print (rows[col])
                     value = round(float(int(rows[col])/1000),1)
                     df_row.append(str(value)+'k')
                     worksheet.write(pos, str(value)+'k')
@@ -549,13 +555,15 @@ def dash_app7_build_layout(params):
         columns[col_len-1]=target_language+columns[col_len-1]
 
         text = '''
-        The following table shows the Top 500 articles list '''+list_dict_inv[list_name] + ''' from '''+source_language+''' CCC '''+source_country+''' and its article availability in '''+target_language+''' Wikipedia. Articles are sorted by the feature ***'''+list_dict_inv[list_name]+'''***. 
+        The following table shows the Top 500 articles list '''+list_dict_inv[list_name] + ''' from '''+source_language+''' CCC '''+source_country+''' and its article availability in '''+target_language+''' Wikipedia. 
 
-        The rest of columns present complementary features that are explicative of the article rellevance (number of editors, edits, pageviews, Bytes, Wikidata properties or Interwiki links). In particular, number of Inlinks from CCC (incoming links from the CCC group of articles) highlights the article importance in terms of how much it is required by other articles. The column named Related Languages present Interwiki links to the article version when available in the four languages closer to the target language (those that cover best this language and therefore it is likely their editors consult it).
+        The rest of columns present complementary features that are explicative of the article relevance (number of editors, edits, pageviews, Bytes, Wikidata properties or Interwiki links). In particular, number of Inlinks from CCC (incoming links from the CCC group of articles) highlights the article importance in terms of how much it is required by other articles. The column named Related Languages present Interwiki links to the article version when available in the four languages closer to the target language (those that cover best this language and therefore it is likely their editors consult it).
 
         The table's last column shows the article title in its target language, in ***blue*** when it exists, in ***red*** as a proposal generated with the Wikimedia Content Translation tool or as an existing Wikidata label in the same language, and ***empty*** when the article does not exist or there is no title proposal available.
         '''    
-        countries_sel = language_countries[source_lang]
+#        countries_sel = language_countries[source_lang]
+
+        # RESULTS PAGE
 
         layout = html.Div([
             html.H3(title, style={'textAlign':'center'}),
@@ -563,33 +571,32 @@ def dash_app7_build_layout(params):
                 text.replace('  ', '')),
 #            containerProps={'textAlign':'center'}),
 
-    #        html.Br(),
-           html.Div(
+            html.Div(
             html.A(
                 'Download Table (Excel)',
                 id='download-link',
                 download=filename+".xlsx",
                 href='/downloads/top_ccc_lists/'+filename+'.xlsx',
                 target="_blank"),
-            style={'float': 'right','width': '200'}),
+            style={'float': 'right','width': '200px'}),
 
             html.H5('Select the parameters'),
 
             html.Div(
             html.P('Source language'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('Source country'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('List'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('Target language'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Br(),
 
@@ -600,18 +607,18 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': language_names[i]} for i in sorted(language_names)],
                 value='none',
                 placeholder="Select a source language",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_country',
-                options=[{'label': i, 'value': countries_sel[i]} for i in sorted(countries_sel)],
+#                options=[{'label': i, 'value': countries_sel[i]} for i in sorted(countries_sel)],
                 value='none',
                 placeholder="Select a source country (optional)",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -619,8 +626,8 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': lists_dict[i]} for i in sorted(lists_dict)],
                 value='none',
                 placeholder="Select a list",
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -628,19 +635,19 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': language_names[i]} for i in sorted(language_names)],
                 value='none',
                 placeholder="Select a language",
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
     #        dcc.Link('Query',href=""),
 
             html.Br(),
 
             html.Div(
             html.P('Order by'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('Exclude'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Br(),
 
@@ -651,8 +658,8 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': features_dict[i]} for i in sorted(features_dict)],
                 value='none',
                 placeholder="Order by (optional)",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -660,8 +667,8 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': covered[i]} for i in sorted(covered)],
                 value='none',
                 placeholder="Exclude (optional)",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
 
             html.A(html.Button('Query Results!'),
@@ -669,6 +676,9 @@ def dash_app7_build_layout(params):
 
             html.Br(),
             html.Br(),
+
+            html.H5('Results'),
+
             html.Table(
             # Header
             [html.Tr([html.Th(col) for col in columns])] +
@@ -680,6 +690,9 @@ def dash_app7_build_layout(params):
         ], className="container")
 
     else:
+
+        # FIRST PAGE
+
 
         layout = html.Div([
             html.H3('Top CCC articles lists', style={'textAlign':'center'}),
@@ -698,19 +711,19 @@ def dash_app7_build_layout(params):
 
             html.Div(
             html.P('Source language'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('Source country'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('List'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('Target language'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Br(),
 
@@ -720,17 +733,17 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': language_names[i]} for i in sorted(language_names)],
                 value='none',
                 placeholder="Select a language",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_country',
-                options=[{'label': i, 'value': country_names_inv[i]} for i in sorted(country_names_inv)],
+#                options=[{'label': i, 'value': country_names_inv[i]} for i in sorted(country_names_inv)],
                 value='none',
                 placeholder="Select a country (optional)",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -738,8 +751,8 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': lists_dict[i]} for i in sorted(lists_dict)],
                 value='none',
                 placeholder="Select a list",
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -747,8 +760,8 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': language_names[i]} for i in sorted(language_names)],
                 value='none',
                 placeholder="Select a language",
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
     #        dcc.Link('Query',href=""),
 
 
@@ -756,11 +769,11 @@ def dash_app7_build_layout(params):
 
             html.Div(
             html.P('Order by'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             html.P('Exclude'),
-            style={'display': 'inline-block','width': '200'}),
+            style={'display': 'inline-block','width': '200px'}),
 
             html.Br(),
 
@@ -771,8 +784,8 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': features_dict[i]} for i in sorted(features_dict)],
                 value='none',
                 placeholder="Order by (optional)",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -780,8 +793,8 @@ def dash_app7_build_layout(params):
                 options=[{'label': i, 'value': covered[i]} for i in sorted(covered)],
                 value='none',
                 placeholder="Exclude (optional)",           
-                style={'width': '190'}
-             ), style={'display': 'inline-block','width': '200'}),
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
 
             html.A(html.Button('Query Results!'),
@@ -797,14 +810,16 @@ def dash_app7_build_layout(params):
     [Input('source_lang', 'value')])
 def set_countries(source_lang):
 
-    if source_lang!=None:
-        try:
-            countries_sel = language_countries[source_lang]
-        except:
-            pass
-        return [{'label': i, 'value': countries_sel[i]} for i in sorted(countries_sel)]
+    try:
+        countries_sel = language_countries[source_lang]
+    except:
+        countries_sel = {}
+
+    countries_list = [{'label': i, 'value': countries_sel[i]} for i in sorted(countries_sel)]
+    if countries_list != None:
+        return countries_list
     else:
-        return 
+        return
 
 
 # callback update URL

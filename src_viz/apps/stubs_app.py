@@ -4,14 +4,13 @@ from dash_apps import *
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app_viquiestirada = Dash(__name__, server = app, url_base_pathname= webtype + '/viquiestirada/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
-dash_app_viquiestirada.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
 
 df = pd.read_csv('/srv/wcdo/other/cawiki_relevant_stubs.csv')
 
 # Renaming the columns
 columns_dict = {'page_title':'Títol','num_bytes':'Octets','column_byte_diff':'Dif.Oct.','column_byte_diff_lang':'Lleng.Ref.','num_pageviews':'Vistes','num_interwiki':'Interwiki','num_wdproperty':'WDProp.','num_inlinks':'Inlinks','date_created':'Creació','iso3166':'Geo.','gender':'Gènere','ccc_binary':'CCC','category_name':'Categories','cur_preferred_languages':'Lleng.Props.'}
 
-df=df.rename(columns=columns_dict)
+df = df.rename(columns=columns_dict)
 df = df.reset_index()
 
 df = df.fillna('')

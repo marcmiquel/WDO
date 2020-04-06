@@ -9,6 +9,7 @@ from dash import Dash
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
+import dash_table
 import dash_table_experiments as dt
 from dash.dependencies import Input, Output, State
 # viz
@@ -28,6 +29,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import datetime
 import time
+import requests
 # script
 sys.path.insert(0, '/srv/wcdo/src_data')
 import wikilanguages_utils
@@ -52,8 +54,6 @@ language_names = {}
 for languagecode in wikilanguagecodes:
 	lang_name = languages.loc[languagecode]['languagename']+' ('+languagecode+')'
 	language_names[lang_name] = languagecode
-
-
 
 closest_langs = wikilanguages_utils.obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, 4)
 
@@ -121,18 +121,23 @@ def handling_page_not_found(e):
     return "<h1>404</h1><p>The resource could not be found.</p>", 404
 
 
+
 ##### DASH APPS #####
+from apps.stubs_app import *
+
 from apps.language_territories_mapping_app import *
 from apps.list_of_wikipedias_territories_by_ccc_apps import *
 from apps.ccc_coverage_spread_apps import *
 from apps.ccc_pageviews_apps import *
 from apps.top_ccc_app import *
-
-
 from apps.missing_ccc_app import *
 from apps.top_ccc_coverage_spread_apps import *
 
-from apps.stubs_app import *
+from apps.common_ccc_app import *
+from apps.visual_ccc_app import *
+from apps.search_ccc_app import *
+from apps.incomplete_ccc_app import *
+
 
 
 print ('\n\n\n*** START WCDO APP:'+str(datetime.datetime.now()))
@@ -144,7 +149,7 @@ def parse_state(url):
     parse_result = urlparse(url)
     params = parse_qsl(parse_result.query)
     state = dict(params)
-    print (state)
+#    print (state)
     return state
 
 # layout

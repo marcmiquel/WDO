@@ -5,8 +5,6 @@ from dash_apps import *
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 dash_app1 = Dash(__name__, server = app, url_base_pathname= webtype + '/language_territories_mapping/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
-dash_app1.scripts.append_script({"external_url": "https://wcdo.wmflabs.org/assets/gtag.js"})
-
 
 conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();  
 
@@ -24,7 +22,7 @@ df = df.set_index('WikimediaLanguagecode')
 df['Language Name'] = pd.Series(languages[['languagename']].to_dict('dict')['languagename'])
 df = df.reset_index()
 
-columns_dict = {'Language Name':'Language','WikimediaLanguagecode':'Wiki','QitemTerritory':'WD Qitem','territoryname':'Territory','territorynameNative':'Territory (Local)','demonymNative':'Demonyms (Local)','ISO3166':'ISO 3166', 'ISO3662':'ISO 3166-2','country':'Country'}
+columns_dict = {'Language Name':'Language','WikimediaLanguagecode':'Wiki','QitemTerritory':'WD Qitem','territoryname':'Territory','territorynameNative':'Territory (Local)','demonymNative':'Demonyms (Local)','ISO3166':'ISO 3166', 'ISO31662':'ISO 3166-2','country':'Country','region':'Region','subregion':'Subregion'}
 df=df.rename(columns=columns_dict)
 
 title = 'Language Territories Mapping'
@@ -47,21 +45,25 @@ dash_app1.layout = html.Div([
 
 
 #    containerProps={'textAlign':'center'}),
-    dt.DataTable(
-        columns=['Wiki','Language','WD Qitem','Territory (Local)','Demonyms (Local)','ISO3166','ISO31662'],
-        rows=df.to_dict('records'),
-        filterable=True,
-        sortable=True,
-        id='datatable-languageterritories'
-    ),
+    dash_table.DataTable(
+        id='datatable-languageterritories',
+        columns=[
+            {"name": i, "id": i, "deletable": True, "selectable": True} for i in ['Wiki','Language','WD Qitem','Territory','Territory (Local)','ISO 3166','ISO 3166-2','Region','Subregion']
+        ],
+        data=df.to_dict('records'),
+        filter_action="native",
+        sort_action="native",
+        sort_mode="multi",
 
-    dcc.Markdown(
-    '''Tags: #languages #territories #culturaldiversity #wikipedias'''.replace('  ', '')),
+    )
+
+#     dcc.Markdown(
+#     '''Tags: #languages #territories #culturaldiversity #wikipedias'''.replace('  ', '')),
 
 
-#    containerProps={'textAlign':'center'}),
+# #    containerProps={'textAlign':'center'}),
 
-    html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
+#     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
 
 ], className="container")
 

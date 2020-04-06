@@ -1280,4 +1280,4 @@ if __name__ == '__main__':
 
     finishTime = time.time()
     print ('* Done with the WIKIPEDIA DIVERSITY CYCLE completed successfuly after: ' + str(datetime.timedelta(seconds=finishTime - startTime)))
-    wikilanguages_utils.finish_email(startTime,'diversity_wikipedia.out', 'WIKIPEDIA DIVERSITY')
+    wikilanguages_utils.finish_email(startTime,'wikipedia_diversity.out', 'WIKIPEDIA DIVERSITY')
