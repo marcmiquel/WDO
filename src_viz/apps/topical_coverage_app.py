@@ -27,7 +27,6 @@ df_topics['Topic'] = df_topics['Topic2'].map(topic_names)
 #print (df_topics.head(10))
 #print (df_topics.columns.tolist())
 
-
 df_topics_books = df_topics.loc[df_topics['Topic2'] == 'books']
 df_topics_clothing = df_topics.loc[df_topics['Topic2'] == 'clothing_and_fashion']
 df_topics_earth = df_topics.loc[df_topics['Topic2'] == 'earth']
@@ -40,7 +39,6 @@ df_topics_music_creations_and_organizations = df_topics.loc[df_topics['Topic2'] 
 df_topics_paintings = df_topics.loc[df_topics['Topic2'] == 'paintings']
 df_topics_sport_and_teams = df_topics.loc[df_topics['Topic2'] == 'sport_and_teams']
 df_topics_people = df_topics.loc[df_topics['Topic2'] == 'people']
-
 
 # print (df_topics_clothing.head(10))
 # print (df_topics_music_creations_and_organizations.head(10))
@@ -60,6 +58,7 @@ dash_app14.title = title+title_addenda
 text_heatmap = ''
 
 dash_app14.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows stastistics and graphs that explain the distribution of topics in Wikipedia language editions and in their CCC based on some Wikidata properties. The topics are Earth, Monuments and Buildings, GLAM (Galleries, Libraries, Archives and Museums), Folk, Food, Books, Paintings, Clothing and Fashion, Sports and Teams, Music Creations and Organizations, and People. 
@@ -67,74 +66,83 @@ dash_app14.layout = html.Div([
         Articles have been identified with containing the Wikidata property "instance of" assigned the following Qitems: Earth (Q271669 landform, Q205895 landmass), GLAM (Q33506 museum, Q166118 archive, library Q7075), Monuments and Buildings (Q811979 architectural structure), Folk (Q132241  festival, Q288514  fair, Q4384751 folk culture, Q36192 folklore), Food (Q2095 food), Books (Q7725634 literary work, Q571 book, Q234460 text, Q47461344 written work), Paintings (Q3305213 painting), Clothing and Fashion (Q11460  clothing, Q3661311 clothing_and_fashion house, Q1618899clothing_and_fashion label), Sports and Teams (Q327245 team, Q41323 type of sport, Q349 sport), Music Creations and Organizations (Q188451 musical genre, Q2088357 musical organization, Q482994 musical term), People (articles have been identified using the P21 gender property).
 
         If you want to find relevant articles in each of these topics for any language and focused on their cultural context, you can access the [Top CCC articles lists](https://wcdo.wmflabs.org/top_ccc_articles/).
+
+        The graphs of this page answer the following questions:
+        * What is the topical distribution in a Wikipedia Language Edition and in its CCC?
+        * What is the topical distribution in various Wikipedia Language Edition and their CCC?
        '''),
-    html.Hr(),
+    html.Br(),
+#    html.Hr(),
 
 ###
 
-    html.H5('Topic Extent in a Wikipedia Language Edition and Languages CCC Treemap'),
-    dcc.Markdown('''* **What is the topical distribution in a Wikipedia Language Edition and in its CCC?**
+    dcc.Tabs([
+        dcc.Tab(label='Extent of Topics in a Wikipedia and its CCC (Treemap)', children=[
 
-        The following treemap graphs show for a selected Wikipedia language edition the extent of articles that have been identified as related to one of the aforementioned topics both in all the Wikipedia language edition articles and in the selection of Cultural Context Content (CCC) articles. The size of the tiles is according to the extent in number of articles. In many language editions, a considerable extent of content is not "instance of" these topics.
-        This graph allows comparing how different is the cultural context content from all the language edition content.
-     '''.replace('  ', '')),
-    # last month, accumulated.
+            html.H5('Extent of Topics in a Wikipedia Language Edition and in Languages CCC Treemap'),
+            dcc.Markdown('''* **What is the topical distribution in a Wikipedia Language Edition and in its CCC?**
 
-    html.Br(),
-    html.Div(
-#    html.P('Select a Wikipedia and Geographical entity type'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
+                The following treemap graphs show for a selected Wikipedia language edition the extent of articles that have been identified as related to one of the aforementioned topics both in all the Wikipedia language edition articles and in the selection of Cultural Context Content (CCC) articles. The size of the tiles is according to the extent in number of articles. In many language editions, a considerable extent of content is not "instance of" these topics.
+                This graph allows comparing how different is the cultural context content from all the language edition content.
+             '''.replace('  ', '')),
+            # last month, accumulated.
 
-    html.Div(
-    html.P('Select a Wikipedia'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
+            html.Div(
+            html.P('Select a Wikipedia'),
+            style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_languages',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'English (en)',
-        style={'width': '240px'}
-     ), style={'display': 'inline-block','width': '250px'}),
+            html.Div(
+            dcc.Dropdown(
+                id='sourcelangdropdown_languages',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                value = 'English (en)',
+                style={'width': '240px'}
+             ), style={'display': 'inline-block','width': '250px'}),
 
-    dcc.Graph(id = 'topics_treemap'),
-    html.Hr(),
+            dcc.Graph(id = 'topics_treemap'),
+#            html.Hr(),
 
+    ###
+        ]),
+        dcc.Tab(label='Extent of Topics in Several Language Editions and their CCC (Stacked Bars)', children=[
 
-###
+            html.H5('Extent of Topics in Wikipedia Language Editions and in Languages CCC Stacked Bars'),
+            dcc.Markdown('''* **What is the topical distribution in various Wikipedia Language Edition and their CCC?**
 
-    html.H5('Topic Extent in Wikipedia Language Editions and in Languages CCC Stacked Bars'),
-    dcc.Markdown('''* **What is the topical distribution in various Wikipedia Language Edition and their CCC?**
+                The following barchart shows for a group of selected Wikipedia language editions the topical distribution. In the first row you can see the extent of each topic for the entire Wikipedia language edition and in the second row for their CCC. By hovering on each topic you can see the extent in percentage and number of articles.
+             '''.replace('  ', '')),
+            html.Br(),
+            html.Div(
+            html.P('Select a group of Wikipedias'),
+            style={'display': 'inline-block','width': '200px'}),
 
-        The following barchart shows for a group of selected Wikipedia language editions the topical distribution. In the first row you can see the extent of each topic for the entire Wikipedia language edition and in the second row for their CCC. By hovering on each topic you can see the extent in percentage and number of articles.
-     '''.replace('  ', '')),
-    html.Br(),
-    html.Div(
-    html.P('Select a group of Wikipedias'),
-    style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
-    html.Br(),
-
-    html.Div(
-    dcc.Dropdown(
-        id='grouplangdropdown',
-        options=[{'label': k, 'value': k} for k in lang_groups],
-        value='Top 10',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+            html.Div(
+            dcc.Dropdown(
+                id='grouplangdropdown',
+                options=[{'label': k, 'value': k} for k in lang_groups],
+                value='Top 10',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
 
-    html.Br(),
+            html.Br(),
 
-    dcc.Dropdown(id='sourcelangdropdown_topicalcoverage',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        multi=True),
+            dcc.Dropdown(id='sourcelangdropdown_topicalcoverage',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                multi=True),
 
-    html.Br(),
-    dcc.Graph(id = 'language_topics_barchart'),
-    dcc.Graph(id = 'language_topics_barchart2')
+            html.Br(),
+            dcc.Graph(id = 'language_topics_barchart'),
+            dcc.Graph(id = 'language_topics_barchart2')
+
+            ]),
+
+    ]),
+
+    footbar,
 
 ], className="container")
 

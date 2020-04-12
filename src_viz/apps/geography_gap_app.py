@@ -232,177 +232,226 @@ dash_app3.title = title+title_addenda
 text_heatmap = ''
 
 dash_app3.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows stastistics and graphs that explain how well each Wikipedia language edition covers 
         the Geolocated articles.
-        They illustrate the content geography gap, that is the imbalances in representing the different world regions, subregions and countries. They answer the following questions:
-        * What is the extent of geolocated articles without interwiki links in each country, subregion and world region?
+        They illustrate the content geography gap, that is the imbalances in representing the different world regions, subregions and countries. 
+
+        The graphs answer the following questions:
         * What is the extent of geolocated articles in each Wikipedia language edition?
-        * What is the extent of geolocated articles in countries, subregions and regions in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?
+        * What is the extent of geolocated articles without interwiki links in each country, subregion and world region?
+        * What is the extent of geolocated entities (countries, subregions and regions) in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?
         * How well do Wikipedia language editions cover the available geolocated articles in each country?
-        * What Wikipedia language editions cover best each country, subregion, and region geolocated articles?
+        * What Wikipedia language editions accumulated more geolocated articles in each country, subregion, and region?
         '''),
-
-    html.Hr(),
-
-
-###
-
-    html.H5('Geolocated Wikidata Qitems Without Interwiki Links Scatterplot'),
-
-    dcc.Markdown('''* **What is the extent of geolocated articles without Interwiki links in each country, subregion and world region?**
-
-        The following scatterplot graph shows for a list of countries, subregions or world regions the number of articles they contain (Y-axis) and on the percentage of articles without any interwiki links (X-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.
-     '''.replace('  ', '')),
-
-    dcc.Dropdown(
-        id='geolocateddropdown_coverage',
-        options = [{'label': k, 'value': k} for k in ['Countries','Subregions','Regions']],
-        value = 'Countries',
-        style={'width': '190px'}
-     ),
-    dcc.Graph(id = 'scatterplot_nointerwiki'),
-
-    html.Hr(),
-
-
-###
-
-    html.H5('Extent of Geolocated Articles in Wikipedia Language Editions and Language CCC Scatterplot'),
-
-    dcc.Markdown('''* **What is the extent of geolocated articles in each Wikipedia language edition?**
-
-        The following scatterplot graph shows the extent of geolocated articles and CCC geolocated articles in each Wikipedia language edition. CCC geolocated articles are geolocated articles that belong to the language CCC. Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.
-     '''.replace('  ', '')),
-
-    dcc.Dropdown(
-        id='geolocatedarticlesdropdown_coverage',
-        options = [{'label': k, 'value': k} for k in ['Wikipedia','CCC']],
-        value = 'Wikipedia',
-        style={'width': '190px'}
-     ),
-    dcc.Graph(id = 'scatterplot_geolocatedextent'),
-
-   html.Hr(),
-
-
-####
-
-    html.H5("Extent of Countries, Subregions, Regions in Wikipedia Content Treemap", style={'textAlign':'left'}),
-
-    dcc.Markdown('''
-        * **What is the extent of geolocated articles in countries, subregions and regions in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?**
-        '''.replace('  ', '')),
-    dcc.Markdown('''
-        The following treemap graphs show for two selected projects both the extent and the coverage of different geographical entities (countries, subregions and world regions). The size of the tiles and the colorscale (orange-dark blue) is according to the extent the geographical entities take in the selected project, which can be the sum of all geolocated articles in all Wikipedia language editions, all the Wikidata geolocated qitems or specific Wikipedia language editions. When you hover on a tile you can read the same information regarding the coverage and extent plus the number of articles.
-        '''.replace('  ', '')),
     html.Br(),
 
-    html.Div(
-    html.P('Select two projects to compare'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
+    dcc.Tabs([
+        dcc.Tab(label='Extent of Geolocated Art. in Wikipedias/CCC (Scatterplot)', children=[
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_treemapgeolocatedcoverage',
-        options = [{'label': k, 'value': k} for k in treemapoptions],
-        value = 'All Geolocated Articles',
-        style={'width': '240px'}
-     ), style={'display': 'inline-block','width': '250px'}),
+		###
+		    html.H5('Geolocated Wikidata Qitems Without Interwiki Links Scatterplot'),
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_treemapgeolocatedcoverage2',
-        options = [{'label': k, 'value': k} for k in treemapoptions],
-        value = 'Wikidata Geolocated Qitems',
-        style={'width': '240px'}
-     ), style={'display': 'inline-block','width': '250px'}),
+		    dcc.Markdown('''* **What is the extent of geolocated articles without Interwiki links in each country, subregion and world region?**'''),
+		    dcc.Markdown('''The following scatterplot graph shows for a list of countries, subregions or world regions the number of articles they contain (Y-axis) and on the percentage of articles without any interwiki links (X-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.'''),
 
-    html.Br(),
-    html.Div(
-    html.P('Select a geographical entity'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
+		    dcc.Dropdown(
+		        id='geolocateddropdown_coverage',
+		        options = [{'label': k, 'value': k} for k in ['Countries','Subregions','Regions']],
+		        value = 'Countries',
+		        style={'width': '190px'}
+		     ),
+		    dcc.Graph(id = 'scatterplot_nointerwiki'),
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourceentitytype_treemap',
-        options = [{'label': k, 'value': k} for k in ['Countries','Subregions','Regions']],
-        value = 'Countries',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+#		    html.Hr(),
 
-    html.Br(),
+        ]),
 
-    dcc.Graph(id = 'treemap_geolocated_coverage'),
+		###
+        dcc.Tab(label='Geolocated Articles Without Interwiki (Scatterplot)', children=[
 
-    html.Hr(),
+		    html.H5('Extent of Geolocated Articles in Wikipedia Language Editions and Language CCC Scatterplot'),
 
-####
+		    dcc.Markdown('''* **What is the extent of geolocated articles in each Wikipedia language edition?**'''.replace('  ', '')),
+		    dcc.Markdown('''The following scatterplot graph shows the extent of geolocated articles and CCC geolocated articles in each Wikipedia language edition. CCC geolocated articles are geolocated articles that belong to the language CCC. Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.
+		     '''),
 
-    html.H5("Coverage of Countries Geolocated Articles by Wikipedia Language Editions Map", style={'textAlign':'left'}),
+		    dcc.Dropdown(
+		        id='geolocatedarticlesdropdown_coverage',
+		        options = [{'label': k, 'value': k} for k in ['Wikipedia','CCC']],
+		        value = 'Wikipedia',
+		        style={'width': '190px'}
+		     ),
+		    dcc.Graph(id = 'scatterplot_geolocatedextent'),
 
-    dcc.Markdown('''
-        * **How well do Wikipedia language editions cover the available geolocated articles in each country?**
-        '''.replace('  ', '')),
-    dcc.Markdown('''
-        The following map graphs show the coverage of the Total Articles geolocated in the following territories by a Wikipedia language edition, and the extent they take in the group of geolocated articles of this Wikipedia language edition. You can hover on each country and see the number of covered articles and total articles, the percentages of coverage and extent, as well as other information regarding the country.
-        '''.replace('  ', '')),
-    html.Br(),
+        ]),
 
-    html.Div(
-    html.P('Select a Wikipedia'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
+		####
+        dcc.Tab(label='Extent of Geolocated Entities in Geolocated Articles (Treemap)', children=[
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_mapgeolocatedcoverage',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'Italian (it)',
-        style={'width': '240px'}
-     ), style={'display': 'inline-block','width': '250px'}),
+		    html.H5("Extent of Countries, Subregions, Regions in Wikipedia Content Treemap", style={'textAlign':'left'}),
 
-    html.Br(),
-    dcc.Graph(id = 'choropleth_map_countries_coverage'),
-    dcc.Graph(id = 'choropleth_map_countries_extent'),
+		    dcc.Markdown('''
+		        * **What is the extent of geolocated entities (countries, subregions and regions) in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?**
+		        '''.replace('  ', '')),
+		    dcc.Markdown('''The following treemap graphs show for two selected projects both the extent and the coverage of different geographical entities (countries, subregions and world regions). The size of the tiles and the colorscale (orange-dark blue) is according to the extent the geographical entities take in the selected project, which can be the sum of all geolocated articles in all Wikipedia language editions, all the Wikidata geolocated qitems or specific Wikipedia language editions. When you hover on a tile you can read the same information regarding the coverage and extent plus the number of articles.
+		        '''.replace('  ', '')),
+		    html.Br(),
 
-    html.Hr(),
+		    html.Div(
+		    html.P('Select two projects to compare'),
+		    style={'display': 'inline-block','width': '200px'}),
+		    html.Br(),
 
-####
+		    html.Div(
+		    dcc.Dropdown(
+		        id='sourcelangdropdown_treemapgeolocatedcoverage',
+		        options = [{'label': k, 'value': k} for k in treemapoptions],
+		        value = 'All Geolocated Articles',
+		        style={'width': '240px'}
+		     ), style={'display': 'inline-block','width': '250px'}),
 
-    html.H5('Wikipedia Language Editions Coverage of Countries, Subregions and Regions Barchart'),
-    dcc.Markdown('''* **What Wikipedia language editions cover best each country, subregion, and region geolocated articles?**
+		    html.Div(
+		    dcc.Dropdown(
+		        id='sourcelangdropdown_treemapgeolocatedcoverage2',
+		        options = [{'label': k, 'value': k} for k in treemapoptions],
+		        value = 'Wikidata Geolocated Qitems',
+		        style={'width': '240px'}
+		     ), style={'display': 'inline-block','width': '250px'}),
 
-        The following barchart graph shows for a selected geographical entity (country, world subregion or region) the coverage by Wikipedia language editions of the total available number of geolocated articles/qitems in them. By hovering in each Wikipedia you can see the coverage percentage as well, the extent it takes in percentage of their total number of articles, the total number of articles geolocated in that geographical entity as well as other geographical information.'''.replace('  ', '')),
+		    html.Br(),
+		    html.Div(
+		    html.P('Select a geographical entity'),
+		    style={'display': 'inline-block','width': '200px'}),
+		    html.Br(),
+
+		    html.Div(
+		    dcc.Dropdown(
+		        id='sourceentitytype_treemap',
+		        options = [{'label': k, 'value': k} for k in ['Countries','Subregions','Regions']],
+		        value = 'Countries',
+		        style={'width': '190px'}
+		     ), style={'display': 'inline-block','width': '200px'}),
+
+		    html.Br(),
+
+		    dcc.Graph(id = 'treemap_geolocated_coverage'),
+
+        ]),
+
+		####
+        dcc.Tab(label='Coverage of Countries Geolocated Articles (Map)', children=[
+
+		    html.H5("Coverage of Countries Geolocated Articles by Wikipedia Language Editions Map", style={'textAlign':'left'}),
+
+		    dcc.Markdown('''
+		        * **How well do Wikipedia language editions cover the available geolocated articles in each country?**
+		        '''.replace('  ', '')),
+		    dcc.Markdown('''
+		        The following map graphs show the coverage of the Total Articles geolocated in the following territories by a Wikipedia language edition, and the extent they take in the group of geolocated articles of this Wikipedia language edition. You can hover on each country and see the number of covered articles and total articles, the percentages of coverage and extent, as well as other information regarding the country.
+		        '''.replace('  ', '')),
+		    html.Br(),
+
+		    html.Div(
+		    html.P('Select a Wikipedia'),
+		    style={'display': 'inline-block','width': '200px'}),
+		    html.Br(),
+
+		    html.Div(
+		    dcc.Dropdown(
+		        id='sourcelangdropdown_mapgeolocatedcoverage',
+		        options = [{'label': k, 'value': k} for k in language_names_list],
+		        value = 'Italian (it)',
+		        style={'width': '240px'}
+		     ), style={'display': 'inline-block','width': '250px'}),
+
+		    html.Br(),
+		    dcc.Graph(id = 'choropleth_map_countries_coverage'),
+		    dcc.Graph(id = 'choropleth_map_countries_extent'),
+
+        ]),
+
+		####
+        dcc.Tab(label='Wikipedias by Coverage of Geographical Entities (Barchart)', children=[
+		    html.H5('Wikipedia Language Editions Coverage of Countries, Subregions and Regions Barchart'),
+		    dcc.Markdown('''* **What Wikipedia language editions cover best each country, subregion, and region geolocated articles?**
+
+		        The following barchart graph shows for a selected geographical entity (country, world subregion or region) the degree of coverage of its geolocated articles/Qitems in them by all Wikipedia language editions or a selected group. By hovering in each Wikipedia you can see the coverage percentage as well, the extent it takes in percentage of their total number of articles, the total number of articles geolocated in that geographical entity as well as other geographical information.'''.replace('  ', '')),
+
+		    html.Div(html.P('Select a Geographical Entity'), style={'display': 'inline-block','width': '200px'}),
+
+		    html.Br(),
+		    html.Div(
+		    dcc.Dropdown(
+		        id='sourceentitytype',
+		        options = [{'label': k, 'value': k} for k in ['Countries','Subregions','Regions']],
+		        value = 'Countries',
+		        style={'width': '190px'}
+		     ), style={'display': 'inline-block','width': '200px'}),
+
+		    html.Div(
+		    dcc.Dropdown(
+		        id='sourceentityspecific',
+		#        options = options,
+		        value = 'South Africa',
+		        style={'width': '190px'}
+		     ), style={'display': 'inline-block','width': '200px'}),
 
 
-    html.Div(html.P('Select a Geographical Entity'), style={'display': 'inline-block','width': '200px'}),
+		    html.Div(
+		    html.P('Select all languages or a specific group'),
+		    style={'width': '400px'}),
 
-    html.Br(),
-    html.Div(
-    dcc.Dropdown(
-        id='sourceentitytype',
-        options = [{'label': k, 'value': k} for k in ['Countries','Subregions','Regions']],
-        value = 'Countries',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+		    html.Div(
+		    dcc.RadioItems(
+		        id='specific_group_radio',
+		        options=[{'label':'All languages','value':'all'},{'label':'Select a group','value':'group'}],
+		        value='all',
+		        labelStyle={'display': 'inline-block'},
+		        style={'width': '390px'}
+		     ), style={'display': 'inline-block','width': '400px'}),
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourceentityspecific',
-#        options = options,
-        value = 'South Africa',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+		    html.Br(),
+		    html.Br(),
 
-    dcc.Graph(id = 'barchart_coverage')
+		    html.Div(
+		    html.P('Select a group of Wikipedias'),
+		    style={'display': 'inline-block','width': '200px'}),
 
-#    html.Hr()
+		    html.Div(
+		    html.P('You can add or remove languages'),
+		    style={'display': 'inline-block','width': '500px'}),
 
-	], className="container")
+		    html.Br(),
+
+
+		    html.Div(
+		    dcc.Dropdown(
+		        id='grouplangdropdown',
+		        options=[{'label': k, 'value': k} for k in lang_groups],
+		        value='Top 10',
+		        disabled = False,
+		        style={'width': '190px'}
+		     ), style={'display': 'inline-block','width': '200px'}),
+
+		    html.Div(
+		    dcc.Dropdown(id='sourcelangdropdown_geography_gap',
+		        options = [{'label': k, 'value': k} for k in language_names_list],
+		        multi=True,
+		        disabled = False,
+		        style={'width': '990px'}
+		     ), style={'display': 'inline-block','width': '1000px'}),
+		    html.Br(),
+
+		    dcc.Graph(id = 'barchart_coverage')
+        ]),
+    ]),
+
+	footbar,
+
+], className="container")
 
 
 ###
@@ -491,30 +540,69 @@ def update_scatterplot(value):
 
 
 
-# BARCHART CCC SPREAD
 @dash_app3.callback(
-    Output('barchart_coverage', 'figure'),
-    [Input('sourceentityspecific', 'value'),Input('sourceentitytype', 'value')])
-def update_barchart(entityspecific,entitytype):
-#   print (entityspecific,entitytype)
-    if entityspecific == None or entitytype == None: return
+    [Output('sourcelangdropdown_geography_gap', 'disabled'), Output('grouplangdropdown', 'disabled'), Output('grouplangdropdown','value')],
+    [Input('specific_group_radio','value')])
+def set_radio_languages(radio_value):
 
-    if entitytype == 'Countries':
-#  Wiki Language ISO 3166  Articles  Coverage (%)  Extent (%)                   Country                        Subregion    Region
-        df = df_lang_countries_final.loc[df_lang_countries_final['Country'] == entityspecific]
-        fig = px.bar(df.head(20), x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','ISO 3166','Country','Subregion','Region'], color='Articles', height=400)
+	if radio_value == "all":
+		return True, True, []
+	else:
+		return False, False, "Top 10"
 
-    if entitytype == 'Subregions':
-# Wiki Language                        Subregion  Articles  Coverage (%)  Extent (%)    Region
-        df = df_lang_subregion_final.loc[df_lang_subregion_final['Subregion'] == entityspecific]
-        fig = px.bar(df.head(20), x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','Subregion','Region'], color='Articles', height=400)
+@dash_app3.callback(
+    dash.dependencies.Output('sourcelangdropdown_geography_gap', 'value'),
+    [dash.dependencies.Input('grouplangdropdown', 'value'), Input('specific_group_radio','value')])
+def set_langs_options_geography(selected_group, radio_value):
+    langolist, langlistnames = wikilanguages_utils.get_langs_group(selected_group, None, None, None, wikipedialanguage_numberarticles, territories, languages)
+    available_options = [{'label': i, 'value': i} for i in langlistnames.keys()]
+    list_options = []
+    for item in available_options:
+        list_options.append(item['label'])
+    re = sorted(list_options,reverse=False)
 
-    if entitytype == 'Regions':
-# Wiki        Language    Region  Articles  Coverage (%)  Extent (%)
-        df = df_lang_region_final.loc[df_lang_region_final['Region'] == entityspecific]
-        fig = px.bar(df.head(20), x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','Region'], color='Articles', height=400)
+    if radio_value == "all":
+	    re = []
 
-    return fig
+    return re
+
+@dash_app3.callback(Output('barchart_coverage', 'figure'),
+    [Input('sourceentityspecific', 'value'), Input('sourceentitytype', 'value'), Input('sourcelangdropdown_geography_gap', 'value')])
+def update_barchart(entityspecific, entitytype, languages):
+
+	print (entityspecific, entitytype, languages)
+
+	s = 20
+	langs = []
+
+	if type(languages) == list and len(languages) != 0:
+		for x in languages: 
+			langs.append(language_names[x])
+		s = len(langs)
+
+	elif type(languages) == str:
+		langs.append(language_names[languages])
+
+	else:
+		langs = wikilanguagecodes
+
+
+	if entitytype == 'Countries':
+		df = df_lang_countries_final.loc[(df_lang_countries_final['Wiki'].isin(langs)) & (df_lang_countries_final['Country'] == entityspecific)]
+		df = df.head(s)
+		fig = px.bar(df, x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','ISO 3166','Country','Subregion','Region'], color='Articles', height=400)
+
+	if entitytype == 'Subregions':
+		df = df_lang_subregion_final.loc[(df_lang_subregion_final['Wiki'].isin(langs)) & (df_lang_subregion_final['Subregion'] == entityspecific)]
+		df = df.head(s)
+		fig = px.bar(df, x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','Subregion','Region'], color='Articles', height=400)
+
+	if entitytype == 'Regions':
+		df = df_lang_region_final.loc[(df_lang_region_final['Wiki'].isin(langs)) & (df_lang_region_final['Region'] == entityspecific)]
+		df = df.head(s)
+		fig = px.bar(df, x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','Region'], color='Articles', height=400)
+
+	return fig
 
 
 

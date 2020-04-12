@@ -213,6 +213,7 @@ def dash_app23_build_layout(params):
         # PAGE CASE 2: PARAMETERS WERE INTRODUCED AND THERE ARE NO RESULTS
         if len(df) == 0:
             layout = html.Div([
+                navbar,
                 html.H3('Search CCC Articles', style={'textAlign':'center'}),
 
                 html.H5('Unfortunately there are not articles proposed for the local content for this language. Try another combination of parameters.'),
@@ -339,8 +340,7 @@ def dash_app23_build_layout(params):
                 html.A(html.Button('Query Results!'),
                     href=''),
 
-
-
+                footbar,
 
             ], className="container")
 
@@ -510,6 +510,7 @@ def dash_app23_build_layout(params):
 
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
                 text_results.replace('  ', '')),
@@ -633,9 +634,6 @@ def dash_app23_build_layout(params):
             html.A(html.Button('Query Results!'),
                 href=''),
 
-
-
-
             html.Br(),
             html.Br(),
 
@@ -647,7 +645,9 @@ def dash_app23_build_layout(params):
             # Body
             [html.Tr([
                 html.Td(df_row[x]) for x in range(len(columns))
-            ]) for df_row in df_list])
+            ]) for df_row in df_list]),
+
+            footbar,
 
         ], className="container")
 
@@ -659,6 +659,7 @@ def dash_app23_build_layout(params):
         # PAGE 1: FIRST PAGE. NOTHING STARTED YET.
 
         layout = html.Div([
+            navbar,
             html.H3('Search CCC Articles', style={'textAlign':'center'}),
             dcc.Markdown(text_default.replace('  ', '')),
 
@@ -782,18 +783,15 @@ def dash_app23_build_layout(params):
             html.A(html.Button('Query Results!'),
                 href=''),
 
-
+            footbar,
 
         ], className="container")
 
     return layout
 
-        
-
 
 
 def wikidata_sparql_query_to_articles_qitems(textbox_query):
-
 
     params = {'query': str(textbox_query), 'format': 'json'}
     url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'

@@ -28,6 +28,7 @@ df=df.rename(columns=columns_dict)
 title = 'Language Territories Mapping'
 dash_app1.title = title+title_addenda
 dash_app1.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown(
     '''This page contains a copy of the latest version of the **Language Territories Mapping database** (see wikipedia_language_territories_mapping.csv in [github project page](https://github.com/marcmiquel/WCDO/tree/master/language_territories_mapping)). The first version of this database has been generated using Ethnologue, 
@@ -42,9 +43,6 @@ dash_app1.layout = html.Div([
     the full database includes the Qitem for the language, language names in Native languages among other information. 
     Additionally, the full table is extended with the database country_regions.csv, which presents an equivalence 
     table between countries, world regions (continents) and subregions (see country_regions.csv in the github).'''.replace('  ', '')),
-
-
-#    containerProps={'textAlign':'center'}),
     dash_table.DataTable(
         id='datatable-languageterritories',
         columns=[
@@ -55,15 +53,9 @@ dash_app1.layout = html.Div([
         sort_action="native",
         sort_mode="multi",
 
-    )
+    ),
 
-#     dcc.Markdown(
-#     '''Tags: #languages #territories #culturaldiversity #wikipedias'''.replace('  ', '')),
-
-
-# #    containerProps={'textAlign':'center'}),
-
-#     html.A('Home - Wikipedia Cultural Diverstiy Observatory', href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', target="_blank", style={'textAlign': 'right', 'text-decoration':'none'})
+    footbar,
 
 ], className="container")
 

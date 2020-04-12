@@ -4,13 +4,8 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-dash_app32 = Dash(server = app, url_base_pathname = webtype + '/visual_ccc_articles/')
-
-
-
-#dash_app32.config.supress_callback_exceptions = True
+dash_app32 = Dash(server = app, url_base_pathname = webtype + '/visual_ccc_articles/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 dash_app32.config['suppress_callback_exceptions']=True
-
 
 dash_app32.title = 'Visual CCC Articles'+title_addenda
 dash_app32.layout = html.Div([
@@ -204,6 +199,7 @@ def dash_app32_build_layout(params):
         if len(df) == 0: # there are no results.
 
             layout = html.Div([
+                navbar,
                 html.H3('Top CCC articles images', style={'textAlign':'center'}),
 
                 html.H5('There are not results. Unfortunately this list is empty for this language. Try another language and list.'),
@@ -365,9 +361,7 @@ def dash_app32_build_layout(params):
                 html.A(html.Button('Query Results!'),
                     href=''),
 
-
-#                containerProps={'textAlign':'center'}),
-
+                footbar,
 
             ], className="container")
 
@@ -494,7 +488,9 @@ def dash_app32_build_layout(params):
 
 
         layout = html.Div([
-            html.H3(title, style={'textAlign':'center'}),
+            html.H3(
+                navbar,
+                title, style={'textAlign':'center'}),
             dcc.Markdown(
                 text.replace('  ', '')),
 
@@ -656,7 +652,9 @@ def dash_app32_build_layout(params):
             # Body
             [html.Tr([
                 html.Td(df_row[x]) for x in range(len(columns))
-            ]) for df_row in df_list])
+            ]) for df_row in df_list]),
+
+            footbar,
 
         ], className="container")
 
@@ -818,6 +816,7 @@ def dash_app32_build_layout(params):
             html.A(html.Button('Query Results!'),
                 href=''),
 
+            footbar,
 
         ], className="container")
 

@@ -62,16 +62,24 @@ title = "Gender Gap"
 dash_app12.title = title+title_addenda
 
 dash_app12.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows stastistics and graphs that illustrate the gender gap in Wikipedia language editions content. For a detailed analysis on the evolution of gender gap or the pageviews it receives, you can check [Diversity Over Time](http://wcdo.wmflabs.org/diversity_over_time) and [Last Month Pageviews](https://wcdo.wmflabs.org/last_month_pageviews/).
+
+        * What is the gender gap in specific groups of Wikipedia language editions?
         '''),
+
+    html.Hr(),
+
+    html.H5('Gender Gap in Wikipeida Language Editions Barchart'),
+
+    dcc.Markdown('''* **What is the gender gap in specific groups of Wikipedia language editions?**'''.replace('  ', '')),
+
 
     html.Div(
     html.P('Select a group of Wikipedias'),
     style={'display': 'inline-block','width': '200px'}),
-
-    html.Br(),
 
     html.Div(
     dcc.Dropdown(
@@ -81,7 +89,6 @@ dash_app12.layout = html.Div([
         style={'width': '190px'}
      ), style={'display': 'inline-block','width': '200px'}),
 
-    dcc.Graph(id = 'language_gendergap_barchart'),
 
     html.Div(
     html.P('You can add or remove languages:'),
@@ -91,9 +98,11 @@ dash_app12.layout = html.Div([
         options = [{'label': k, 'value': k} for k in language_names_list],
         multi=True),
 
-    html.Br(),
-#    dcc.Graph(id = 'language_gendergap_barchart2'),
-#    html.Hr()
+
+    dcc.Graph(id = 'language_gendergap_barchart'),
+
+    footbar,
+
 ], className="container")
 
 

@@ -224,6 +224,7 @@ def dash_app28_build_layout(params):
 
 
             layout = html.Div([
+                navbar,
                 html.H3('Missing CCC Articles', style={'textAlign':'center'}),
 
                 html.H5('Unfortunately there are not articles proposed for the local content for this language. Try another combination of parameters.'),
@@ -374,11 +375,11 @@ def dash_app28_build_layout(params):
                     style={'width': '190px'}
                  ), style={'display': 'inline-block','width': '200px'}),
 
-
-
-
                 html.A(html.Button('Query Results!'),
                     href=''),
+
+                footbar,
+
             ], className="container")
 
             return layout
@@ -494,6 +495,7 @@ def dash_app28_build_layout(params):
         countries_sel = language_countries[target_lang]
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
                 text.replace('  ', '')),
@@ -555,10 +557,6 @@ def dash_app28_build_layout(params):
 
 
                 html.Br(),
-
-
-
-
                 html.H5('Filter by content'),
 
                 html.Div(
@@ -605,8 +603,6 @@ def dash_app28_build_layout(params):
 
 
                 html.Br(),
-
-
                 html.H5('Choose the source of content'),
 
                 html.Div(
@@ -665,7 +661,9 @@ def dash_app28_build_layout(params):
             # Body
             [html.Tr([
                 html.Td(df_row[x]) for x in range(len(columns))
-            ]) for df_row in df_list])
+            ]) for df_row in df_list]),
+
+            footbar,
 
         ], className="container")
 
@@ -691,6 +689,7 @@ def dash_app28_build_layout(params):
 
 
         layout = html.Div([
+            navbar,
             html.H3('Missing CCC Articles', style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', '')),
 
@@ -742,10 +741,6 @@ def dash_app28_build_layout(params):
 
 
             html.Br(),
-
-
-
-
             html.H5('Filter by content'),
 
             html.Div(
@@ -839,6 +834,9 @@ def dash_app28_build_layout(params):
 
             html.A(html.Button('Query Results!'),
                 href=''),
+
+            footbar,
+
         ], className="container")
 
     return layout

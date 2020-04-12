@@ -3,191 +3,6 @@ import sys
 sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
-# METHODS
-def dataframe_periods(df, order, entity, units):
-
-    if order == 'get_last_month_of_year':
-        df = df.sort_values(by=['Wiki', entity, 'period'])
-#        df.to_csv('inici.csv')
-
-        old_year = 0
-        index_to_delete = []
-        index_list = []
-        old_entity = 0
-        for i, row in df.iterrows():
-            cur_year = row['period'].year
-            cur_entity = row[entity]
-
-            if (cur_year != old_year and old_year!=0) or (cur_entity != old_entity and old_entity!=0):
-                index_list.remove(old_index)
-                df.at[old_index, 'period_formatted'] = str(old_year)
-                index_to_delete+= index_list
-                index_list = []
-
-            cur_index = i
-            index_list.append(cur_index)
-            old_year = cur_year
-            old_index = cur_index
-            old_entity = cur_entity
-
-        index_list.remove(old_index)
-        index_to_delete+= index_list
-        index_list = []
-        df.at[old_index, 'period_formatted'] = str(old_year)
-        df = df.drop(index_to_delete)
-#        df = df.sort_values(by=[entity,'period'])
-#        df.to_csv('final.csv')
-
-
-    if order == 'get_last_month_of_quarter':
-        df = df.sort_values(by=['Wiki', entity, 'period'])
-
-        index_to_delete = []
-        index_list = []
-        old_quarter = 0
-        old_entity = 0
-        old_index = 0
-        for i, row in df.iterrows():
-            pe = row['period']
-            cur_month = pe.month
-            cur_index = i
-            cur_entity = row[entity]
-            cur_quarter = pe.quarter
-
-            if (cur_quarter != old_quarter and old_quarter!=0) or (cur_entity != old_entity and old_entity!=0):
-                index_list.remove(old_index)
-                index_to_delete+= index_list
-                index_list = []
-                df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
-#                print (row)
-
-            old_quarter = pe.quarter
-            old_year = pe.year
-            old_entity = cur_entity
-
-            index_list.append(cur_index)
-            old_index = cur_index
-
-        index_list.remove(old_index)
-        index_to_delete+= index_list
-        index_list = []
-        df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
-        df = df.drop(index_to_delete)
-#        df = df.sort_values(by=['period'])
-
-
-#     if order == 'get_first_month_of_year':
-#         df = df.sort_values(by=[entity, 'period'],ascending=False)
-
-#         old_year = 0
-#         index_to_delete = []
-#         index_list = []
-#         old_entity = 0
-#         for i, row in df.iterrows():
-#             cur_year = row['period'].year
-#             cur_entity = row[entity]
-
-#             if (cur_year != old_year and old_year!=0) or (cur_entity != old_entity and old_entity!=0):
-#                 index_list.remove(old_index)
-#                 index_to_delete+= index_list
-#                 index_list = []
-
-#             cur_index = i
-#             index_list.append(cur_index)
-#             old_year = cur_year
-#             old_index = cur_index
-#             old_entity = cur_entity
-
-#         index_list.remove(old_index)
-#         index_to_delete+= index_list
-#         index_list = []
-#         df = df.drop(index_to_delete)
-# #        df = df.sort_values(by=['period',entity])
-
-
-    if order == 'add_articles_of_year':
-        df = df.sort_values(by=[entity, 'period'])
-
-        old_year = 0
-        index_to_delete = []
-        index_list = []
-        units_val = 0
-        old_entity = 0
-        for i, row in df.iterrows():
-            cur_year = row['period'].year
-            cur_index = i
-            cur_entity = row[entity]
-
-            if (cur_year != old_year and old_year!=0)  or (cur_entity != old_entity and old_entity!=0):
-                index_list.remove(old_index)
-                index_to_delete+= index_list
-                index_list = []
-                df.at[old_index, units] = units_val
-                units_val = 0
-                df.at[old_index, 'period_formatted'] = str(old_year)
-
-            index_list.append(cur_index)
-            units_val += row[units]
-            old_year = cur_year
-            old_index = cur_index
-            old_entity = cur_entity
-
-        index_list.remove(old_index)
-        index_to_delete+= index_list
-        index_list = []
-        df.at[old_index, units] = units_val
-        df.at[old_index, 'period_formatted'] = str(old_year)
-        df = df.drop(index_to_delete)
-#        df = df.sort_values(by=['period'])
-
-
-    if order == 'add_articles_of_quarter':
-        df = df.sort_values(by=[entity, 'period'])
-
-        index_to_delete = []
-        index_list = []
-        units_val = 0
-        old_quarter = 0
-        old_entity = 0
-        old_index = 0
-        for i, row in df.iterrows():
-            pe = row['period']
-            cur_month = pe.month
-            cur_index = i
-            cur_entity = row[entity]
-            cur_quarter = pe.quarter
-
-            if (cur_quarter != old_quarter and old_quarter!=0)  or (cur_entity != old_entity and old_entity!=0):
-                index_list.remove(old_index)
-                index_to_delete+= index_list
-                index_list = []
-                # print (df.loc[old_index])
-                df.at[old_index, units] = units_val
-                df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
-                # print (df.loc[old_index])
-                units_val = 0
-
-            old_quarter = cur_quarter
-            old_year = pe.year
-            old_entity = cur_entity
-
-            index_list.append(cur_index)
-            units_val += row[units]
-            old_index = cur_index
-
-        index_list.remove(old_index)
-        index_to_delete+= index_list
-        index_list = []
-        df.at[old_index, units] = units_val
-        df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
-        df = df.drop(index_to_delete)
-#        df = df.sort_values(by=['period'])
-
-    df['period']=df['period_formatted']
-    return df
-
-
-
 
 #### ARTICLES DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
@@ -413,7 +228,7 @@ df_accumulated_regions['Entity_Extra'] = ''
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
-dash_app13 = Dash(__name__, server = app, url_base_pathname= webtype + '/monthly_created_articles/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
+dash_app13 = Dash(__name__, server = app, url_base_pathname= webtype + '/diversity_over_time/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 # dash_app13 = Dash()
 dash_app13.config['suppress_callback_exceptions']=True
 
@@ -423,6 +238,7 @@ dash_app13.title = title+title_addenda
 text_heatmap = ''
 
 dash_app13.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows stastistics and graphs that explain the creation of different types of content over time; they depict both the the accumulated articles and the new articles created on a monthly basis. The different types of content used for the analysis are: geographical entities (countries, subregions and regions), languages CCC, Top CCC Lists, and gender.
@@ -433,349 +249,543 @@ dash_app13.layout = html.Div([
         * What is the extent of the different types of content created and accumulated in Wikipedia language editions over time?
         * What Wikipedia language editions have created and accumulated more content of the different types over time?
        '''),
-    html.Hr(),
+    html.Br(),
 
 # ###
 
-    # 1 SPECIFIC MONTH TREEMAP
-    html.H3('New Articles by Content Type in a Wikipedia Language Edition On Any Specific Month Treemap'),
-    dcc.Markdown('''* **What is the extent of the different types of content created and accumulated in the Wikipedia language editions on a specific month?**
-
-        The following treemap graphs shows for a selected Wikipedia language edition the extent of the different entities in a content type in both the articles created during a specific month and in the accumulated articles to that date. The size of the tiles is according to the number of articles and the extent (%) is calculated according to the total number of articles from that type of content. By selecting "show other content" you can see in the remaining proportion of articles of existing articles that are not from that type of content.
-     '''.replace('  ', '')),
-
-    html.Br(),
-
-    html.Div(
-    html.P('Select a Wikipedia'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    html.P('Content type'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    html.P('Select a year and month'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    html.P('Show other content in the graph'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Br(),
-    html.Div(
-    dcc.Dropdown(
-        id='lang_dropdown_treemap',
-        options = [{'label': k, 'value': k} for k in language_names],
-        value = 'Catalan (ca)',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    dcc.Dropdown(
-        id='content_types_treemap',
-        options = [{'label': k, 'value': k} for k in content_types],
-        value = 'Languages CCC',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    dcc.Dropdown(
-        id='time_aggregation_treemap',
-        options = [{'label': k, 'value': k} for k in periods],
-        value = periods[0],
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    dcc.RadioItems(id='showothercontent_radio_treemap',
-        options=[{'label':'Yes','value':'Yes'},{'label':'No','value':'No'}],
-        value='No',
-        labelStyle={'display': 'inline-block'},
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    dcc.Graph(id = 'specificmonth_treemap'),
-    html.Hr(),
 
-
-###
+    dcc.Tabs([
+        dcc.Tab(label='One Wikipedia At A Given Time (Treemap)', children=[
+
+            # 1 SPECIFIC MONTH TREEMAP
+            html.H5('Articles by Content Type in a Wikipedia Language Edition On Any Specific Month Treemap'),
+            dcc.Markdown('''* **What is the extent of the different types of content created and accumulated in the Wikipedia language editions on a specific month?**
+
+                The following treemap graphs shows for a selected Wikipedia language edition the extent of the different entities in a content type in both the articles created during a specific month and in the accumulated articles to that date. The size of the tiles is according to the number of articles and the extent (%) is calculated according to the total number of articles from that type of content. By selecting "show other content" you can see in the remaining proportion of articles of existing articles that are not from that type of content.
+             '''.replace('  ', '')),
+
+            html.Br(),
+
+            html.Div(
+            html.P('Select a Wikipedia'),
+            style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            html.P('Content type'),
+            style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            html.P('Select a year and month'),
+            style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            html.P('Show other content in the graph'),
+            style={'display': 'inline-block','width': '200px'}),
+
+            html.Br(),
+            html.Div(
+            dcc.Dropdown(
+                id='lang_dropdown_treemap',
+                options = [{'label': k, 'value': k} for k in language_names],
+                value = 'Catalan (ca)',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            dcc.Dropdown(
+                id='content_types_treemap',
+                options = [{'label': k, 'value': k} for k in content_types],
+                value = 'Languages CCC',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            dcc.Dropdown(
+                id='time_aggregation_treemap',
+                options = [{'label': k, 'value': k} for k in periods],
+                value = periods[0],
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            dcc.RadioItems(id='showothercontent_radio_treemap',
+                options=[{'label':'Yes','value':'Yes'},{'label':'No','value':'No'}],
+                value='No',
+                labelStyle={'display': 'inline-block'},
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+            dcc.Graph(id = 'specificmonth_treemap'),
+            #html.Hr(),
 
-    # 2 SPECIFIC MONTH SCATTERPLOT
-    html.H3('Wikipedia Language Editions By Created and Accumulated Articles On Content Type And Any Specific Month Scatterplot'),
-    dcc.Markdown('''* **What Wikipedia language editions have created more content of the different types on a specific month?**
+        ]),
+        dcc.Tab(label='Several Wikipedias At A Given Time (Scatterplot)', children=[
 
-        The following scatterplot graphs shows for a group of selected Wikipedia language editions and type of content, the amount of articles and the percentage of it that was both accumulated and created at a specific period of time. Wikipedia language editions' entities are represented on x-axis as the number of articles and y-axis as the extent each entity take in the total number of articles created for that content type in that month or accumulated to that point in time.
+            # 2 SPECIFIC MONTH SCATTERPLOT
+            html.H5('Wikipedia Language Editions By Created and Accumulated Articles On Content Type And Any Specific Month Scatterplot'),
+            dcc.Markdown('''* **What Wikipedia language editions have created more content of the different types on a specific month?**
 
-        It is possible to select as many Wikipedia language editions and as many entities as preferred from a specific content type, but we recommend to select no more than three of each as the graph may become too cluttered. The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
-     '''.replace('  ', '')),
+                The following scatterplot graphs shows for a group of selected Wikipedia language editions and type of content, the amount of articles and the percentage of it that was both accumulated and created at a specific period of time. Wikipedia language editions' entities are represented on x-axis as the number of articles and y-axis as the extent each entity take in the total number of articles created for that content type in that month or accumulated to that point in time.
 
+                It is possible to select as many Wikipedia language editions and as many entities as preferred from a specific content type, but we recommend to select no more than three of each as the graph may become too cluttered. The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
+             '''.replace('  ', '')),
 
-    html.Div(
-    html.P('Select a group of Wikipedias'),
-    style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    html.P('You can add or remove languages:'),
-    style={'display': 'inline-block','width': '500px'}),
+            html.Div(
+            html.P('Select a group of Wikipedias'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Br(),
+            html.Div(
+            html.P('You can add or remove languages:'),
+            style={'display': 'inline-block','width': '500px'}),
 
-    html.Div(
-    dcc.Dropdown(
-        id='langgroup_dropdown_scatterplot',
-        options = [{'label': k, 'value': k} for k in lang_groups],
-        value = 'Top 5',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.Dropdown(
-        id='langgroup_box_scatterplot',
-        options = [{'label': k, 'value': k} for k in language_names],
-        multi=True,
-        style={'width': '790px'}
-     ), style={'display': 'inline-block','width': '800px'}),
-
-    html.Br(),
+            html.Div(
+            dcc.Dropdown(
+                id='langgroup_dropdown_scatterplot',
+                options = [{'label': k, 'value': k} for k in lang_groups],
+                value = 'Top 5',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    html.P('Select a content type'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    html.P('You can add or remove entities:'),
-    style={'display': 'inline-block','width': '500px'}),
-    html.Br(),
-
-    html.Div(
-    dcc.Dropdown(
-        id='content_types_scatterplot',
-        options = [{'label': k, 'value': k} for k in content_types],
-        value = 'Regions',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    dcc.Dropdown(
-        id='entities_box_scatterplot',
-        options = [{'label': k, 'value': j} for k,j in entities_list],
-        value = ['Africa','Asia','Oceania','Antarctica'],
-        multi=True,
-        style={'width': '790px'}
-     ), style={'display': 'inline-block','width': '800px'}),
-
+            html.Div(
+            dcc.Dropdown(
+                id='langgroup_box_scatterplot',
+                options = [{'label': k, 'value': k} for k in language_names],
+                multi=True,
+                style={'width': '790px'}
+             ), style={'display': 'inline-block','width': '800px'}),
 
-    html.Br(),
+            html.Br(),
 
-    html.Div(
-    html.P('Select a year and a month'),
-    style={'display': 'inline-block','width': '200px'}),
+            html.Div(
+            html.P('Select a content type'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Br(),
+            html.Div(
+            html.P('You can add or remove entities:'),
+            style={'display': 'inline-block','width': '500px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.Dropdown(
-        id='period_scatterplot',
-        options = [{'label': k, 'value': k} for k in periods],
-        value = default_period,
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+            html.Div(
+            dcc.Dropdown(
+                id='content_types_scatterplot',
+                options = [{'label': k, 'value': k} for k in content_types],
+                value = 'Regions',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            dcc.Dropdown(
+                id='entities_box_scatterplot',
+                options = [{'label': k, 'value': j} for k,j in entities_list],
+                value = ['Africa','Asia','Oceania','Antarctica'],
+                multi=True,
+                style={'width': '790px'}
+             ), style={'display': 'inline-block','width': '800px'}),
 
 
-    dcc.Graph(id = 'specificmonth_scatterplot1'),
-    dcc.Graph(id = 'specificmonth_scatterplot2'),
+            html.Br(),
+
+            html.Div(
+            html.P('Select a year and a month'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Hr(),
+            html.Br(),
 
+            html.Div(
+            dcc.Dropdown(
+                id='period_scatterplot',
+                options = [{'label': k, 'value': k} for k in periods],
+                value = default_period,
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
-# # ###
 
-    # 3 OVER TIME BARCHART
-    html.H3('Created and Accumulated Articles by Content Type Over Time in Wikipedia Language Editions Barchart'),
-    dcc.Markdown('''* **What is the extent of the different types of content created and accumulated in Wikipedia language editions over time?**
-
-      The following barchart graphs shows for a single Wikipedia language editions and for a selected type of content, the amount of articles and the percentage of for each of its entities that is both accumulated and created over time. Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The stacked bars can take the whole y-axis or be proportional to the number of aggregated articles for that period of time. 
-
-      The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggreation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
-     '''.replace('  ', '')),
-
-
-    html.Div(
-    html.P('Select a Wikipedia'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    html.P('Content type'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    html.P('Select the time aggregation'),
-    style={'display': 'inline-block','width': '200px'}),
+            dcc.Graph(id = 'specificmonth_scatterplot1'),
+            dcc.Graph(id = 'specificmonth_scatterplot2'),
 
-    html.Div(
-    html.P('Show absolute or relative values'),
-    style={'display': 'inline-block','width': '300px'}),
+            #html.Hr(),
 
 
-    html.Br(),
-    html.Div(
-    dcc.Dropdown(
-        id='lang_dropdown_barchart',
-        options = [{'label': k, 'value': k} for k in language_names],
-        value = 'English (en)',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    dcc.Dropdown(
-        id='content_types_barchart',
-        options = [{'label': k, 'value': k} for k in content_types],
-        value = 'Gender',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    dcc.Dropdown(
-        id='time_aggregation_barchart',
-        options = [{'label': k, 'value': k} for k in ['Monthly','Quarterly','Yearly']],
-        value = 'Yearly',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    dcc.RadioItems(
-        id='show_absolute_relative_radio_barchart',
-        options=[{'label':'Absolute','value':'Absolute'},{'label':'Relative','value':'Relative'}],
-        value='Relative',
-        labelStyle={'display': 'inline-block'},
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
-
-    dcc.Graph(id = 'createdaccumulatedmonthly_barchart1'),
-    dcc.Graph(id = 'createdaccumulatedmonthly_barchart2'),
-    html.Hr(),
-
-
-# ###
-    # 4 OVER TIME TIME SERIES
-    html.H3('Wikipedia Language Editions By Monthly Created Articles On Any Content Type Over Time Time Series'),
-    dcc.Markdown('''* 
-       **What Wikipedia language editions have created and accumulated more content of the different types over time?**
-
-
-    The following time series / line chart graphs shows for a group of selected Wikipedia language editions and for specific entities of a type of content, the amount of articles and the percentage of each entity that has been both accumulated and created over time. The graphs allow selecting either one Wikipedia language edition and more than one entity from a content type or one single entity from a content type and more than one Wikipedia language edition in order to compare them over time.
-
-    Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The lines can be presented in the y-axis as a result of the number of aggregated articles for that period of time or the extent they take according to the total created or accumulated articles for that content type. The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggreation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
-     '''.replace('  ', '')),
+        ]),
+        dcc.Tab(label='One Wikipedia Over Time (Barchart)', children=[
 
+        # 3 OVER TIME BARCHART
+            html.H5('Created and Accumulated Articles by Content Type Over Time in Wikipedia Language Editions Barchart'),
+            dcc.Markdown('''* **What is the extent of the different types of content created and accumulated in Wikipedia language editions over time?**
 
-    html.Br(),
-    html.Div(
-    html.P('Select a group of Wikipedias'),
-    style={'display': 'inline-block','width': '200px'}),
+              The following barchart graphs shows for a single Wikipedia language editions and for a selected type of content, the amount of articles and the percentage of for each of its entities that is both accumulated and created over time. Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The stacked bars can take the whole y-axis or be proportional to the number of aggregated articles for that period of time. 
 
-    html.Div(
-    html.P('You can add or remove languages:'),
-    style={'display': 'inline-block','width': '500px'}),
+              The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggreation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
+             '''.replace('  ', '')),
 
-    html.Br(),
+
+            html.Div(
+            html.P('Select a Wikipedia'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    dcc.Dropdown(
-        id='langgroup_dropdown_timeseries',
-        options = [{'label': k, 'value': k} for k in lang_groups],
-        disabled =False,
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+            html.Div(
+            html.P('Content type'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    dcc.Dropdown(
-        id='langgroup_box_timeseries',
-        options = [{'label': k, 'value': k} for k in language_names],
-        value = 'Catalan (ca)',
-        multi=False,
-        style={'width': '790px'}
-     ), style={'display': 'inline-block','width': '800px'}),
+            html.Div(
+            html.P('Select the time aggregation'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Br(),
+            html.Div(
+            html.P('Show absolute or relative values'),
+            style={'display': 'inline-block','width': '300px'}),
 
-    html.Div(
-    html.P('Select a content type'),
-    style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    html.P('You can add or remove entities:'),
-    style={'display': 'inline-block','width': '500px'}),
-    html.Br(),
+            html.Br(),
+            html.Div(
+            dcc.Dropdown(
+                id='lang_dropdown_barchart',
+                options = [{'label': k, 'value': k} for k in language_names],
+                value = 'English (en)',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
+            html.Div(
+            dcc.Dropdown(
+                id='content_types_barchart',
+                options = [{'label': k, 'value': k} for k in content_types],
+                value = 'Gender',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
+            html.Div(
+            dcc.Dropdown(
+                id='time_aggregation_barchart',
+                options = [{'label': k, 'value': k} for k in ['Monthly','Quarterly','Yearly']],
+                value = 'Yearly',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    dcc.Dropdown(
-        id='content_types_timeseries',
-        options = [{'label': k, 'value': k} for k in ['Entire Wikipedia']+content_types],
-        value = 'Regions',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+            html.Div(
+            dcc.RadioItems(
+                id='show_absolute_relative_radio_barchart',
+                options=[{'label':'Absolute','value':'Absolute'},{'label':'Relative','value':'Relative'}],
+                value='Relative',
+                labelStyle={'display': 'inline-block'},
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.Dropdown(
-        id='entities_box_timeseries',
-        options = [{'label': k, 'value': j} for k,j in entities_list],
-        multi=True,
-        style={'width': '790px'}
-     ), style={'display': 'inline-block','width': '800px'}),
-    html.Br(),
+            dcc.Graph(id = 'createdaccumulatedmonthly_barchart1'),
+            dcc.Graph(id = 'createdaccumulatedmonthly_barchart2'),
+            #html.Hr(),
+
+
+        ]),
+        dcc.Tab(label='Several Wikipedias Over Time (Time Series)', children=[
+
+            # 4 OVER TIME TIME SERIES
+            html.H5('Wikipedia Language Editions By Monthly Created Articles On Any Content Type Over Time Time Series'),
+            dcc.Markdown('''* 
+               **What Wikipedia language editions have created and accumulated more content of the different types over time?**
+
 
+            The following time series / line chart graphs shows for a group of selected Wikipedia language editions and for specific entities of a type of content, the amount of articles and the percentage of each entity that has been both accumulated and created over time. The graphs allow selecting either one Wikipedia language edition and more than one entity from a content type or one single entity from a content type and more than one Wikipedia language edition in order to compare them over time.
 
+            Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The lines can be presented in the y-axis as a result of the number of aggregated articles for that period of time or the extent they take according to the total created or accumulated articles for that content type. The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggreation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
+             '''.replace('  ', '')),
 
-    html.Div(
-    html.P('Show absolute or relative values'),
-    style={'display': 'inline-block','width': '210px'}),
 
-    html.Div(
-    html.P('Compare entities in language / entities by language'),
-    style={'display': 'inline-block','width': '400px'}),
+            html.Br(),
+            html.Div(
+            html.P('Select a group of Wikipedias'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Br(),
+            html.Div(
+            html.P('You can add or remove languages:'),
+            style={'display': 'inline-block','width': '500px'}),
 
-    html.Div(
-    dcc.RadioItems(
-        id='show_absolute_relative_radio_timeseries',
-        options=[{'label':'Absolute','value':'Absolute'},{'label':'Relative','value':'Relative'}],
-        value='Absolute',
-        labelStyle={'display': 'inline-block'},
-        style={'width': '200px'}
-     ), style={'display': 'inline-block','width': '210px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.RadioItems(
-        id='show_compare_timeseries',
-        options=[{'label':'Limit 1 language','value':'1Language'},{'label':'Limit 1 entity','value':'1Entity'}],
-        value='1Language',
-        labelStyle={'display': 'inline-block'},
-        style={'width': '390px'}
-     ), style={'display': 'inline-block','width': '400px'}),
+            html.Div(
+            dcc.Dropdown(
+                id='langgroup_dropdown_timeseries',
+                options = [{'label': k, 'value': k} for k in lang_groups],
+                disabled =False,
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
-    html.Br(),
+            html.Div(
+            dcc.Dropdown(
+                id='langgroup_box_timeseries',
+                options = [{'label': k, 'value': k} for k in language_names],
+                value = 'Catalan (ca)',
+                multi=False,
+                style={'width': '790px'}
+             ), style={'display': 'inline-block','width': '800px'}),
 
-    dcc.Graph(id = 'createdaccumulatedmonthly_timeseries1'),
-    dcc.Graph(id = 'createdaccumulatedmonthly_timeseries2'),
+            html.Br(),
 
-    html.Hr(),
+            html.Div(
+            html.P('Select a content type'),
+            style={'display': 'inline-block','width': '200px'}),
 
+            html.Div(
+            html.P('You can add or remove entities:'),
+            style={'display': 'inline-block','width': '500px'}),
+            html.Br(),
 
 
-###
+
+            html.Div(
+            dcc.Dropdown(
+                id='content_types_timeseries',
+                options = [{'label': k, 'value': k} for k in ['Entire Wikipedia']+content_types],
+                value = 'Regions',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+            html.Div(
+            dcc.Dropdown(
+                id='entities_box_timeseries',
+                options = [{'label': k, 'value': j} for k,j in entities_list],
+                multi=True,
+                style={'width': '790px'}
+             ), style={'display': 'inline-block','width': '800px'}),
+            html.Br(),
+
+
+
+            html.Div(
+            html.P('Show absolute or relative values'),
+            style={'display': 'inline-block','width': '210px'}),
+
+            html.Div(
+            html.P('Compare entities in language / entities by language'),
+            style={'display': 'inline-block','width': '400px'}),
+
+            html.Br(),
+
+            html.Div(
+            dcc.RadioItems(
+                id='show_absolute_relative_radio_timeseries',
+                options=[{'label':'Absolute','value':'Absolute'},{'label':'Relative','value':'Relative'}],
+                value='Absolute',
+                labelStyle={'display': 'inline-block'},
+                style={'width': '200px'}
+             ), style={'display': 'inline-block','width': '210px'}),
+
+            html.Div(
+            dcc.RadioItems(
+                id='show_compare_timeseries',
+                options=[{'label':'Limit 1 language','value':'1Language'},{'label':'Limit 1 entity','value':'1Entity'}],
+                value='1Language',
+                labelStyle={'display': 'inline-block'},
+                style={'width': '390px'}
+             ), style={'display': 'inline-block','width': '400px'}),
+
+            html.Br(),
+
+            dcc.Graph(id = 'createdaccumulatedmonthly_timeseries1'),
+            dcc.Graph(id = 'createdaccumulatedmonthly_timeseries2'),
+
+            #html.Hr(),
+
+
+            ]),
+    ]),
+
+    footbar,
 
 ], className="container")
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
-#### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+#### FUNCTIONS AND CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
+
+def dataframe_periods(df, order, entity, units):
+
+    if order == 'get_last_month_of_year':
+        df = df.sort_values(by=['Wiki', entity, 'period'])
+#        df.to_csv('inici.csv')
+
+        old_year = 0
+        index_to_delete = []
+        index_list = []
+        old_entity = 0
+        for i, row in df.iterrows():
+            cur_year = row['period'].year
+            cur_entity = row[entity]
+
+            if (cur_year != old_year and old_year!=0) or (cur_entity != old_entity and old_entity!=0):
+                index_list.remove(old_index)
+                df.at[old_index, 'period_formatted'] = str(old_year)
+                index_to_delete+= index_list
+                index_list = []
+
+            cur_index = i
+            index_list.append(cur_index)
+            old_year = cur_year
+            old_index = cur_index
+            old_entity = cur_entity
+
+        index_list.remove(old_index)
+        index_to_delete+= index_list
+        index_list = []
+        df.at[old_index, 'period_formatted'] = str(old_year)
+        df = df.drop(index_to_delete)
+#        df = df.sort_values(by=[entity,'period'])
+#        df.to_csv('final.csv')
+
+
+    if order == 'get_last_month_of_quarter':
+        df = df.sort_values(by=['Wiki', entity, 'period'])
+
+        index_to_delete = []
+        index_list = []
+        old_quarter = 0
+        old_entity = 0
+        old_index = 0
+        for i, row in df.iterrows():
+            pe = row['period']
+            cur_month = pe.month
+            cur_index = i
+            cur_entity = row[entity]
+            cur_quarter = pe.quarter
+
+            if (cur_quarter != old_quarter and old_quarter!=0) or (cur_entity != old_entity and old_entity!=0):
+                index_list.remove(old_index)
+                index_to_delete+= index_list
+                index_list = []
+                df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
+#                print (row)
+
+            old_quarter = pe.quarter
+            old_year = pe.year
+            old_entity = cur_entity
+
+            index_list.append(cur_index)
+            old_index = cur_index
+
+        index_list.remove(old_index)
+        index_to_delete+= index_list
+        index_list = []
+        df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
+        df = df.drop(index_to_delete)
+#        df = df.sort_values(by=['period'])
+
+
+#     if order == 'get_first_month_of_year':
+#         df = df.sort_values(by=[entity, 'period'],ascending=False)
+
+#         old_year = 0
+#         index_to_delete = []
+#         index_list = []
+#         old_entity = 0
+#         for i, row in df.iterrows():
+#             cur_year = row['period'].year
+#             cur_entity = row[entity]
+
+#             if (cur_year != old_year and old_year!=0) or (cur_entity != old_entity and old_entity!=0):
+#                 index_list.remove(old_index)
+#                 index_to_delete+= index_list
+#                 index_list = []
+
+#             cur_index = i
+#             index_list.append(cur_index)
+#             old_year = cur_year
+#             old_index = cur_index
+#             old_entity = cur_entity
+
+#         index_list.remove(old_index)
+#         index_to_delete+= index_list
+#         index_list = []
+#         df = df.drop(index_to_delete)
+# #        df = df.sort_values(by=['period',entity])
+
+
+    if order == 'add_articles_of_year':
+        df = df.sort_values(by=[entity, 'period'])
+
+        old_year = 0
+        index_to_delete = []
+        index_list = []
+        units_val = 0
+        old_entity = 0
+        for i, row in df.iterrows():
+            cur_year = row['period'].year
+            cur_index = i
+            cur_entity = row[entity]
+
+            if (cur_year != old_year and old_year!=0)  or (cur_entity != old_entity and old_entity!=0):
+                index_list.remove(old_index)
+                index_to_delete+= index_list
+                index_list = []
+                df.at[old_index, units] = units_val
+                units_val = 0
+                df.at[old_index, 'period_formatted'] = str(old_year)
+
+            index_list.append(cur_index)
+            units_val += row[units]
+            old_year = cur_year
+            old_index = cur_index
+            old_entity = cur_entity
+
+        index_list.remove(old_index)
+        index_to_delete+= index_list
+        index_list = []
+        df.at[old_index, units] = units_val
+        df.at[old_index, 'period_formatted'] = str(old_year)
+        df = df.drop(index_to_delete)
+#        df = df.sort_values(by=['period'])
+
+
+    if order == 'add_articles_of_quarter':
+        df = df.sort_values(by=[entity, 'period'])
+
+        index_to_delete = []
+        index_list = []
+        units_val = 0
+        old_quarter = 0
+        old_entity = 0
+        old_index = 0
+        for i, row in df.iterrows():
+            pe = row['period']
+            cur_month = pe.month
+            cur_index = i
+            cur_entity = row[entity]
+            cur_quarter = pe.quarter
+
+            if (cur_quarter != old_quarter and old_quarter!=0)  or (cur_entity != old_entity and old_entity!=0):
+                index_list.remove(old_index)
+                index_to_delete+= index_list
+                index_list = []
+                # print (df.loc[old_index])
+                df.at[old_index, units] = units_val
+                df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
+                # print (df.loc[old_index])
+                units_val = 0
+
+            old_quarter = cur_quarter
+            old_year = pe.year
+            old_entity = cur_entity
+
+            index_list.append(cur_index)
+            units_val += row[units]
+            old_index = cur_index
+
+        index_list.remove(old_index)
+        index_to_delete+= index_list
+        index_list = []
+        df.at[old_index, units] = units_val
+        df.at[old_index, 'period_formatted'] = str(old_year) + '-Q' + str(old_quarter)
+        df = df.drop(index_to_delete)
+#        df = df.sort_values(by=['period'])
+
+    df['period']=df['period_formatted']
+    return df
+
 
 def entity_to_dfs(content_type, created_accumulated):
 
@@ -858,7 +868,7 @@ def update_specific_month_treemap(language, content_type, period, othercontent):
             topicpercent = df_accumulated['Extent Articles (%)'].sum(); # print (topicpercent)
             topicarts = df_accumulated.Articles.sum();
             totalart = topicarts/(topicpercent/100)
-            remainingpercent = 100-topicpercent; print (remainingpercent)
+            remainingpercent = 100-topicpercent; #print (remainingpercent)
             remainingart = totalart-topicarts
             row_df_accumulated = pd.Series(data = {'Wiki':language, 'Group':'wp', 'Content_Type':content_type, 'Entity':'Other Content', 'Articles':remainingart, 'Extent Articles (%)':remainingpercent, 'period':max_period_accumulated, 'Language':language_names_full[language]})
 
@@ -938,6 +948,8 @@ def update_specific_month_scatterplot(languages, content_type, entities, period)
 #    if languages == None or content_type == None or entities == None or period == None: return (None,None)
         
 #    print (languages, content_type, entities, period)
+    if languages == None:
+        languages = []
 
     langs = []
     if type(languages) != str:

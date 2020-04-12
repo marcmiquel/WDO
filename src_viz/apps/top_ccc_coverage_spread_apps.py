@@ -211,6 +211,7 @@ def dash_app8_build_layout(params):
 
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
                 text.replace('  ', '')),
@@ -264,7 +265,10 @@ def dash_app8_build_layout(params):
                 [html.Tr([
                     html.Td(df.iloc[i][col]) for col in df.columns
                 ]) for i in range(len(df))]
-            )
+            ),
+
+            footbar,
+
             ], className="container")
 
     else:
@@ -289,6 +293,7 @@ def dash_app8_build_layout(params):
         '''
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
 
             dcc.Markdown(
@@ -337,8 +342,9 @@ def dash_app8_build_layout(params):
 
             html.A(html.Button('Query Results!'),
                 href=''),
-            html.Br(),
-            html.Br(),
+
+            footbar,
+
 
             ], className="container")        
 
@@ -557,6 +563,7 @@ def dash_app9_build_layout(params):
 
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', '')),
 
@@ -612,6 +619,8 @@ def dash_app9_build_layout(params):
                 ]) for i,row in sorted(country_dict.items())]
             ),
 
+            footbar,
+
             ], className="container")
 
     else:
@@ -628,6 +637,7 @@ def dash_app9_build_layout(params):
                 **The challenge is to reach 100 articles covered (Covered Articles) from each country!**
                 '''
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', '')),
 
@@ -666,8 +676,8 @@ def dash_app9_build_layout(params):
 
             html.A(html.Button('Query Results!'),
                 href=''),
-            html.Br(),
-            html.Br(),
+
+            footbar,
 
             ], className="container")
 
@@ -854,6 +864,7 @@ def dash_app10_build_layout(params):
 
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', '')),
 
@@ -904,7 +915,10 @@ def dash_app10_build_layout(params):
                 [html.Tr([
                     html.Td(df.iloc[i][col]) for col in df.columns
                 ]) for i in range(len(df))]
-            )
+            ),
+
+            footbar,
+
             ], className="container")
     else:
         title = 'Any Wikipedia Top 100 CCC article lists spread across the rest of Wikipedias'
@@ -917,6 +931,7 @@ def dash_app10_build_layout(params):
                 '''
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(text.replace('  ', '')),
 
@@ -954,14 +969,14 @@ def dash_app10_build_layout(params):
 
             html.A(html.Button('Query Results!'),
                 href=''),
-            html.Br(),
-            html.Br(),
-            html.Br(),
+
+            footbar,
 
             ], className="container")
 
-
     return layout
+
+
 
 # callback update URL
 component_ids10 = ['lang','lists']
@@ -987,5 +1002,3 @@ def page_load(href):
         return []
     state = dash_apps.parse_state(href)
     return dash_app10_build_layout(state)
-
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###

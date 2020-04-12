@@ -4,20 +4,14 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-dash_app7 = Dash(server = app, url_base_pathname = webtype + '/top_ccc_articles/')
-
-
-
-#dash_app7.config.supress_callback_exceptions = True
+dash_app7 = Dash(server = app, url_base_pathname = webtype + '/top_ccc_articles/', external_stylesheets = external_stylesheets)
 dash_app7.config['suppress_callback_exceptions']=True
-
 
 dash_app7.title = 'Top CCC Articles Lists from Cultural Context Content'+title_addenda
 dash_app7.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content') 
 ])
-
 
 
 text_default = '''
@@ -253,6 +247,7 @@ def dash_app7_build_layout(params):
             # PAGE NO RESULTS
 
             layout = html.Div([
+                navbar,
                 html.H3('Top CCC articles lists', style={'textAlign':'center'}),
 
                 html.H5('There are not results. Unfortunately this list is empty for this language. Try another language and list.'),
@@ -267,8 +262,6 @@ def dash_app7_build_layout(params):
                     ],
                     style={'font-size': 12}),
 
-
-#                containerProps={'textAlign':'center'}),
                 html.Br(),
 
                 html.H5('Select the parameters'),
@@ -364,6 +357,8 @@ def dash_app7_build_layout(params):
 
                 html.A(html.Button('Query Results!'),
                     href=''),
+
+                footbar,
 
             ], className="container")
 
@@ -566,10 +561,10 @@ def dash_app7_build_layout(params):
         # RESULTS PAGE
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
                 text.replace('  ', '')),
-#            containerProps={'textAlign':'center'}),
 
             html.Div(
             html.A(
@@ -685,7 +680,9 @@ def dash_app7_build_layout(params):
             # Body
             [html.Tr([
                 html.Td(df_row[x]) for x in range(len(columns))
-            ]) for df_row in df_list])
+            ]) for df_row in df_list]),
+
+            footbar,
 
         ], className="container")
 
@@ -695,10 +692,10 @@ def dash_app7_build_layout(params):
 
 
         layout = html.Div([
+            navbar,
             html.H3('Top CCC articles lists', style={'textAlign':'center'}),
             dcc.Markdown(
                 text_default.replace('  ', '')),
-#            containerProps={'textAlign':'center'}),
 
             html.Div([
                 dcc.Markdown(text_default2.replace('  ', '')),
@@ -799,6 +796,9 @@ def dash_app7_build_layout(params):
 
             html.A(html.Button('Query Results!'),
                 href=''),
+
+            footbar,
+
         ], className="container")
 
     return layout

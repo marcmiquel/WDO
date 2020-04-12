@@ -290,17 +290,15 @@ df.set_index('id', inplace=True, drop=False)
 
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-#dash_app6 = Dash()
-
 dash_app6 = Dash(__name__, server = app, url_base_pathname= webtype + '/last_month_pageviews/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 dash_app6.config['suppress_callback_exceptions']=True
-
 
 title = "Last Month Pageviews"
 dash_app6.title = title+title_addenda
 text_heatmap = ''
 
 dash_app6.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows stastistics and graphs that explain the distribution of pageviews in each Wikipedia language edition and for each types of articles. Different kinds of gaps also appear in the pageviews. 
@@ -310,158 +308,170 @@ dash_app6.layout = html.Div([
         * What is the extent of pageviews dedicated to each language edition Top CCC lists in relation to their language CCC?
         * What is the gender gap in pageviews in biographies in each Wikipedia language edition? 
        '''),
-    html.Hr(),
+    html.Br(),
+#    #html.Hr(),
 
 ###
+    dcc.Tabs([
+        dcc.Tab(label='Extent of Geolocated Entities in Pageviews (Treemap)', children=[
 
-    html.H5('Extent of Pageviews in Geolocated Articles (Countries and Regions) Treemap'),
-    dcc.Markdown('''* **What is the extent of pageviews dedicated to each country and world region in each Wikipedia language edition?**
+            html.H5('Extent of Geolocated Entities (Countries and Regions) in Pageviews Treemap'),
+            dcc.Markdown('''* **What is the extent of pageviews dedicated to each country and world region in each Wikipedia language edition?**
 
-        The following treemap graphs show for a selected Wikipedia language edition the extent of geographical entities (countries, subregions and world regions) in their geolocated articles. This can either be in terms of the number of articles or the pageviews they receive. The size of the tiles is according to the extent of the geographical entities take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
-     '''.replace('  ', '')),
-    html.Br(),
-    html.Div(
-    html.P('Select a Wikipedia and Geographical entity type'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
+                The following treemap graphs show for a selected Wikipedia language edition the extent of geographical entities (countries, subregions and world regions) in their geolocated articles. This can either be in terms of the number of articles or the pageviews they receive. The size of the tiles is according to the extent of the geographical entities take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
+             '''.replace('  ', '')),
+            html.Br(),
+            html.Div(
+            html.P('Select a Wikipedia and a type of geographical entity'),
+            style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_geolocated',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'English (en)',
-        style={'width': '240px'}
-     ), style={'display': 'inline-block','width': '250px'}),
+            html.Div(
+            dcc.Dropdown(
+                id='sourcelangdropdown_geolocated',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                value = 'English (en)',
+                style={'width': '240px'}
+             ), style={'display': 'inline-block','width': '250px'}),
 
-    dcc.Dropdown(
-        id='geolocateddropdown',
-        options = [{'label': k, 'value': k} for k in ['Countries','Regions']],
-        value = 'Countries',
-        style={'width': '190px'}
-     ),
-    dcc.Graph(id = 'geolocated_treemap'),
-    html.Hr(),
+            dcc.Dropdown(
+                id='geolocateddropdown',
+                options = [{'label': k, 'value': k} for k in ['Countries','Regions']],
+                value = 'Countries',
+                style={'width': '190px'}
+             ),
+            dcc.Graph(id = 'geolocated_treemap'),
 
+        ]),
 
-###
+        dcc.Tab(label="Extent of Languages' CCC in Pageviews (Treemap)", children=[
 
-    html.H5('Extent of Pageviews in Language CCC Treemap'),
-    dcc.Markdown('''* **What is the extent of pageviews dedicated to each language CCC in each Wikipedia language edition?**
+            html.H5("Extent of Languages' CCC in Pageviews Treemap"),
+            dcc.Markdown('''* **What is the extent of pageviews dedicated to each language CCC in each Wikipedia language edition?**
 
-        The following treemap graphs shows for a selected Wikipedia language edition the extent each language CCC take in the sum of articles and pageviews dedicated and received by all languages CCC. The size of the tiles is according to the extent the language CCC take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
-     '''.replace('  ', '')),
-    html.Br(),
-    html.Div(
-    html.P('Select a Wikipedia'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
+                The following treemap graphs shows for a selected Wikipedia language edition the extent each language CCC take in the sum of articles and pageviews dedicated and received by all languages CCC. The size of the tiles is according to the extent the language CCC take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
+             '''.replace('  ', '')),
+            html.Br(),
+            html.Div(
+            html.P('Select a Wikipedia'),
+            style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_languageccc',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'English (en)',
-        style={'width': '240px'}
-     ), style={'display': 'inline-block','width': '250px'}),
+            html.Div(
+            dcc.Dropdown(
+                id='sourcelangdropdown_languageccc',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                value = 'English (en)',
+                style={'width': '240px'}
+             ), style={'display': 'inline-block','width': '250px'}),
 
-    dcc.Graph(id = 'language_ccc_treemap'),
-    html.Hr(),
+            dcc.Graph(id = 'language_ccc_treemap'),
+            #html.Hr(),
 
-
-
-###
-
-    html.H5('Extent of Pageviews of each Language Top CCC Scatterplot'),
-    dcc.Markdown('''
-        * **What is the extent of pageviews dedicated to each language edition Top CCC lists in relation to their language CCC?**
-
-        The following scatterplot shows for each language edition Top CCC lists articles, the number of pageviews they receive (y-axis in logscale) and the percentage of pageviews they take from all the pageviews received by the language CCC (x-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name in the legend to see only the Wikipedia languages editions of a single region.
-
-        The Top CCC articles present the most rellevant articles in terms of different metrics (e.g. number of editors or pageviews) and specific content types (e.g. geolocated articles or women) from a language cultural context content. Since these articles are the most valuable part of CCC, they also collect a considerable amount of pageviews. When a Wikipedia language edition is small, often the Top CCC lists encompass most of their language CCC.
-     '''.replace('  ', '')),
-    html.Br(),
-    html.Div(id='none',children=[],style={'display': 'none'}),    
-    dcc.Graph(id = 'language_topccc_scatterplot'),
-    html.Hr(),
-
-###
-
-    html.H5('Gender Gap in Pageviews Barchart'),
-    dcc.Markdown('''
-        * **What is the gender gap in pageviews in biographies in each Wikipedia language edition?**
-
-        The following barchart shows for a group of selected Wikipedia language editions the gender gap in terms of articles (red for women and blue for men) and in terms of pageviews these articles receive (orange for women and pink for men). By hovering on each of the bars you can compare the percentages and the absolute number of articles and pageviews.     '''.replace('  ', '')),
-    html.Br(),
-
-    html.Div(
-    html.P('Select a group of Wikipedias'),
-    style={'display': 'inline-block','width': '200px'}),
-
-    html.Br(),
-
-    html.Div(
-    dcc.Dropdown(
-        id='grouplangdropdown',
-        options=[{'label': k, 'value': k} for k in lang_groups],
-        value='Top 10',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-
-    html.Br(),
-
-    dcc.Dropdown(id='sourcelangdropdown_gendergap',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        multi=True),
-
-    html.Br(),
-    dcc.Graph(id = 'language_gendergap_barchart'),
-#    dcc.Graph(id = 'language_gendergap_barchart2'),
-    html.Hr(),
+        ]),
 
 
 ###
+        dcc.Tab(label="Extent of Languages' CCC in Pageviews (Table)", children=[
 
-    html.H5("Last Month Pageviews in CCC by Wikipedia language edition"),
-    dcc.Markdown('''The following table shows for each language edition the relative popularity 
-        of the own CCC articles as well as that from the CCC articles originary from other language editions.
+            html.H5("Last Month Pageviews in CCC by Wikipedia language edition"),
+            dcc.Markdown('''The following table shows for each language edition the relative popularity 
+                of the own CCC articles as well as that from the CCC articles originary from other language editions.
 
-        Languages are sorted in alphabetic order by their name, and the columns present the following 
-        statistics: the number of articles in the Wikipedia language edition (**Articles**), the percentage of CCC articles (**CCC art %**), the number of pageviews (**Pageviews**), the percentage of pageviews dedicated to CCC articles (**CCC %**), the percentage of pageviews dedicated to the language edition Top CCC articles (**Top CCC %**) (taking into account the first hundred articles from each list), the percentage of pageviews dedicated to all the Top CCC articles from all language editions (**All Top%**) including the own, and the percentage of pageviews dedicated to the **first five other language CCC**. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
+                Languages are sorted in alphabetic order by their name, and the columns present the following 
+                statistics: the number of articles in the Wikipedia language edition (**Articles**), the percentage of CCC articles (**CCC art %**), the number of pageviews (**Pageviews**), the percentage of pageviews dedicated to CCC articles (**CCC %**), the percentage of pageviews dedicated to the language edition Top CCC articles (**Top CCC %**) (taking into account the first hundred articles from each list), the percentage of pageviews dedicated to all the Top CCC articles from all language editions (**All Top%**) including the own, and the percentage of pageviews dedicated to the **first five other language CCC**. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
 
 
-    dash_table.DataTable(
-        id='datatable-cccpageviews',
-        columns=[
-            {'name': i, 'id': i, 'deletable': True} for i in df.columns
-            # omit the id column
-            if i != 'id'
-        ],
-        data=df.to_dict('records'),
-        editable=True,
-        filter_action="native",
-        sort_action="native",
-        sort_mode="multi",
-        column_selectable="single",
-        row_selectable="multi",
-        row_deletable=True,
-        selected_columns=[],
-        selected_rows=[],
-        page_action="native",
-        page_current= 0,
-        page_size= 10,
-        style_data={
-            'whiteSpace': 'normal',
-            'height': 'auto'
-        },
+            dash_table.DataTable(
+                id='datatable-cccpageviews',
+                columns=[
+                    {'name': i, 'id': i, 'deletable': True} for i in df.columns
+                    # omit the id column
+                    if i != 'id'
+                ],
+                data=df.to_dict('records'),
+                editable=True,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                column_selectable="single",
+                row_selectable="multi",
+                row_deletable=True,
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current= 0,
+                page_size= 10,
+                style_data={
+                    'whiteSpace': 'normal',
+                    'height': 'auto'
+                },
 
-    ),
-    html.Br(),
-    html.Br(),
+            ),
+            html.Br(),
+            html.Br(),
 
-    html.Div(id='datatable-cccpageviews-container'),
+            html.Div(id='datatable-cccpageviews-container'),
 
-    html.Br()
+        ]),
+###
+
+        dcc.Tab(label="Extent of Languages' Top CCC in Pageviews (Scatterplot)", children=[
+
+            html.H5("Extent of Languages' Top CCC in Pageviews Scatterplot"),
+            dcc.Markdown('''
+                * **What is the extent of pageviews dedicated to each language edition Top CCC lists in relation to their language CCC?**
+
+                The following scatterplot shows for each language edition Top CCC lists articles, the number of pageviews they receive (y-axis in logscale) and the percentage of pageviews they take from all the pageviews received by the language CCC (x-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name in the legend to see only the Wikipedia languages editions of a single region.
+
+                The Top CCC articles present the most rellevant articles in terms of different metrics (e.g. number of editors or pageviews) and specific content types (e.g. geolocated articles or women) from a language cultural context content. Since these articles are the most valuable part of CCC, they also collect a considerable amount of pageviews. When a Wikipedia language edition is small, often the Top CCC lists encompass most of their language CCC.
+             '''.replace('  ', '')),
+            html.Br(),
+            html.Div(id='none',children=[],style={'display': 'none'}),    
+            dcc.Graph(id = 'language_topccc_scatterplot'),
+
+        ]),
+
+
+###
+        dcc.Tab(label='Gender Gap in Pageviews (Barchart)', children=[
+
+            html.H5('Gender Gap in Pageviews Barchart'),
+            dcc.Markdown('''
+                * **What is the gender gap in pageviews in biographies in each Wikipedia language edition?**
+
+                The following barchart shows for a group of selected Wikipedia language editions the gender gap in terms of articles (red for women and blue for men) and in terms of pageviews these articles receive (orange for women and pink for men). By hovering on each of the bars you can compare the percentages and the absolute number of articles and pageviews.     '''.replace('  ', '')),
+            html.Br(),
+
+            html.Div(
+            html.P('Select a group of Wikipedias'),
+            style={'display': 'inline-block','width': '200px'}),
+
+            html.Br(),
+
+            html.Div(
+            dcc.Dropdown(
+                id='grouplangdropdown',
+                options=[{'label': k, 'value': k} for k in lang_groups],
+                value='Top 10',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+
+            html.Br(),
+
+            dcc.Dropdown(id='sourcelangdropdown_gendergap',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                multi=True),
+
+            html.Br(),
+            dcc.Graph(id = 'language_gendergap_barchart'),
+
+        ])
+
+    ]),
+
+    footbar,
 
 ], className="container")
 

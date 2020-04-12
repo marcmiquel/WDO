@@ -10,6 +10,7 @@ dash_app25.config['suppress_callback_exceptions']=True
 
 dash_app25.title = 'Incomplete CCC Articles '+title_addenda
 dash_app25.layout = html.Div([
+    navbar,
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content') 
 ])
@@ -365,6 +366,8 @@ def dash_app25_build_layout(params):
         # NO RESULTS PAGE
         if len(df1) == 0: # there are no results.
             layout = html.Div([
+                navbar,
+
                 html.H3('Incomplete CCC articles', style={'textAlign':'center'}),
 
                 html.H5('There are not results. Unfortunately this list is empty for this language. Try another language and list.'),
@@ -372,9 +375,7 @@ def dash_app25_build_layout(params):
                 html.Br(),
 
                 dcc.Markdown(
-                    text_base.replace('  ', ''),
-                containerProps={'textAlign':'center'}),
-
+                    text_base.replace('  ', '')),
                 html.H5('Source of content'),
 
                 html.Div(
@@ -393,7 +394,7 @@ def dash_app25_build_layout(params):
                 style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
-                html.P('Top CCC List'),
+                html.P('Top CCC list'),
                 style={'display': 'inline-block','width': '200px'}),
 
                 html.Br(),
@@ -526,7 +527,7 @@ def dash_app25_build_layout(params):
                 html.A(html.Button('Query Results!'),
                     href=''),
 
-
+                footbar,
 
 
             ], className="container")
@@ -554,10 +555,10 @@ def dash_app25_build_layout(params):
 
         # RESULTS PAGE
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
-                text_table.replace('  ', ''),
-            containerProps={'textAlign':'center'}),
+                text_table.replace('  ', '')),
 
     #        html.Br(),
 
@@ -580,7 +581,7 @@ def dash_app25_build_layout(params):
                 style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
-                html.P('Top CCC List'),
+                html.P('Top CCC list'),
                 style={'display': 'inline-block','width': '200px'}),
 
                 html.Br(),
@@ -709,9 +710,6 @@ def dash_app25_build_layout(params):
                 html.A(html.Button('Query Results!'),
                     href=''),
 
-
-
-
             html.Br(),
             html.Br(),
             html.Table(
@@ -720,13 +718,16 @@ def dash_app25_build_layout(params):
             # Body
             [html.Tr([
                 html.Td(df_row[x]) for x in range(len(columns))
-            ]) for df_row in df_list])
+            ]) for df_row in df_list]),
+
+            footbar,
 
         ], className="container")
 
     else:
         # FIRST PAGE
         layout = html.Div([
+            navbar,
             html.H3('Incomplete CCC articles', style={'textAlign':'center'}),
             dcc.Markdown(
                 text_base.replace('  ', '')),
@@ -750,7 +751,7 @@ def dash_app25_build_layout(params):
             style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
-            html.P('Top CCC List'),
+            html.P('Top CCC list'),
             style={'display': 'inline-block','width': '200px'}),
 
             html.Br(),
@@ -879,7 +880,7 @@ def dash_app25_build_layout(params):
             html.A(html.Button('Query Results!'),
                 href=''),
 
-
+            footbar,
 
 
         ], className="container")
