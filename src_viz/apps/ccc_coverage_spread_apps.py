@@ -317,6 +317,7 @@ title = "Wikipedia Languages CCC Coverage (Culture Gap)"
 dash_app4.title = title+title_addenda
 
 dash_app4.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows statistics and graphs that explain how well each Wikipedia language edition covers 
@@ -330,241 +331,250 @@ dash_app4.layout = html.Div([
         * What Wikipedia language editions cover best the sum of all languages CCC articles?
         '''),
 
-    html.Hr(),
+    html.Br(),
+
 
 ##----
+    dcc.Tabs([
 
-    html.H5("Languages CCC Coverage Heatmap", style={'textAlign':'left'}),
-#    html.Br(),
-    dcc.Markdown('''
-        * **How well does this group of Wikipedia language editions cover each others’ CCC?**
+        dcc.Tab(label='Two Wikipedias Coverage of Lang. CCC (Treemap)', children=[
 
-        The following heatmap graph shows how well a group of Wikipedia language editions cover their CCC. Each row shows the of each Wikipedia language CCC. The coverage is calculated as the number of articles in a Wikipedia language edition (row) which belong to another Wikipedia language edition CCC (column) divided by the total number of articles in the Wikipedia language edition CCC (column). For an easy identification of values, cells are coloured being purple low coverage and yellow high coverage.
+            html.H5("Wikipedia Language Coverage of Other Languages CCC Treemap", style={'textAlign':'left'}),
 
-        In the following menu you can choose a group of Wikipedia language editions: Top 10, 20, 30 and 40 Wikipedias according to the number of articles they have, and specific continents and subcontinents. You can manually add a language edition to the list and see how it is covered and covers the other languages CCC.
+            dcc.Markdown('''
+                * **What is the extent of all language editions CCC in this Wikipedia language edition?**
+                '''.replace('  ', '')),
+            dcc.Markdown('''
+                The following treemap graphs show for two selected Wikipedia language editions both the extent and the coverage of other languages CCC. The size of the tiles and the colorscale (light-dark blue) is according to the extent the other languages CCC take in the selected Wikipedia language edition. When you hover on a tile you can read the same information regarding the coverage and extent plus the number of articles. 
 
-        '''.replace('  ', '')),
-    html.Br(),
+                In the following dropdown menus you can select the two Wikipedia language editions to compare how well they cover the other languages CCC and the extent they occupy.
+                You can also select whether to show or hide the selected Wikipedia associated CCC.
+                '''.replace('  ', '')),
+            html.Br(),
 
-    html.Div(
-    html.P('Select a group of Wikipedias'),
-    style={'display': 'inline-block','width': '200px'}),
+            html.Div(
+            html.P('Select two Wikipedias'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Br(),
+            html.Div(
+            html.P('Show the selected language CCC extent in the graph'),
+            style={'display': 'inline-block','width': '400px'}),
+            html.Br(),
 
-    html.Div(
-    dcc.Dropdown(
-        id='grouplangdropdown_coverage',
-        options=[{'label': k, 'value': k} for k in lang_groups],
-        value='Top 10',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-
-    html.Br(),
-
-    dcc.Dropdown(id='sourcelangdropdown_coverageheatmap',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        multi=True),
-
-    html.Br(),
-    html.Div(
-    html.P('Show values in the cell'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
-    
-    html.Div(
-    dcc.RadioItems(id='radio_articlespercentage_coverage',
-        options=[{'label':'Articles','value':'Articles'},{'label':'Percentage','value':'Percentage'}],
-        value='Percentage',
-        labelStyle={'display': 'inline-block'},
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    dcc.Graph(id = 'heatmap_coverage'),
-    html.Hr(),
+#            html.Br(),
 
 
-###----
+            html.Div(
+            dcc.Dropdown(
+                id='sourcelangdropdown_treemapcoverage',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                value = 'Spanish (es)',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
-    html.H5('Wikipedia Language Coverage of Other Language CCC Scatterplot', style={'textAlign':'left'}),
+            html.Div(
+            dcc.Dropdown(
+                id='sourcelangdropdown_treemapcoverage2',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                value = 'Catalan (ca)',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
-    dcc.Markdown('''
-        * **How well does this Wikipedia language edition cover other languages CCC?**
+#            html.Br(),
 
-        The following scatterplot graph shows how well each Wikipedia language edition covers other languages CCC. While the Y-axis (log-scale) shows the perentage of a language CCC it covers, the X-axis shows the number of articles this equals. Wikipedia language editions are colored according to their world region (continent).
-     '''.replace('  ', '')),
-    html.Br(),
+            html.Div(
+            dcc.RadioItems(id='radio_exclude_ownccc',
+                options=[{'label':'Yes','value':'Yes'},{'label':'No','value':'No'}],
+                value='No',
+                labelStyle={'display': 'inline-block'},
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(html.P('Select a Wikipedia'), style={'display': 'inline-block','width': '200px'}),
+            dcc.Graph(id = 'treemap_ccc_coverage'),
+#            html.Hr(),
 
-    dcc.Dropdown(
-        id='sourcelangdropdown_coverage',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'English (en)',
-        style={'width': '190px'}
-     ),
-
-    dcc.Graph(id = 'scatterplot_coverage'),
-#    html.Br(),
-    html.Hr(),
-
-
-###----
-
-    html.H5("Wikipedia language coverage of Other Languages CCC Treemap", style={'textAlign':'left'}),
-
-    dcc.Markdown('''
-    	* **What is the extent of all language editions CCC in this Wikipedia language edition?**
-        '''.replace('  ', '')),
-    dcc.Markdown('''
-        The following treemap graphs show for two selected Wikipedia language editions both the extent and the coverage of other languages CCC. The size of the tiles and the colorscale (light-dark blue) is according to the extent the other languages CCC take in the selected Wikipedia language edition. When you hover on a tile you can read the same information regarding the coverage and extent plus the number of articles. 
-
-        In the following dropdown menus you can select the two Wikipedia language editions to compare how well they cover the other languages CCC and the extent they occupy.
-        You can also select whether to show or hide the selected Wikipedia associated CCC.
-        '''.replace('  ', '')),
-    html.Br(),
-
-    html.Div(
-    html.P('Select two Wikipedias'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
-
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_treemapcoverage',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'Spanish (es)',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Div(
-    dcc.Dropdown(
-        id='sourcelangdropdown_treemapcoverage2',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'Catalan (ca)',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    html.Br(),
-    html.Div(
-    html.P('Show the selected language CCC extent in the graph'),
-    style={'display': 'inline-block','width': '400px'}),
-    html.Br(),
-
-    html.Div(
-    dcc.RadioItems(id='radio_exclude_ownccc',
-        options=[{'label':'Yes','value':'Yes'},{'label':'No','value':'No'}],
-        value='No',
-        labelStyle={'display': 'inline-block'},
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
-
-    dcc.Graph(id = 'treemap_ccc_coverage'),
-    html.Hr(),
+        ]),
 
 
+        dcc.Tab(label='Group of Wikipedias CCC Coverage (Heatmap)', children=[
 
-###----
+            html.H5("Languages CCC Coverage Heatmap", style={'textAlign':'left'}),
+        #    html.Br(),
+            dcc.Markdown('''
+                * **How well does this group of Wikipedia language editions cover each others’ CCC?**
 
-    html.H5('Wikipedia Language Editions Coverage of the Sum of All Languages CCC Articles Scatterplot', style={'textAlign':'left'}),
+                The following heatmap graph shows how well a group of Wikipedia language editions cover their CCC. Each row shows the of each Wikipedia language CCC. The coverage is calculated as the number of articles in a Wikipedia language edition (row) which belong to another Wikipedia language edition CCC (column) divided by the total number of articles in the Wikipedia language edition CCC (column). For an easy identification of values, cells are coloured being purple low coverage and yellow high coverage.
 
+                In the following menu you can choose a group of Wikipedia language editions: Top 10, 20, 30 and 40 Wikipedias according to the number of articles they have, and specific continents and subcontinents. You can manually add a language edition to the list and see how it is covered and covers the other languages CCC.
 
-    dcc.Markdown('''
-        * **What Wikipedia language editions cover best the sum of all languages CCC articles?**
-        '''.replace('  ', '')),
-    dcc.Markdown('''
-        The following scatterplot graph shows how well each Wikipedia language edition covers the sum of all languages CCC articles. While the Y-axis (log-scale) shows the total number of articles a Wikipedia contains, the X-axis shows the Sum of all Languages CCC articles a Wikipedia covers. 
+                '''.replace('  ', '')),
+            html.Br(),
 
-        Below the X-axis there is a range-slider that allows you to select a specific frame (by default it is set between 500,000 and 2 Million articles). Wikipedia language editions are colored according to their world region (continent). 
-    '''.replace('  ', '')),
-    dcc.Graph(id = 'scatterplot_sum'),
+            html.Div(
+            html.P('Select a group of Wikipedias'),
+            style={'display': 'inline-block','width': '200px'}),
 
-    html.Div(
-    dcc.RangeSlider(
-            id='rangeslider',
-            min=0,
-            max=2000000,
-            step=10000,
-            value=[500000, 2000000],
-            marks={
-#                    0: {'label': '0°C', 'style': {'color': '#77b0b1'}},
-                0: {'label': '0'},
-#                    10000: {'label': '10k'},
-                50000: {'label': '50k'},
-                100000: {'label': '100k'},
-                200000: {'label': '200k'},
-                500000: {'label': '500k'},
-                1000000: {'label': '1M'},
-                1200000: {'label': '1,2M'},
-                1400000: {'label': '1,4M'},
-                1600000: {'label': '1,6M'},
-                1800000: {'label': '1,8M'},
-                2000000: {'label': '2M'},
-            }
-        ),
-        style={'marginLeft': 80,'marginRight': 180}),
+            html.Br(),
 
-    html.Br(),
-    html.Br(),
-    html.Hr(),
+            html.Div(
+            dcc.Dropdown(
+                id='grouplangdropdown_coverage',
+                options=[{'label': k, 'value': k} for k in lang_groups],
+                value='Top 10',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
 
-###----
+            html.Br(),
+
+            dcc.Dropdown(id='sourcelangdropdown_coverageheatmap',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                multi=True),
+
+            html.Br(),
+            html.Div(
+            html.P('Show values in the cell'),
+            style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
+            
+            html.Div(
+            dcc.RadioItems(id='radio_articlespercentage_coverage',
+                options=[{'label':'Articles','value':'Articles'},{'label':'Percentage','value':'Percentage'}],
+                value='Percentage',
+                labelStyle={'display': 'inline-block'},
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
+
+            dcc.Graph(id = 'heatmap_coverage'),
+#            html.Hr(),
 
 
-    html.H5("Summary Table", style={'textAlign':'left'}),
-    dcc.Markdown('''
-        This table shows how well each language edition covers the other 
-        language editions CCC by counting the number of CCC articles they have available.
-        Languages are sorted in alphabetic order by their Wikicode, and the columns present the following 
-        statistics: the number of articles in the Wikipedia language edition (**Articles**), the average number of interwiki links of not own CCC articles (**No-CCC IW**), the **first 
-        five other languages CCC** in terms of most articles covered and the percentage of coverage computed 
-        according to the total number of CCC articles of those language edition, the relative coverage 
-        (**R. Coverage**) of all languages CCC computed as the average of each language edition CCC percentage 
-        of coverage, the total coverage (**T. Coverage**) of all languages CCC computed as the percentage of 
-        coverage of all the articles that belong to other language editions CCC, and the total number of articles 
-        covered (**Covered Art.**) that belong other language editions CCC.
-        '''.replace('  ', '')),
+        ]),
+        dcc.Tab(label='Wikipedias Coverage of Lang. CCC (Scatterplot)', children=[
 
-    html.Br(),
-#    containerProps={'textAlign':'center'}),
-    dash_table.DataTable(
-        id='datatable-ccccoverage',
-        columns=[
-            {'name': i, 'id': i, 'deletable': True} for i in df_coverage.columns
-            # omit the id column
-            if i != 'id'
-        ],
-        data=df_coverage.to_dict('records'),
-        editable=True,
-        filter_action="native",
-        sort_action="native",
-        sort_mode="multi",
-        column_selectable="single",
-        row_selectable="multi",
-        row_deletable=True,
-        selected_columns=[],
-        selected_rows=[],
-        page_action="native",
-        page_current= 0,
-        page_size= 10,
-        style_data={
-            'whiteSpace': 'normal',
-            'height': 'auto'
-        },
+        ###----
 
-    ),
-    html.Br(),
-    html.Br(),
-    html.Div(id='datatable-ccccoverage-container')
+            html.H5('Wikipedia Language Coverage of Other Language CCC Scatterplot', style={'textAlign':'left'}),
+
+            dcc.Markdown('''
+                * **How well does this Wikipedia language edition cover other languages CCC?**
+
+                The following scatterplot graph shows how well each Wikipedia language edition covers other languages CCC. While the Y-axis (log-scale) shows the perentage of a language CCC it covers, the X-axis shows the number of articles this equals. Wikipedia language editions are colored according to their world region (continent).
+             '''.replace('  ', '')),
+            html.Br(),
+
+            html.Div(html.P('Select a Wikipedia'), style={'display': 'inline-block','width': '200px'}),
+
+            dcc.Dropdown(
+                id='sourcelangdropdown_coverage',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                value = 'English (en)',
+                style={'width': '190px'}
+             ),
+
+            dcc.Graph(id = 'scatterplot_coverage'),
+        #    html.Br(),
+
+        ]),
 
 
-###----
+        dcc.Tab(label='Wikipedias Coverage of Lang. CCC (Table)', children=[
+
+            html.H5("Wikipedias Coverage of Lang. CCC Summary Table", style={'textAlign':'left'}),
+            dcc.Markdown('''
+                This table shows how well each language edition covers the other 
+                language editions CCC by counting the number of CCC articles they have available.
+                Languages are sorted in alphabetic order by their Wikicode, and the columns present the following 
+                statistics: the number of articles in the Wikipedia language edition (**Articles**), the average number of interwiki links of not own CCC articles (**No-CCC IW**), the **first 
+                five other languages CCC** in terms of most articles covered and the percentage of coverage computed 
+                according to the total number of CCC articles of those language edition, the relative coverage 
+                (**R. Coverage**) of all languages CCC computed as the average of each language edition CCC percentage 
+                of coverage, the total coverage (**T. Coverage**) of all languages CCC computed as the percentage of 
+                coverage of all the articles that belong to other language editions CCC, and the total number of articles 
+                covered (**Covered Art.**) that belong other language editions CCC.
+                '''.replace('  ', '')),
+
+            html.Br(),
+            dash_table.DataTable(
+                id='datatable-ccccoverage',
+                columns=[
+                    {'name': i, 'id': i, 'deletable': True} for i in df_coverage.columns
+                    # omit the id column
+                    if i != 'id'
+                ],
+                data=df_coverage.to_dict('records'),
+                editable=True,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                column_selectable="single",
+                row_selectable="multi",
+                row_deletable=True,
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current= 0,
+                page_size= 10,
+                style_data={
+                    'whiteSpace': 'normal',
+                    'height': 'auto'
+                },
+
+            ),
+            html.Br(),
+            html.Br(),
+            html.Div(id='datatable-ccccoverage-container')
+
+        ]),
+
+        dcc.Tab(label='Wikipedias Coverage all CCC Content (Scatterplot)', children=[
+
+            html.H5('Wikipedia Language Editions Coverage of the Sum of All Languages CCC Articles Scatterplot', style={'textAlign':'left'}),
+
+
+            dcc.Markdown('''
+                * **What Wikipedia language editions cover best the sum of all languages CCC articles?**
+                '''.replace('  ', '')),
+            dcc.Markdown('''
+                The following scatterplot graph shows how well each Wikipedia language edition covers the sum of all languages CCC articles. While the Y-axis (log-scale) shows the total number of articles a Wikipedia contains, the X-axis shows the Sum of all Languages CCC articles a Wikipedia covers. 
+
+                Below the X-axis there is a range-slider that allows you to select a specific frame (by default it is set between 500,000 and 2 Million articles). Wikipedia language editions are colored according to their world region (continent). 
+            '''.replace('  ', '')),
+            dcc.Graph(id = 'scatterplot_sum'),
+
+            html.Div(
+            dcc.RangeSlider(
+                    id='rangeslider',
+                    min=0,
+                    max=2000000,
+                    step=10000,
+                    value=[500000, 2000000],
+                    marks={
+        #                    0: {'label': '0°C', 'style': {'color': '#77b0b1'}},
+                        0: {'label': '0'},
+        #                    10000: {'label': '10k'},
+                        50000: {'label': '50k'},
+                        100000: {'label': '100k'},
+                        200000: {'label': '200k'},
+                        500000: {'label': '500k'},
+                        1000000: {'label': '1M'},
+                        1200000: {'label': '1,2M'},
+                        1400000: {'label': '1,4M'},
+                        1600000: {'label': '1,6M'},
+                        1800000: {'label': '1,8M'},
+                        2000000: {'label': '2M'},
+                    }
+                ),
+                style={'marginLeft': 80,'marginRight': 180}),
+
+        ]),
+ 
+    ]),
+
+    footbar,
+
 
 ], className="container")
-
-
 
 
 
@@ -702,7 +712,6 @@ def update_treemap_coverage(value,value2,exclude):
     return fig
 
 
-
 # SCATTER SUM OF CCC COVERAGE
 @dash_app4.callback(
     Output('scatterplot_sum', 'figure'),
@@ -793,9 +802,7 @@ def update_graphs(rows, derived_virtual_selected_rows):
         for column in ['Covered Art.','T.Coverage', 'No-CCC IW'] if column in dff
     ]
 
-
 ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-
 
 
 
@@ -1078,7 +1085,7 @@ dash_app5 = Dash(__name__, server = app, url_base_pathname= webtype + '/ccc_spre
 title = "Wikipedia Languages CCC Spread (Culture Gap)"
 dash_app5.title = title+title_addenda
 dash_app5.layout = html.Div([
-
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows statistics and graphs that explain how well each Wikipedia language edition 
@@ -1094,156 +1101,173 @@ dash_app5.layout = html.Div([
         * What is the extent of this language CCC not spread to other language editions?
 
         '''),
-    html.Hr(),
-
-# ###----
-
-    html.H5("Languages CCC Spread Heatmap", style={'textAlign':'left'}),
-    dcc.Markdown('''
-        * **What is the extent of this group of Wikipedia languages editions CCC in each others content?**
-
-        The following heatmap graph shows the extent of each Wikipedia languages' CCC in other Wikipedia language editions. The extent is calculated as the number of articles from a Wikipedia language CCC (column) which are available in a Wikipedia language edition (row) divided by the total number of articles in the Wikipedia language edition (row). For an easy identification of values, cells are coloured being purple low extent and yellow high extent.
-
-        In the following menu you can choose a group of Wikipedia language editions: Top 10, 20, 30 and 40 Wikipedias according to the number of articles they have, and specific continents and subcontinents. You can manually add a language edition to the list and see its CCC extent in the other Wikipedia language editions.
-
-        '''.replace('  ', '')),
     html.Br(),
 
-    html.Div(
-    html.P('Select a group of Wikipedias'),
-    style={'display': 'inline-block','width': '200px'}),
 
-    html.Br(),
+    dcc.Tabs([
 
-    html.Div(
-    dcc.Dropdown(
-        id='grouplangdropdown_spread',
-        options=[{'label': k, 'value': k} for k in lang_groups],
-        value='Top 10',
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+        dcc.Tab(label='Group of Wikipedia Lang. CCC Spread (Heatmap)', children=[
 
+            html.H5("Languages CCC Spread Heatmap", style={'textAlign':'left'}),
+            dcc.Markdown('''
+                * **What is the extent of this group of Wikipedia languages editions CCC in each others content?**
 
-    html.Br(),
+                The following heatmap graph shows the extent of each Wikipedia languages' CCC in other Wikipedia language editions. The extent is calculated as the number of articles from a Wikipedia language CCC (column) which are available in a Wikipedia language edition (row) divided by the total number of articles in the Wikipedia language edition (row). For an easy identification of values, cells are coloured being purple low extent and yellow high extent.
 
-    dcc.Dropdown(id='sourcelangdropdown_spreadheatmap',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        multi=True),
+                In the following menu you can choose a group of Wikipedia language editions: Top 10, 20, 30 and 40 Wikipedias according to the number of articles they have, and specific continents and subcontinents. You can manually add a language edition to the list and see its CCC extent in the other Wikipedia language editions.
 
-    html.Br(),
-    html.Div(
-    html.P('Show values in the cell'),
-    style={'display': 'inline-block','width': '200px'}),
-    html.Br(),
-    
-    html.Div(
-    dcc.RadioItems(id='radio_articlespercentage_spread',
-        options=[{'label':'Articles','value':'Articles'},{'label':'Percentage','value':'Percentage'}],
-        value='Percentage',
-        labelStyle={'display': 'inline-block'},
-        style={'width': '190px'}
-     ), style={'display': 'inline-block','width': '200px'}),
+                '''.replace('  ', '')),
+            html.Br(),
+
+            html.Div(
+            html.P('Select a group of Wikipedias'),
+            style={'display': 'inline-block','width': '200px'}),
+
+            html.Br(),
+
+            html.Div(
+            dcc.Dropdown(
+                id='grouplangdropdown_spread',
+                options=[{'label': k, 'value': k} for k in lang_groups],
+                value='Top 10',
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
 
-    dcc.Graph(id = 'heatmap_spread'),
-    html.Hr(),
+            html.Br(),
 
-# ###----
+            dcc.Dropdown(id='sourcelangdropdown_spreadheatmap',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                multi=True),
 
-    html.H5('Language CCC Spread in Other Wikipedia Language Editions Barchart'),
-    dcc.Markdown('''* **What is the extent of this language CCC in other Wikipedia language editions?**
-
-        The following barchart graph shows for a selected Language CCC the Wikipedia language editions that cover more articles and their total number of Wikipedia articles they contain. The color relates to the total number of Wikipedia articles.
-     '''.replace('  ', '')),
-
-
-    html.Div(html.P('Select a Language CCC'), style={'display': 'inline-block','width': '200px'}),
-
-    dcc.Dropdown(
-        id='sourcelangdropdown_spread',
-        options = [{'label': k, 'value': k} for k in language_names_list],
-        value = 'English (en)',
-        style={'width': '190px'}
-     ),
-
-    dcc.Graph(id = 'barchart_spread'),
-    html.Hr(),
-
-# ###----
-
-    html.H5("Language CCC Articles Spread Treemap", style={'textAlign':'left'}),
-    dcc.Markdown('''* **What is the extent of the this language CCC articles in the sum of all languages CCC?**
-        * **What is the extent of the the sum of this language CCC articles in all languages in the sum of all Wikipedia languages articles?**
-
-        The following treemap graphs show (left) the extent of all languages CCC in the sum of all languages CCC articles and (right) the sum of the extent of all languages CCC in all Wikipedia language editions articles. The two graphs show the extent both in number of articles and percentage. To calculate the percentage of extent in the left graph we divide the number of articles of a language CCC in by the sum of all languages CCC articles in their corresponding Wikipedia language editions. To calculate the percentage of extent in the right graph, for a language CCC we count the total number of articles that exist across all the language editions and divide it by the sum of all Wikipedia language editions' articles.
-        '''.replace('  ', '')),
-    html.Br(),
-    html.Div(id='none',children=[],style={'display': 'none'}),
-    dcc.Graph(id = 'treemap_langccc_spreadtreemap'),
-    html.Hr(),
-
-# ###----
-
-    html.H5('Languages CCC Without Interwiki Links Scatterplot'),
-
-    dcc.Markdown('''* **What is the extent of this language CCC not spread to other language editions?**
-
-        The following scatterplot graph shows for all Wikipedia language editions on the Y-axis (log-scale) the number of articles in their CCC and on the X-axis the percentage of articles without any interwiki links. Wikipedia language editions are colored according to their world region (continent).
-     '''.replace('  ', '')),
-
-#    html.Div(id='none2',children=[],style={'display': 'none'}),
-    dcc.Graph(id = 'scatterplot_nointerwiki'),
-    html.Hr(),
+            html.Br(),
+            html.Div(
+            html.P('Show values in the cell'),
+            style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
+            
+            html.Div(
+            dcc.RadioItems(id='radio_articlespercentage_spread',
+                options=[{'label':'Articles','value':'Articles'},{'label':'Percentage','value':'Percentage'}],
+                value='Percentage',
+                labelStyle={'display': 'inline-block'},
+                style={'width': '190px'}
+             ), style={'display': 'inline-block','width': '200px'}),
 
 
-###----
+            dcc.Graph(id = 'heatmap_spread'),
+        ]),
 
-    html.H5("Summary Table", style={'textAlign':'left'}),
-    dcc.Markdown('''
-        The following table shows which language CCC is more popular among all Wikipedia 
-        language editions by counting in each language edition the number of CCC articles spread across the other languages. 
 
-        Languages are sorted in alphabetic order by their Wikicode, and the columns present the following 
-        statistics: (**CCC art.**) the number of CCC articles and the percentage it occupies in the language 
-        computed in relation to their total number of articles, the percentage of articles in a language CCC with no interwiki links (**CCC% Without Interwiki Links**), the **first five other languages** covering more 
-         articles from the language CCC and the percentage they occupy in relation to their total number of articles, the relative spread (**R. Spread**) of a language CCC across 
-        all the other languages computed as the average of the percentage they occupy in each other language 
-        edition, the total spread (**T. Spread**) of a CCC across all the other languages computed as the 
-        percentage in relation to all languages articles (not counting the own), and finally, the total number 
-        of language CCC articles (**Spread Art.**) that exists across all the other language editions.'''.replace('  ', '')),
-#    containerProps={'textAlign':'center'}),
+        dcc.Tab(label='One Language CCC Spread Across Languages (Barchart)', children=[
 
-    dash_table.DataTable(
-        id='datatable-cccspread',
-        columns=[
-            {'name': i, 'id': i, 'deletable': True} for i in df_spread.columns
-            # omit the id column
-            if i != 'id'
-        ],
-        data=df_spread.to_dict('records'),
-        editable=True,
-        filter_action="native",
-        sort_action="native",
-        sort_mode="multi",
-        column_selectable="single",
-        row_selectable="multi",
-        row_deletable=True,
-        selected_columns=[],
-        selected_rows=[],
-        page_action="native",
-        page_current= 0,
-        page_size= 10,
-        style_data={
-            'whiteSpace': 'normal',
-            'height': 'auto'
-        },
+            html.H5('Language CCC Spread in Other Wikipedia Language Editions Barchart'),
+            dcc.Markdown('''* **What is the extent of this language CCC in other Wikipedia language editions?**
 
-    ),
-    html.Br(),
-    html.Br(),
-    html.Div(id='datatable-cccspread-container')
+                The following barchart graph shows for a selected Language CCC the Wikipedia language editions that cover more articles and their total number of Wikipedia articles they contain. The color relates to the total number of Wikipedia articles.
+             '''.replace('  ', '')),
+
+
+            html.Div(html.P('Select a Language CCC'), style={'display': 'inline-block','width': '200px'}),
+
+            dcc.Dropdown(
+                id='sourcelangdropdown_spread',
+                options = [{'label': k, 'value': k} for k in language_names_list],
+                value = 'English (en)',
+                style={'width': '190px'}
+             ),
+
+            dcc.Graph(id = 'barchart_spread'),
+#            html.Hr(),
+
+        # ###----
+        ]),
+
+
+        dcc.Tab(label='Language CCC Spread Treemap in All Content (Treemap)', children=[
+
+            html.H5("Language CCC Articles Spread Treemap", style={'textAlign':'left'}),
+            dcc.Markdown('''* **What is the extent of the this language CCC articles in the sum of all languages CCC?**
+                * **What is the extent of the the sum of this language CCC articles in all languages in the sum of all Wikipedia languages articles?**
+
+                The following treemap graphs show (left) the extent of all languages CCC in the sum of all languages CCC articles and (right) the sum of the extent of all languages CCC in all Wikipedia language editions articles. The two graphs show the extent both in number of articles and percentage. To calculate the percentage of extent in the left graph we divide the number of articles of a language CCC in by the sum of all languages CCC articles in their corresponding Wikipedia language editions. To calculate the percentage of extent in the right graph, for a language CCC we count the total number of articles that exist across all the language editions and divide it by the sum of all Wikipedia language editions' articles.
+                '''.replace('  ', '')),
+            html.Br(),
+            html.Div(id='none',children=[],style={'display': 'none'}),
+            dcc.Graph(id = 'treemap_langccc_spreadtreemap'),
+#            html.Hr(),
+
+        ]),
+
+        # ###----
+
+        dcc.Tab(label='Languages CCC Without Interwiki (Scatterplot)', children=[
+
+            html.H5('Languages CCC Without Interwiki Links Scatterplot'),
+
+            dcc.Markdown('''* **What is the extent of this language CCC not spread to other language editions?**
+
+                The following scatterplot graph shows for all Wikipedia language editions on the Y-axis (log-scale) the number of articles in their CCC and on the X-axis the percentage of articles without any interwiki links. Wikipedia language editions are colored according to their world region (continent).
+             '''.replace('  ', '')),
+
+            dcc.Graph(id = 'scatterplot_nointerwiki'),
+
+        ]),
+
+        dcc.Tab(label='All Languages CCC Spread Across Languages (Table)', children=[
+            html.H5("Summary Table", style={'textAlign':'left'}),
+            dcc.Markdown('''
+                The following table shows which language CCC is more popular among all Wikipedia 
+                language editions by counting in each language edition the number of CCC articles spread across the other languages. 
+
+                Languages are sorted in alphabetic order by their Wikicode, and the columns present the following 
+                statistics: (**CCC art.**) the number of CCC articles and the percentage it occupies in the language 
+                computed in relation to their total number of articles, the percentage of articles in a language CCC with no interwiki links (**CCC% Without Interwiki Links**), the **first five other languages** covering more 
+                 articles from the language CCC and the percentage they occupy in relation to their total number of articles, the relative spread (**R. Spread**) of a language CCC across 
+                all the other languages computed as the average of the percentage they occupy in each other language 
+                edition, the total spread (**T. Spread**) of a CCC across all the other languages computed as the 
+                percentage in relation to all languages articles (not counting the own), and finally, the total number 
+                of language CCC articles (**Spread Art.**) that exists across all the other language editions.'''.replace('  ', '')),
+
+            dash_table.DataTable(
+                id='datatable-cccspread',
+                columns=[
+                    {'name': i, 'id': i, 'deletable': True} for i in df_spread.columns
+                    # omit the id column
+                    if i != 'id'
+                ],
+                data=df_spread.to_dict('records'),
+                editable=True,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                column_selectable="single",
+                row_selectable="multi",
+                row_deletable=True,
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current= 0,
+                page_size= 10,
+                style_data={
+                    'whiteSpace': 'normal',
+                    'height': 'auto'
+                },
+            ),
+            html.Br(),
+            html.Br(),
+            html.Div(id='datatable-cccspread-container')
+
+            ]),
+
+
+        # ###----
+
+    ]),
+
+    footbar,
+
 ], className="container")
-
 
 
 
@@ -1282,7 +1306,6 @@ def update_heatmap_spread(source_lang,articlespercentage):
         title_text='Languages CCC extent (%) in Wikipedia Language editions',
         title_x=0.5,
     )
-
 
     for i in range(len(fig.layout.annotations)):
         fig.layout.annotations[i].font.size = 10
@@ -1397,10 +1420,6 @@ def update_scatterplot(none):
 
     )
 
-
-
-
-
     return fig
 
 
@@ -1432,7 +1451,6 @@ def update_graphs(rows, derived_virtual_selected_rows):
     # the component.
     if derived_virtual_selected_rows is None:
         derived_virtual_selected_rows = []
-
 
     dff = df if rows is None else pd.DataFrame(rows)
 

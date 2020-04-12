@@ -6,8 +6,6 @@ from dash_apps import *
 conn = sqlite3.connect(databases_path + 'stats.db'); cursor = conn.cursor()
 
 #### CCC DATA
-
-
 df = pd.DataFrame(wikilanguagecodes)
 df = df.set_index(0)
 reformatted_wp_numberarticles = {}
@@ -189,105 +187,110 @@ df_territories['Territory name wiki'] = df_territories['Territory name']+' ('+df
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app2 = Dash(__name__, server = app, url_base_pathname= webtype + '/cultural_context_content/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 
-
 title = 'Cultural Context Content (CCC) in Wikipedia Language Editions'
-
-
 dash_app2.title = title+title_addenda
 dash_app2.layout = html.Div([
+    navbar,
     html.H3(title, style={'textAlign':'center'}),
 
     dcc.Markdown('''
         This page shows stastistics and graphs that explain the extent and composition of [Cultural Context Content (CCC)](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content) in Wikipedia language editions. Cultural Context Content is the group of articles in a Wikipedia language edition that relates to the editors' geographical and cultural context (places, traditions, language, politics, agriculture, biographies, events, etcetera.). 
+
         The statistics and graphs answer the following questions:
         * What is the extent of CCC in each Wikipedia language edition?
-        * What is the extent of the language related territories in each language CCC?
+        * What is the extent of the Wikipedia language related territories in their corresponding CCC?
         '''),
 
-    html.Hr(),
-
-
-    html.H5('Lists of Wikipedias by Cultural Context Content', style={'textAlign':'left'}),
-    dcc.Markdown(
-    '''
-    * **What is the extent of CCC in each Wikipedia language edition?**        
-
-    The followign table contains a list of all the current Wikipedia language editions ordered by their number of articles from their Cultural Context Content dataset that relate to territories where the language is spoken as official or as indigeneous.
-
-    For each language edition, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC (GL %)** as the percentage of articles from CCC that are geolocated, **CCC (KW Title %)** as the percentage of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles, **CCC (People %)** as the percentage of articles from CCC that are about people, **CCC People (Women %)** as the percentage of articles in CCC people articles that are about women. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
-#    containerProps={'textAlign':'center'}),
-
-    dash_table.DataTable(
-        id='datatable-cccextent',
-        columns=[
-            {'name': i, 'id': i, 'deletable': True} for i in df.columns
-            # omit the id column
-            if i != 'id'
-        ],
-        data=df.to_dict('records'),
-        editable=True,
-        filter_action="native",
-        sort_action="native",
-        sort_mode="multi",
-        column_selectable="single",
-        row_selectable="multi",
-        row_deletable=True,
-        selected_columns=[],
-        selected_rows=[],
-        page_action="native",
-        page_current= 0,
-        page_size= 10,
-        style_data={
-            'whiteSpace': 'normal',
-            'height': 'auto'
-        },
-
-    ),
     html.Br(),
-    html.Br(),
-    html.Div(id='datatable-cccextent-container'),
-    html.Hr(),
 
-    html.H5('List of Language Territories by Cultural Context Content', style={'textAlign':'left'}),
-    dcc.Markdown(
-    '''
-    * **What is the extent of the language related territories in each language CCC?**
+    dcc.Tabs([
+        dcc.Tab(label='Extent of Cultural Context Content in Wikipedias (Table)', children=[
 
-    The following table contains each Wikipedia language edition Cultural Context Content divided in its territories according to the language territories mapping. Articles are assigned to territories according to the different strategies that have been used to include them into CCC. The label Not Assigned is for those articles which were not possible to classify.
+            html.H5('Extent of Cultural Context Content in each Wikipedia Table', style={'textAlign':'left'}),
+            dcc.Markdown(
+            '''
+            * **What is the extent of CCC in each Wikipedia language edition?**        
 
+            The following table contains a list of all the current Wikipedia language editions ordered by their number of articles from their Cultural Context Content dataset that relate to territories where the language is spoken as official or as indigeneous.
 
-    For each territory, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC GL (%)** as the number of articles from CCC that are geolocated, **KW Title (%)** as the number of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
- 
-    dash_table.DataTable(
-        id='datatable-cccextentqitem',
-        columns=[
-            {'name': i, 'id': i, 'deletable': True} for i in columns_territory
-            # omit the id column
-            if i != 'id'
-        ],
-        data=df_territories.to_dict('records'),
-        editable=True,
-        filter_action="native",
-        sort_action="native",
-        sort_mode="multi",
-        column_selectable="single",
-        row_selectable="multi",
-        row_deletable=True,
-        selected_columns=[],
-        selected_rows=[],
-        page_action="native",
-        page_current= 0,
-        page_size= 10,
-        style_data={
-            'whiteSpace': 'normal',
-            'height': 'auto'
-        },
+            For each language edition, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC (GL %)** as the percentage of articles from CCC that are geolocated, **CCC (KW Title %)** as the percentage of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles, **CCC (People %)** as the percentage of articles from CCC that are about people, **CCC People (Women %)** as the percentage of articles in CCC people articles that are about women. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
 
-    ),
-    html.Br(),
-    html.Br(),
-    html.Div(id='datatable-cccextentqitem-container')
+            dash_table.DataTable(
+                id='datatable-cccextent',
+                columns=[
+                    {'name': i, 'id': i, 'deletable': True} for i in df.columns
+                    # omit the id column
+                    if i != 'id'
+                ],
+                data=df.to_dict('records'),
+                editable=True,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                column_selectable="single",
+                row_selectable="multi",
+                row_deletable=True,
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current= 0,
+                page_size= 10,
+                style_data={
+                    'whiteSpace': 'normal',
+                    'height': 'auto'
+                },
 
+            ),
+            html.Br(),
+            html.Br(),
+            html.Div(id='datatable-cccextent-container'),
+        ]),
+
+        dcc.Tab(label="Extent of Territories in Languages' CCC (Table)", children=[
+
+            html.H5('Extent of Language Territories in their Language CCC Table', style={'textAlign':'left'}),
+            dcc.Markdown(
+            '''
+            * **What is the extent of the language related territories in their corresponding CCC?**
+
+            The following table contains each Wikipedia language edition Cultural Context Content and the extent of the territories where the language is spoken according to the language-territories mapping. Articles from each language CCC are assigned to territories according to the different strategies that have been used to include them into CCC. The label Not Assigned is for those articles which were not possible to classify.
+
+            For each territory, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC GL (%)** as the number of articles from CCC that are geolocated, **KW Title (%)** as the number of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
+         
+            dash_table.DataTable(
+                id='datatable-cccextentqitem',
+                columns=[
+                    {'name': i, 'id': i, 'deletable': True} for i in columns_territory
+                    # omit the id column
+                    if i != 'id'
+                ],
+                data=df_territories.to_dict('records'),
+                editable=True,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                column_selectable="single",
+                row_selectable="multi",
+                row_deletable=True,
+                selected_columns=[],
+                selected_rows=[],
+                page_action="native",
+                page_current= 0,
+                page_size= 10,
+                style_data={
+                    'whiteSpace': 'normal',
+                    'height': 'auto'
+                },
+
+            ),
+            html.Br(),
+            html.Br(),
+            html.Div(id='datatable-cccextentqitem-container')
+        ]),
+
+    ]),
+
+    footbar,
 
 ], className="container")
 

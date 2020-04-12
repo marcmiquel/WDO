@@ -6,7 +6,7 @@ from dash_apps import *
 
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-dash_app33 = Dash(server = app, url_base_pathname = webtype + '/common_ccc_articles/')
+dash_app33 = Dash(server = app, url_base_pathname = webtype + '/common_ccc_articles/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 
 # dash_app33.config.supress_callback_exceptions = True
 dash_app33.config['suppress_callback_exceptions']=True
@@ -254,9 +254,6 @@ def dash_app33_build_layout(params):
                 i+=1
 
 
-
-
-
         if order_by == "none" or order_by == "None":
 #            pass
             query += 'ORDER BY r.num_pageviews DESC '
@@ -265,9 +262,6 @@ def dash_app33_build_layout(params):
             query += 'ORDER BY r.'+order_by+' DESC '
 
 #        query += 'LIMIT 10000'
-
-
-
         # if limit == "none":
         #     query += 'LIMIT 50;'
         # else:
@@ -312,9 +306,8 @@ def dash_app33_build_layout(params):
 
         # PAGE CASE 2: PARAMETERS WERE INTRODUCED AND THERE ARE NO RESULTS
         if len(df) == 0:
-            
-
             layout = html.Div([
+                navbar,
                 html.H3('Common CCC Articles', style={'textAlign':'center'}),
 
                 html.H5('Unfortunately there are not articles proposed for the local content for this language. Try another combination of parameters.'),
@@ -325,7 +318,6 @@ def dash_app33_build_layout(params):
                     full_text.replace('  ', '')),
 
             # here there is the interface
-
             # here there is the interface
 
 
@@ -337,7 +329,7 @@ def dash_app33_build_layout(params):
                 style={'display': 'inline-block','width': '400px'}),
 
                 html.Div(
-                html.P('Target Languages'),
+                html.P('Target languages'),
                 style={'display': 'inline-block','width': '400px'}),
 
 
@@ -457,6 +449,8 @@ def dash_app33_build_layout(params):
 
                 html.A(html.Button('Query Results!'),
                     href=''),
+                footbar,
+
             ], className="container")
 
 
@@ -606,6 +600,7 @@ def dash_app33_build_layout(params):
         '''
 
         layout = html.Div([
+            navbar,
             html.H3(title, style={'textAlign':'center'}),
             dcc.Markdown(
                 results_text.replace('  ', '')),
@@ -752,7 +747,9 @@ def dash_app33_build_layout(params):
             # Body
             [html.Tr([
                 html.Td(df_row[x]) for x in range(len(columns))
-            ]) for df_row in df_list])
+            ]) for df_row in df_list]),
+
+            footbar,
 
         ], className="container")
 
@@ -760,11 +757,10 @@ def dash_app33_build_layout(params):
     else:
 
         # PAGE 1: FIRST PAGE. NOTHING STARTED YET.
-
-
         layout = html.Div([
+            navbar,
             html.H3('Common CCC Articles', style={'textAlign':'center'}),
-            dcc.Markdown(full_text.replace('  ', '')),#,containerProps={'textAlign':'center'}),
+            dcc.Markdown(full_text.replace('  ', '')),
 
             # here there is the interface
             html.H5('Select the Languages'),
@@ -893,6 +889,22 @@ def dash_app33_build_layout(params):
 
             html.A(html.Button('Query Results!'),
                 href=''),
+
+            html.Br(),
+            html.Br(),
+            html.Hr(),
+            html.A(html.Div([
+                    html.P('Wikipedia Cultural Diverstiy Observatory (Meta-Wiki Project Page)', style = {'width': '400px'}),
+                    ]),
+                    href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', 
+                    target="_blank", 
+                    style={'color': '#000000', 'textAlign': 'left', 'text-decoration':'none','display': 'inline-block', 'width':'50%'}),
+
+            html.Div(id = 'current_data', children=[        
+                'Updated with dataset from: ',
+                html.B(current_dataset_period_stats)],
+                style = {'textAlign':'right','display': 'inline-block', 'width':'50%'}),
+
         ], className="container")
 
     return layout
