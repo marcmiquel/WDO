@@ -41,16 +41,23 @@ features_dict_inv = {'num_editors':'Editors', 'num_edits':'Edits', 'num_images':
 
 ccc_all_dict = {'CCC':'ccc','Geolocated':'ccc_geolocated','Men':'men','Women':'women'}
 
-query_type_dict = {'Wikidata SPARQL Query':'sparql', 'Wikipedia Content Search':'search', 'List of articles':'alist', "List of categories' articles":'clist'}
+query_type_dict = {'Wikipedia Article Search':'search', 'Wikidata SPARQL Query':'sparql', 'List of articles':'alist', "List of categories' articles":'clist'}
 
 
-text_default = '''In this page you can search for articles in a Wikipedia language edition and see their availability in other language editions. First, you need to select the *Source Language* where you want to retrieve the content from. Then you can choose the *Type of query*: List of articles, List of categories articles, Wikidata SPARQL Query, and Wikipedia Content Search. 
-    
-    The *List of articles* query simply allows you to introduce a list of articles (their titles or their URLs separated by a comma, semicolon or a line break) in the textbox in order to see the main stats and their availability in the *Target Languages*. The *List of categories' articles* allows you to introduce a list of categories and retrieve the articles contained in them. The *Wikidata SPARQL Query* allows you to introduce a query in the textbox and retrieve the articles related to the Qitems that appear in them (if the query does not contain any Qitem and only labels, there will be no results). The *Wikipedia Content Search* allows you to introduce a query the same search engine of Wikipedia (CirrusSearch), for example, if you introduce the Source Language English and the query "Japanese Cuisine", you will obtain the articles from English Wikipedia along with their main stats on relevance features (number of editors, edits, discussion edits, pageviews, etc.). When using the search option, you can introduce the *Language of the query* and specify which language you are using to query (e.g. Japanese cuisine could be "cuisine du Japon" in French), no matter it is the same target language or not.
+text_default = '''In this page you can search for articles in a Wikipedia language edition and see their availability in other language editions. First, you need to select the *Source Language* where you want to retrieve the content from. Then you can choose the *Type of query*: Wikipedia Article Search, Wikidata SPARQL Query, List of articles, and List of categories articles. 
 
-    All the queries return a table with the articles in the source language and its main stats and its availability in the *Target Languages*. The table will also show the title of the article in the first target language as long as it is available. For this it is recommended that the first target language is English and the second target language is the one you are currently working on (probably your home-wiki). You can also filter the results with the parameter *Topic* which allows you to show only articles from certain topics (CCC, Geolocated, Men and Women). The parameter *Order by feature* sorts the results by a specific feature, and the parameter *Limit the results* limits the search results to a specific number.
+    * The *Wikipedia Article Search* allows you to introduce a query to the same search engine of Wikipedia has (CirrusSearch) and retrieve some articles. For example, if you introduce the Source Language English and the query "Japanese Cuisine", you will obtain the articles from English Wikipedia along with their main stats on relevance features (number of editors, edits, discussion edits, pageviews, etc.). When using the search option, you can introduce the *Language of the query* and specify which language you are using to query (e.g. You can query "cuisine du Japon" if you are using French).
+    * The *Wikidata SPARQL Query* allows you to introduce a query in the textbox and retrieve the articles related to the Qitems that appear in them (if the query does not contain any Qitem and only labels, there will be no results).
+    * The *List of articles* query simply allows you to introduce a list of articles (their titles or their URLs separated by a comma, semicolon or a line break) in the textbox in order to see the main stats and their availability in the *Target Languages*. 
+    * The *List of categories' articles* allows you to introduce a list of categories and retrieve the articles contained in them. 
+
+    All the queries return a table with the articles in the source language and its main stats and its availability in the *Target Languages*. The table will also show the title of the article in the first target language as long as it is available. For this it is recommended to select the first target language as English, since the article may already exists, and the second target language as the one you are currently working on (probably your home-wiki). You can also filter the results with the parameter *Topic* which allows you to show only articles from certain topics (CCC, Geolocated, Men and Women). The parameter *Order by feature* sorts the results by a specific feature, and the parameter *Limit the results* limits the search results to a specific number.
 
     This tool is in Alpha version - you may find bugs. In this case, please e-mail us at tools.wcdo@tools.wmflabs.org.
+'''
+
+text_results = '''
+The following table shows the results from the query. The columns present the title in the source language, a set of features (number of inlinks, number of inlinks from the source language CCC, number of Outlinks, number of Bytes, number of References, number of Images, number of Editors, number of Edits, number of Discussions, number of Pageviews, numer of Interwiki links and number of Wikidata properties) from the article in the source language, the title in the first target language (in case it exists), and the languages in which it is available from the target languages.
 '''
 
 
@@ -63,7 +70,7 @@ def dash_app23_build_layout(params):
 
         if 'source_lang' in params:
             source_lang = params['source_lang']
-            source_language = languages.loc[source_lang]['languagename']
+            if source_lang != 'none': source_language = languages.loc[source_lang]['languagename']
         else:
             source_lang = 'none'
 
@@ -106,7 +113,7 @@ def dash_app23_build_layout(params):
         columns_dict = {'position':'Nº','apage_title':source_language+' Title', 'bpage_title': target_language+' Title','target_langs':'Target Langs.'}
         columns_dict.update(features_dict_inv)
 
-        conn = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cur = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cur = conn.cursor()
 
 
 
@@ -210,19 +217,20 @@ def dash_app23_build_layout(params):
 
         df['position'] = ''
 
+        print (len(df))
+
         # PAGE CASE 2: PARAMETERS WERE INTRODUCED AND THERE ARE NO RESULTS
         if len(df) == 0:
             layout = html.Div([
                 navbar,
                 html.H3('Search CCC Articles', style={'textAlign':'center'}),
 
-                html.H5('Unfortunately there are not articles proposed for the local content for this language. Try another combination of parameters.'),
-
                 html.Br(),
 
                 dcc.Markdown(
                     text_default.replace('  ', '')),
 
+                html.Br(),
                 html.H5('Select the source'),
 
                 html.Div(
@@ -252,7 +260,7 @@ def dash_app23_build_layout(params):
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='query_type',
-                    options=[{'label': i, 'value': query_type_dict[i]} for i in sorted(query_type_dict)],
+                    options=[{'label': i, 'value': query_type_dict[i]} for i in query_type_dict],
                     value='none',
                     placeholder="Select the type of query",           
                     style={'width': '190px'}
@@ -339,6 +347,18 @@ def dash_app23_build_layout(params):
 
                 html.A(html.Button('Query Results!'),
                     href=''),
+
+
+                html.Br(),
+                html.Br(),
+
+                html.Hr(),
+                html.H5('Results'),
+                dcc.Markdown(text_results.replace('  ', '')),
+                html.Br(),
+
+                html.H5('There are not results. Unfortunately there are not articles proposed for the local content for this language.'),
+
 
                 footbar,
 
@@ -504,17 +524,15 @@ def dash_app23_build_layout(params):
         dash_app23.title = title+title_addenda
 
         # LAYOUT
-        text_results = '''
-        The following table shows the results from the query. The columns present the title in the source language, a set of features (number of inlinks, number of inlinks from the source language CCC, number of Outlinks, number of Bytes, number of References, number of Images, number of Editors, number of Edits, number of Discussions, number of Pageviews, numer of Interwiki links and number of Wikidata properties) from the article in the source language, the title in the first target language (in case it exists), and the languages in which it is available from the target languages.
-        '''    
-
-
         layout = html.Div([
             navbar,
             html.H3(title, style={'textAlign':'center'}),
-            dcc.Markdown(
-                text_results.replace('  ', '')),
 #            html.Br(),
+
+            dcc.Markdown(
+                text_default.replace('  ', '')),
+
+            html.Br(),
 
             # HERE GOES THE INTERFACE
             html.H5('Select the source'),
@@ -546,7 +564,7 @@ def dash_app23_build_layout(params):
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='query_type',
-                options=[{'label': i, 'value': query_type_dict[i]} for i in sorted(query_type_dict)],
+                options=[{'label': i, 'value': query_type_dict[i]} for i in query_type_dict],
                 value='none',
                 placeholder="Select the type of query",           
                 style={'width': '190px'}
@@ -634,10 +652,14 @@ def dash_app23_build_layout(params):
             html.A(html.Button('Query Results!'),
                 href=''),
 
+            # here there is the table            
             html.Br(),
             html.Br(),
 
+            html.Hr(),
             html.H5('Results'),
+            dcc.Markdown(text_results.replace('  ', '')),
+            html.Br(),
 
             html.Table(
             # Header
@@ -661,10 +683,11 @@ def dash_app23_build_layout(params):
         layout = html.Div([
             navbar,
             html.H3('Search CCC Articles', style={'textAlign':'center'}),
+            html.Br(),
             dcc.Markdown(text_default.replace('  ', '')),
 
-#            html.Br(),
             # HERE GOES THE INTERFACE
+            html.Br(),
 
             html.H5('Select the source'),
 
@@ -695,7 +718,7 @@ def dash_app23_build_layout(params):
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='query_type',
-                options=[{'label': i, 'value': query_type_dict[i]} for i in sorted(query_type_dict)],
+                options=[{'label': i, 'value': query_type_dict[i]} for i in query_type_dict],
                 value='none',
                 placeholder="Select the type of query",           
                 style={'width': '190px'}
@@ -1149,9 +1172,7 @@ def lang1_page_titles_ids_to_lang2_page_titles_qitems_features(source_lang, targ
     df = df.fillna(0)
 
 #    print (len(df))
-
     return df
-
 
 
 # callback update URL

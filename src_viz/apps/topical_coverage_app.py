@@ -5,7 +5,7 @@ from dash_apps import *
 
 #### TOPIC ANALYSIS DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
-conn = sqlite3.connect(databases_path + 'stats.db'); cursor = conn.cursor() 
+conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
 
 query = 'SELECT set1, set1descriptor, set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content = "articles" AND set2="topic" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1;'
 df_topics = pd.read_sql_query(query, conn)
@@ -61,9 +61,9 @@ dash_app14.layout = html.Div([
     navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
-        This page shows stastistics and graphs that explain the distribution of topics in Wikipedia language editions and in their CCC based on some Wikidata properties. The topics are Earth, Monuments and Buildings, GLAM (Galleries, Libraries, Archives and Museums), Folk, Food, Books, Paintings, Clothing and Fashion, Sports and Teams, Music Creations and Organizations, and People. 
+        This page shows stastistics and graphs that explain the distribution of topics in Wikipedia language editions and in their CCC based on Wikidata properties. 
 
-        Articles have been identified with containing the Wikidata property "instance of" assigned the following Qitems: Earth (Q271669 landform, Q205895 landmass), GLAM (Q33506 museum, Q166118 archive, library Q7075), Monuments and Buildings (Q811979 architectural structure), Folk (Q132241  festival, Q288514  fair, Q4384751 folk culture, Q36192 folklore), Food (Q2095 food), Books (Q7725634 literary work, Q571 book, Q234460 text, Q47461344 written work), Paintings (Q3305213 painting), Clothing and Fashion (Q11460  clothing, Q3661311 clothing_and_fashion house, Q1618899clothing_and_fashion label), Sports and Teams (Q327245 team, Q41323 type of sport, Q349 sport), Music Creations and Organizations (Q188451 musical genre, Q2088357 musical organization, Q482994 musical term), People (articles have been identified using the P21 gender property).
+        The topics are Earth, Monuments and Buildings, GLAM (Galleries, Libraries, Archives and Museums), Folk, Food, Books, Paintings, Clothing and Fashion, Sports and Teams, Music Creations and Organizations, and People. Articles have been identified with containing the Wikidata property "instance of" assigned the following Qitems: Earth (Q271669 landform, Q205895 landmass), GLAM (Q33506 museum, Q166118 archive, library Q7075), Monuments and Buildings (Q811979 architectural structure), Folk (Q132241  festival, Q288514  fair, Q4384751 folk culture, Q36192 folklore), Food (Q2095 food), Books (Q7725634 literary work, Q571 book, Q234460 text, Q47461344 written work), Paintings (Q3305213 painting), Clothing and Fashion (Q11460  clothing, Q3661311 clothing_and_fashion house, Q1618899clothing_and_fashion label), Sports and Teams (Q327245 team, Q41323 type of sport, Q349 sport), Music Creations and Organizations (Q188451 musical genre, Q2088357 musical organization, Q482994 musical term), People (articles have been identified using the P21 gender property).
 
         If you want to find relevant articles in each of these topics for any language and focused on their cultural context, you can access the [Top CCC articles lists](https://wcdo.wmflabs.org/top_ccc_articles/).
 
@@ -78,12 +78,13 @@ dash_app14.layout = html.Div([
 
     dcc.Tabs([
         dcc.Tab(label='Extent of Topics in a Wikipedia and its CCC (Treemap)', children=[
-
+            html.Br(),
             html.H5('Extent of Topics in a Wikipedia Language Edition and in Languages CCC Treemap'),
             dcc.Markdown('''* **What is the topical distribution in a Wikipedia Language Edition and in its CCC?**
 
                 The following treemap graphs show for a selected Wikipedia language edition the extent of articles that have been identified as related to one of the aforementioned topics both in all the Wikipedia language edition articles and in the selection of Cultural Context Content (CCC) articles. The size of the tiles is according to the extent in number of articles. In many language editions, a considerable extent of content is not "instance of" these topics.
-                This graph allows comparing how different is the cultural context content from all the language edition content.
+
+                This graph allows comparing how different the cultural context content is from the sum of all the language edition content.
              '''.replace('  ', '')),
             # last month, accumulated.
 
@@ -106,6 +107,7 @@ dash_app14.layout = html.Div([
     ###
         ]),
         dcc.Tab(label='Extent of Topics in Several Language Editions and their CCC (Stacked Bars)', children=[
+            html.Br(),
 
             html.H5('Extent of Topics in Wikipedia Language Editions and in Languages CCC Stacked Bars'),
             dcc.Markdown('''* **What is the topical distribution in various Wikipedia Language Edition and their CCC?**
@@ -214,6 +216,7 @@ def update_treemap_ccc(language):
     fig.update_layout(
         autosize=True,
 #        width=700,
+        titlefont_size=12,
         height=900,
 #        paper_bgcolor="White",
         title_text="Topics Extent in Wikipedia (Left) and in CCC (Right)",
@@ -430,6 +433,7 @@ def update_barchart_wp(langs):
 #        width=700,
 #        height=900,
 #        paper_bgcolor="White",
+        titlefont_size=12,
         title_text="Topics Extent in Selected Wikipedia Language Editions (Top) and in Languages CCC (Bottom)",
         title_x=0.5,
     )

@@ -10,7 +10,6 @@ dash_app25.config['suppress_callback_exceptions']=True
 
 dash_app25.title = 'Incomplete CCC Articles '+title_addenda
 dash_app25.layout = html.Div([
-    navbar,
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content') 
 ])
@@ -40,8 +39,6 @@ text_base = '''In this page you can check whether the articles of a language edi
 
 
 def dash_app25_build_layout(params):
-
-
 
     if len(params)!=0 and (params['source_lang_list'].lower()!='none' or params['source_lang_text'].lower()!='none'):
 
@@ -99,10 +96,10 @@ def dash_app25_build_layout(params):
         else:
             show_only_lang='none'
 
-        conn = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cur = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cur = conn.cursor()
 
         if lists == 1:
-            conn2 = sqlite3.connect(databases_path + 'top_ccc_articles.db'); cur2 = conn2.cursor()
+            conn2 = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cur2 = conn2.cursor()
 
             # COLUMNS
             query = 'SELECT qitem, f.num_wdproperty, f.num_interwiki, f.page_title_original as page_title, '
@@ -370,12 +367,9 @@ def dash_app25_build_layout(params):
 
                 html.H3('Incomplete CCC articles', style={'textAlign':'center'}),
 
-                html.H5('There are not results. Unfortunately this list is empty for this language. Try another language and list.'),
-
                 html.Br(),
+                dcc.Markdown(text_base.replace('  ', '')),
 
-                dcc.Markdown(
-                    text_base.replace('  ', '')),
                 html.H5('Source of content'),
 
                 html.Div(
@@ -527,8 +521,16 @@ def dash_app25_build_layout(params):
                 html.A(html.Button('Query Results!'),
                     href=''),
 
-                footbar,
+                html.Br(),
+                html.Br(),
 
+                html.Hr(),
+                html.H5('Results'),
+                dcc.Markdown(results_text.replace('  ', '')),
+                html.Br(),
+                html.H6('There are not results. Unfortunately the list of incomplete articles is empty for this language and parameters. Try another combination of parameters and query again.'),
+
+                footbar,
 
             ], className="container")
 
@@ -557,8 +559,10 @@ def dash_app25_build_layout(params):
         layout = html.Div([
             navbar,
             html.H3(title, style={'textAlign':'center'}),
-            dcc.Markdown(
-                text_table.replace('  ', '')),
+
+
+            dcc.Markdown(text_base.replace('  ', '')),
+
 
     #        html.Br(),
 
@@ -710,8 +714,13 @@ def dash_app25_build_layout(params):
                 html.A(html.Button('Query Results!'),
                     href=''),
 
+
             html.Br(),
-            html.Br(),
+            html.Br(), 
+            html.Hr(),
+            html.H5('Results'),
+            dcc.Markdown(text_table.replace('  ', '')),
+
             html.Table(
             # Header
             [html.Tr([html.Th(col) for col in columns])] +

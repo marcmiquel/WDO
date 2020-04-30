@@ -4,8 +4,8 @@ from dash_apps import *
 
 
 # GENERAL DATA
-conn = sqlite3.connect(databases_path + 'stats.db'); cursor = conn.cursor() 
-conn2 = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cursor2 = conn2.cursor() 
+conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
+conn2 = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cursor2 = conn2.cursor() 
 
 #--------------------------------------------------------------------------------------------------
 
@@ -338,6 +338,7 @@ dash_app4.layout = html.Div([
     dcc.Tabs([
 
         dcc.Tab(label='Two Wikipedias Coverage of Lang. CCC (Treemap)', children=[
+            html.Br(),
 
             html.H5("Wikipedia Language Coverage of Other Languages CCC Treemap", style={'textAlign':'left'}),
 
@@ -354,7 +355,7 @@ dash_app4.layout = html.Div([
 
             html.Div(
             html.P('Select two Wikipedias'),
-            style={'display': 'inline-block','width': '200px'}),
+            style={'display': 'inline-block','width': '400px'}),
 
             html.Div(
             html.P('Show the selected language CCC extent in the graph'),
@@ -386,7 +387,7 @@ dash_app4.layout = html.Div([
             dcc.RadioItems(id='radio_exclude_ownccc',
                 options=[{'label':'Yes','value':'Yes'},{'label':'No','value':'No'}],
                 value='No',
-                labelStyle={'display': 'inline-block'},
+                labelStyle={'display': 'inline-block', "margin": "0px 10px 0px 0px"},
                 style={'width': '190px'}
              ), style={'display': 'inline-block','width': '200px'}),
 
@@ -397,6 +398,7 @@ dash_app4.layout = html.Div([
 
 
         dcc.Tab(label='Group of Wikipedias CCC Coverage (Heatmap)', children=[
+            html.Br(),
 
             html.H5("Languages CCC Coverage Heatmap", style={'textAlign':'left'}),
         #    html.Br(),
@@ -441,7 +443,7 @@ dash_app4.layout = html.Div([
             dcc.RadioItems(id='radio_articlespercentage_coverage',
                 options=[{'label':'Articles','value':'Articles'},{'label':'Percentage','value':'Percentage'}],
                 value='Percentage',
-                labelStyle={'display': 'inline-block'},
+                labelStyle={'display': 'inline-block', "margin": "0px 5px 0px 0px"},
                 style={'width': '190px'}
              ), style={'display': 'inline-block','width': '200px'}),
 
@@ -451,8 +453,7 @@ dash_app4.layout = html.Div([
 
         ]),
         dcc.Tab(label='Wikipedias Coverage of Lang. CCC (Scatterplot)', children=[
-
-        ###----
+            html.Br(),
 
             html.H5('Wikipedia Language Coverage of Other Language CCC Scatterplot', style={'textAlign':'left'}),
 
@@ -479,6 +480,7 @@ dash_app4.layout = html.Div([
 
 
         dcc.Tab(label='Wikipedias Coverage of Lang. CCC (Table)', children=[
+            html.Br(),
 
             html.H5("Wikipedias Coverage of Lang. CCC Summary Table", style={'textAlign':'left'}),
             dcc.Markdown('''
@@ -528,6 +530,7 @@ dash_app4.layout = html.Div([
         ]),
 
         dcc.Tab(label='Wikipedias Coverage all CCC Content (Scatterplot)', children=[
+            html.Br(),
 
             html.H5('Wikipedia Language Editions Coverage of the Sum of All Languages CCC Articles Scatterplot', style={'textAlign':'left'}),
 
@@ -616,6 +619,7 @@ def update_heatmap_coverage(source_lang,articlespercentage):
     fig.update_layout(
         autosize=True,
 #        height=800,
+        title_font_size=12,
         paper_bgcolor="White",
         title_text='Wikipedia language editions coverage (%) of other languages CCC',
         title_x=0.5,
@@ -703,6 +707,7 @@ def update_treemap_coverage(value,value2,exclude):
         autosize=True,
 #        width=700,
         height=900,
+        title_font_size=12,
 #        paper_bgcolor="White",
 #        title_text='Languages CCC Extent % (Left) and Languages CCC Extent % (Right)',
         title_x=0.5,
@@ -1150,7 +1155,7 @@ dash_app5.layout = html.Div([
             dcc.RadioItems(id='radio_articlespercentage_spread',
                 options=[{'label':'Articles','value':'Articles'},{'label':'Percentage','value':'Percentage'}],
                 value='Percentage',
-                labelStyle={'display': 'inline-block'},
+                labelStyle={'display': 'inline-block', "margin": "0px 5px 0px 0px"},
                 style={'width': '190px'}
              ), style={'display': 'inline-block','width': '200px'}),
 
@@ -1302,6 +1307,7 @@ def update_heatmap_spread(source_lang,articlespercentage):
     fig.update_layout(
         autosize=True,
 #        height=800,
+        title_font_size=12,
         paper_bgcolor="White",
         title_text='Languages CCC extent (%) in Wikipedia Language editions',
         title_x=0.5,
@@ -1391,6 +1397,7 @@ def update_treemap_coverage_allccc_allwp(none):
         autosize=True,
 #        width=700,
         height=900,
+        title_font_size=12,
 #        paper_bgcolor="White",
         title_text='Sum of All Languages CCC (Left) and Sum of All Wikipedia Languages Articles (Right)',
         title_x=0.5,

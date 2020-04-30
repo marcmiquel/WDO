@@ -18,32 +18,51 @@ def check_current_cycle():
 #    return wikilanguages_utils.get_current_cycle_year_month()
 
 def check_running_processes():
-    processes = str(subprocess.check_output("ps aux | grep py | grep root", shell=True).decode('utf-8'))
+    cmd = "ps aux | grep py | grep root"
+#     try:
+#         processes = str(subprocess.check_output(cmd, shell=True).decode('utf-8'))
+# #    processes = str(subprocess.check_output("ps aux | grep py | grep root", shell=True).decode('utf-8'))
+#     except:
+#         processes = ''
+
+    os.system(cmd+' > tmp1')
+    processes = open('tmp1', 'r').read()
+
     return processes
 
 def read_files_from_directory(path, filetype):
-    try: 
-        files = str(subprocess.check_output("ls -lt "+path+" | grep "+filetype, shell=True).decode('utf-8')).replace('marcmiquel','').replace('staff','')
-    except:
-        files = ''
+    cmd = "ls -lt "+path+" | grep "+filetype
+    # try: 
+    #     files = str(subprocess.check_output(cmd, shell=True).decode('utf-8')).replace('marcmiquel','').replace('staff','')
+    # except:
+    #     files = ''
+
+    os.system(cmd+' > tmp2')
+    files = open('tmp2', 'r').read()
+
     return files
 
 def read_from_log_file(path, filename, numlines):
 #    print ("tail -"+str(numlines)+" "+path+filename)
-    try:
-        log = str(subprocess.check_output("tail -"+str(numlines)+" "+path+filename, shell=True).decode('utf-8'))
-    except:
-        log = ''
+    cmd = "tail -"+str(numlines)+" "+path+filename
+    # try:
+    #     log = str(subprocess.check_output(cmd, shell=True).decode('utf-8'))
+    # except:
+    #     log = ''
+
+    os.system(cmd+' > tmp_'+filename)
+    log = open('tmp_'+filename, 'r').read()
+
     return log
 
 def read_from_function_account(script_name):
     query = 'SELECT function_name, year_month, finish_time, duration FROM function_account LIMIT 10;'
     if script_name == 'Wikipedia Diversity': c = sqlite3.connect(databases_path + 'wikipedia_diversity.db')
-    if script_name == 'CCC Selection': c = sqlite3.connect(databases_path + 'wikipedia_diversity.db')
+    if script_name == 'Content Selection': c = sqlite3.connect(databases_path + 'wikipedia_diversity.db')
     if script_name == 'Top CCC Selection': c = sqlite3.connect(databases_path + 'top_ccc_articles.db');
     if script_name == 'Stats Generation': c = sqlite3.connect(databases_path + 'stats.db');
     if script_name == 'Relevance Features': c = sqlite3.connect(databases_path + 'wikipedia_diversity.db')
-    if script_name == 'Missing CCC Selection': c = sqlite3.connect(databases_path + 'stats.db');
+    if script_name == 'Missing CCC Selection': c = sqlite3.connect(databases_path + 'missing_ccc.db');
 
     try:
         df = pd.read_sql_query(query, c)
@@ -53,8 +72,8 @@ def read_from_function_account(script_name):
     return fa
 
 ### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-scripts_names = ['CCC Selection','History Features','Wikipedia Diversity','Top CCC Selection','Stats Generation','Relevance Features','Missing CCC Selection']
-script_names_to_files = {'Wikipedia Diversity':'wikipedia_diversity','CCC Selection':'ccc_selection','Top CCC Selection':'top_ccc_selection','Stats Generation':'stats_generation','Relevance Features':'relevance_features','Missing CCC Selection':'missing_ccc_selection','History Features':'history_features'}
+scripts_names = ['Content Selection','History Features','Wikipedia Diversity','Top CCC Selection','Stats Generation','Relevance Features','Missing CCC Selection']
+script_names_to_files = {'Wikipedia Diversity':'wikipedia_diversity','Content Selection':'content_selection','Top CCC Selection':'top_ccc_selection','Stats Generation':'stats_generation','Relevance Features':'relevance_features','Missing CCC Selection':'missing_content_selection','History Features':'history_features'}
 script_names_to_files_inv = {v: k for k, v in script_names_to_files.items()}
 
 
@@ -67,15 +86,14 @@ dash_app_status.config['suppress_callback_exceptions']=True
 title = "Data Status and Active Processes"
 dash_app_status.title = title+title_addenda
 
-
 dash_app_status.layout = html.Div([
     navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Location(id='url', refresh=False),
 
     html.Div(id = 'current_cycle', children='Current cycle:', style = {'width':'30%','display': 'inline-block'}),
-    html.Br(),
 
+    html.Br(),
     html.H6('Database files:', style = {'width':'37%','display': 'inline-block'}),
     html.H6('Src_data logs:', style = {'width':'33%','display': 'inline-block'}),
     html.H6('Active processes:', style = {'width':'27%','display': 'inline-block'}),
@@ -210,6 +228,21 @@ dash_app_status.layout = html.Div([
     dcc.Textarea(
         id='script5', style = {'width':'50%', 'height':'300px'}),
 
+    html.Br(),
+
+    html.H6('Processes conditions:'),
+    dcc.Markdown('''
+        Each of the following scripts need other scripts to be finished to start:
+
+        * wikipedia_diversity: none
+        * content_selection: wikipedia_diversity
+        * stats_generation: content_selection
+        * relevance_features: content_selection
+        * history_features: content_selection
+        * top_ccc_selection: content_selection, relevance_features
+        * missing_content_selection: content_selection
+     '''.replace('  ', '')),
+
     footbar,
 
 ], className="container")
@@ -248,7 +281,7 @@ def script0(script_name, nlines, n_clicks, url_path):
     if nlines == '': nlines = n_lines_default
     db_lines = read_from_function_account(script_name)
     log_data = read_from_log_file(data_scripts_path,script_names_to_files[script_name]+'.log', nlines)
-    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'+url_path
+    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'
 
 
 @dash_app_status.callback(
@@ -259,7 +292,7 @@ def script0(script_name, nlines, n_clicks, url_path):
     if nlines == '': nlines = n_lines_default
     db_lines = read_from_function_account(script_name)
     log_data = read_from_log_file(data_scripts_path,script_names_to_files[script_name]+'.log', nlines)
-    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'+url_path
+    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'
 
 @dash_app_status.callback(
     dash.dependencies.Output('script2', 'value'),
@@ -269,7 +302,7 @@ def script0(script_name, nlines, n_clicks, url_path):
     if nlines == '': nlines = n_lines_default
     db_lines = read_from_function_account(script_name)
     log_data = read_from_log_file(data_scripts_path,script_names_to_files[script_name]+'.log', nlines)
-    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'+url_path
+    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'
 
 @dash_app_status.callback(
     dash.dependencies.Output('script3', 'value'),
@@ -279,7 +312,7 @@ def script0(script_name, nlines, n_clicks, url_path):
     if nlines == '': nlines = n_lines_default
     db_lines = read_from_function_account(script_name)
     log_data = read_from_log_file(data_scripts_path,script_names_to_files[script_name]+'.log', nlines)
-    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'+url_path
+    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'
 
 @dash_app_status.callback(
     dash.dependencies.Output('script4', 'value'),
@@ -289,7 +322,7 @@ def script0(script_name, nlines, n_clicks, url_path):
     if nlines == '': nlines = n_lines_default
     db_lines = read_from_function_account(script_name)
     log_data = read_from_log_file(data_scripts_path,script_names_to_files[script_name]+'.log', nlines)
-    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'+url_path
+    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'
 
 @dash_app_status.callback(
     dash.dependencies.Output('script5', 'value'),
@@ -299,5 +332,5 @@ def script0(script_name, nlines, n_clicks, url_path):
     if nlines == '': nlines = n_lines_default
     db_lines = read_from_function_account(script_name)
     log_data = read_from_log_file(data_scripts_path,script_names_to_files[script_name]+'.log', nlines)
-    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'+url_path
+    return '* Script Log:\n'+str(log_data)+'\n* Database Function_Account:\n'+str(db_lines)+'\n'
 

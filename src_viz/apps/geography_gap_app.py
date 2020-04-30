@@ -9,8 +9,8 @@ language_names_inv = {v: k for k, v in language_names.items()}
 
 ISO2_3 = {'AF':'AFG','AL':'ALB','DZ':'DZA','AS':'ASM','AD':'AND','AO':'AGO','AI':'AIA','AQ':'ATA','AG':'ATG','AR':'ARG','AM':'ARM','AW':'ABW','AU':'AUS','AT':'AUT','AZ':'AZE','BS':'BHS','BH':'BHR','BD':'BGD','BB':'BRB','BY':'BLR','BE':'BEL','BZ':'BLZ','BJ':'BEN','BM':'BMU','BT':'BTN','BO':'BOL','BQ':'BES','BA':'BIH','BW':'BWA','BV':'BVT','BR':'BRA','IO':'IOT','BN':'BRN','BG':'BGR','BF':'BFA','BI':'BDI','CV':'CPV','KH':'KHM','CM':'CMR','CA':'CAN','KY':'CYM','CF':'CAF','TD':'TCD','CL':'CHL','CN':'CHN','CX':'CXR','CC':'CCK','CO':'COL','KM':'COM','CD':'COD','CG':'COG','CK':'COK','CR':'CRI','HR':'HRV','CU':'CUB','CW':'CUW','CY':'CYP','CZ':'CZE','CI':'CIV','DK':'DNK','DJ':'DJI','DM':'DMA','DO':'DOM','EC':'ECU','EG':'EGY','SV':'SLV','GQ':'GNQ','ER':'ERI','EE':'EST','SZ':'SWZ','ET':'ETH','FK':'FLK','FO':'FRO','FJ':'FJI','FI':'FIN','FR':'FRA','GF':'GUF','PF':'PYF','TF':'ATF','GA':'GAB','GM':'GMB','GE':'GEO','DE':'DEU','GH':'GHA','GI':'GIB','GR':'GRC','GL':'GRL','GD':'GRD','GP':'GLP','GU':'GUM','GT':'GTM','GG':'GGY','GN':'GIN','GW':'GNB','GY':'GUY','HT':'HTI','HM':'HMD','VA':'VAT','HN':'HND','HK':'HKG','HU':'HUN','IS':'ISL','IN':'IND','ID':'IDN','IR':'IRN','IQ':'IRQ','IE':'IRL','IM':'IMN','IL':'ISR','IT':'ITA','JM':'JAM','JP':'JPN','JE':'JEY','JO':'JOR','KZ':'KAZ','KE':'KEN','KI':'KIR','KP':'PRK','KR':'KOR','KW':'KWT','KG':'KGZ','LA':'LAO','LV':'LVA','LB':'LBN','LS':'LSO','LR':'LBR','LY':'LBY','LI':'LIE','LT':'LTU','LU':'LUX','MO':'MAC','MG':'MDG','MW':'MWI','MY':'MYS','MV':'MDV','ML':'MLI','MT':'MLT','MH':'MHL','MQ':'MTQ','MR':'MRT','MU':'MUS','YT':'MYT','MX':'MEX','FM':'FSM','MD':'MDA','MC':'MCO','MN':'MNG','ME':'MNE','MS':'MSR','MA':'MAR','MZ':'MOZ','MM':'MMR','NA':'NAM','NR':'NRU','NP':'NPL','NL':'NLD','NC':'NCL','NZ':'NZL','NI':'NIC','NE':'NER','NG':'NGA','NU':'NIU','NF':'NFK','MP':'MNP','NO':'NOR','OM':'OMN','PK':'PAK','PW':'PLW','PS':'PSE','PA':'PAN','PG':'PNG','PY':'PRY','PE':'PER','PH':'PHL','PN':'PCN','PL':'POL','PT':'PRT','PR':'PRI','QA':'QAT','MK':'MKD','RO':'ROU','RU':'RUS','RW':'RWA','RE':'REU','BL':'BLM','SH':'SHN','KN':'KNA','LC':'LCA','MF':'MAF','PM':'SPM','VC':'VCT','WS':'WSM','SM':'SMR','ST':'STP','SA':'SAU','SN':'SEN','RS':'SRB','SC':'SYC','SL':'SLE','SG':'SGP','SX':'SXM','SK':'SVK','SI':'SVN','SB':'SLB','SO':'SOM','ZA':'ZAF','GS':'SGS','SS':'SSD','ES':'ESP','LK':'LKA','SD':'SDN','SR':'SUR','SJ':'SJM','SE':'SWE','CH':'CHE','SY':'SYR','TW':'TWN','TJ':'TJK','TZ':'TZA','TH':'THA','TL':'TLS','TG':'TGO','TK':'TKL','TO':'TON','TT':'TTO','TN':'TUN','TR':'TUR','TM':'TKM','TC':'TCA','TV':'TUV','UG':'UGA','UA':'UKR','AE':'ARE','GB':'GBR','UM':'UMI','US':'USA','UY':'URY','UZ':'UZB','VU':'VUT','VE':'VEN','VN':'VNM','VG':'VGB','VI':'VIR','WF':'WLF','EH':'ESH','YE':'YEM','ZM':'ZMB','ZW':'ZWE','AX':'ALA'}
 
-conn = sqlite3.connect(databases_path + 'stats.db'); cursor = conn.cursor() 
-conn2 = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cursor2 = conn2.cursor() 
+conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
+conn2 = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cursor2 = conn2.cursor() 
 
 
 #### COVERAGE DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
@@ -96,9 +96,6 @@ df_countries_allwparticles['Country'] = df_countries_allwparticles['ISO 3166'].m
 df_countries_allwparticles['Subregion'] = df_countries_allwparticles['ISO 3166'].map(subregions)
 df_countries_allwparticles['Region'] = df_countries_allwparticles['ISO 3166'].map(regions)
 df_subregions_allwparticles['Region'] = df_subregions_allwparticles['Subregion'].map(subregions_regions)
-
-
-
 
 # print (df_countries_allwparticles.head(10))
 # print (df_subregions_allwparticles.head(10))
@@ -237,12 +234,12 @@ dash_app3.layout = html.Div([
     dcc.Markdown('''
         This page shows stastistics and graphs that explain how well each Wikipedia language edition covers 
         the Geolocated articles.
-        They illustrate the content geography gap, that is the imbalances in representing the different world regions, subregions and countries. 
+        They illustrate the content geography gap, that is the imbalances in representing the different geographical entities (country, subregion and world region). 
 
         The graphs answer the following questions:
         * What is the extent of geolocated articles in each Wikipedia language edition?
         * What is the extent of geolocated articles without interwiki links in each country, subregion and world region?
-        * What is the extent of geolocated entities (countries, subregions and regions) in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?
+        * What is the extent of geographical entities in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?
         * How well do Wikipedia language editions cover the available geolocated articles in each country?
         * What Wikipedia language editions accumulated more geolocated articles in each country, subregion, and region?
         '''),
@@ -250,8 +247,10 @@ dash_app3.layout = html.Div([
 
     dcc.Tabs([
         dcc.Tab(label='Extent of Geolocated Art. in Wikipedias/CCC (Scatterplot)', children=[
-
+	
 		###
+		    html.Br(),
+
 		    html.H5('Geolocated Wikidata Qitems Without Interwiki Links Scatterplot'),
 
 		    dcc.Markdown('''* **What is the extent of geolocated articles without Interwiki links in each country, subregion and world region?**'''),
@@ -271,6 +270,7 @@ dash_app3.layout = html.Div([
 
 		###
         dcc.Tab(label='Geolocated Articles Without Interwiki (Scatterplot)', children=[
+		    html.Br(),
 
 		    html.H5('Extent of Geolocated Articles in Wikipedia Language Editions and Language CCC Scatterplot'),
 
@@ -290,11 +290,12 @@ dash_app3.layout = html.Div([
 
 		####
         dcc.Tab(label='Extent of Geolocated Entities in Geolocated Articles (Treemap)', children=[
+		    html.Br(),
 
 		    html.H5("Extent of Countries, Subregions, Regions in Wikipedia Content Treemap", style={'textAlign':'left'}),
 
 		    dcc.Markdown('''
-		        * **What is the extent of geolocated entities (countries, subregions and regions) in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?**
+		        * **What is the extent of geographical entities in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?**
 		        '''.replace('  ', '')),
 		    dcc.Markdown('''The following treemap graphs show for two selected projects both the extent and the coverage of different geographical entities (countries, subregions and world regions). The size of the tiles and the colorscale (orange-dark blue) is according to the extent the geographical entities take in the selected project, which can be the sum of all geolocated articles in all Wikipedia language editions, all the Wikidata geolocated qitems or specific Wikipedia language editions. When you hover on a tile you can read the same information regarding the coverage and extent plus the number of articles.
 		        '''.replace('  ', '')),
@@ -343,6 +344,7 @@ dash_app3.layout = html.Div([
 
 		####
         dcc.Tab(label='Coverage of Countries Geolocated Articles (Map)', children=[
+		    html.Br(),
 
 		    html.H5("Coverage of Countries Geolocated Articles by Wikipedia Language Editions Map", style={'textAlign':'left'}),
 
@@ -375,12 +377,19 @@ dash_app3.layout = html.Div([
 
 		####
         dcc.Tab(label='Wikipedias by Coverage of Geographical Entities (Barchart)', children=[
+		    html.Br(),
+	
 		    html.H5('Wikipedia Language Editions Coverage of Countries, Subregions and Regions Barchart'),
-		    dcc.Markdown('''* **What Wikipedia language editions cover best each country, subregion, and region geolocated articles?**
+			dcc.Markdown('''* **What Wikipedia language editions cover best each country, subregion, and region geolocated articles?**'''),
+			dcc.Markdown('''The following barchart graph shows for a selected geographical entity (country, world subregion or region) the degree of coverage of its geolocated articles/Qitems in them by all Wikipedia language editions or a selected group. By hovering in each Wikipedia you can see the coverage percentage as well, the extent it takes in percentage of their total number of articles, the total number of articles geolocated in that geographical entity as well as other geographical information.'''.replace('  ', '')),
 
-		        The following barchart graph shows for a selected geographical entity (country, world subregion or region) the degree of coverage of its geolocated articles/Qitems in them by all Wikipedia language editions or a selected group. By hovering in each Wikipedia you can see the coverage percentage as well, the extent it takes in percentage of their total number of articles, the total number of articles geolocated in that geographical entity as well as other geographical information.'''.replace('  ', '')),
 
-		    html.Div(html.P('Select a Geographical Entity'), style={'display': 'inline-block','width': '200px'}),
+		    html.Div(html.P('Select a Geographical Entity'), 
+		    	style={'display': 'inline-block','width': '400px'}),
+
+		    html.Div(
+		    html.P('Select all languages or a specific group'),
+		    style={'width': '400px'}),
 
 		    html.Br(),
 		    html.Div(
@@ -399,17 +408,12 @@ dash_app3.layout = html.Div([
 		        style={'width': '190px'}
 		     ), style={'display': 'inline-block','width': '200px'}),
 
-
-		    html.Div(
-		    html.P('Select all languages or a specific group'),
-		    style={'width': '400px'}),
-
 		    html.Div(
 		    dcc.RadioItems(
 		        id='specific_group_radio',
 		        options=[{'label':'All languages','value':'all'},{'label':'Select a group','value':'group'}],
 		        value='all',
-		        labelStyle={'display': 'inline-block'},
+		        labelStyle={'display': 'inline-block', "margin": "0px 5px 0px 5px"},
 		        style={'width': '390px'}
 		     ), style={'display': 'inline-block','width': '400px'}),
 
@@ -419,10 +423,6 @@ dash_app3.layout = html.Div([
 		    html.Div(
 		    html.P('Select a group of Wikipedias'),
 		    style={'display': 'inline-block','width': '200px'}),
-
-		    html.Div(
-		    html.P('You can add or remove languages'),
-		    style={'display': 'inline-block','width': '500px'}),
 
 		    html.Br(),
 
@@ -462,7 +462,6 @@ dash_app3.layout = html.Div([
 
 #### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
-
 # SCATTERPLOT NO INTERWIKI
 @dash_app3.callback(
     Output('scatterplot_nointerwiki', 'figure'), [Input('geolocateddropdown_coverage', 'value')])
@@ -486,6 +485,7 @@ def update_scatterplot(value):
         autosize=True,
 #        width=700,
         height=600,
+        title_font_size=12,
 #        paper_bgcolor="White",
 #        title_text='Languages CCC Extent % (Left) and Languages CCC Extent % (Right)',
         title_x=0.5,
@@ -513,6 +513,7 @@ def update_scatterplot(value):
         autosize=True,
     #        width=700,
         height=600,
+        title_font_size=12,
     #        paper_bgcolor="White",
     #        title_text='Languages CCC Extent % (Left) and Languages CCC Extent % (Right)',
         title_x=0.5,
@@ -729,19 +730,6 @@ def update_treemap_coverage(project,project2,entitytype):
         else:
             df2 = df_lang_region_final.loc[df_lang_region_final['Wiki'] == project2]
 
-#       fig = px.bar(df.head(20), x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','ISO 3166','Country','Subregion','Region'], color='Articles', height=400)
-
-#       fig = px.bar(df.head(20), x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','Subregion','Region'], color='Articles', height=400)
-
-#       fig = px.bar(df.head(20), x='Language', y='Coverage (%)', hover_data=['Language','Articles','Total Articles','Coverage (%)','Extent (%)','Region'], color='Articles', height=400)
-    
-    # print (df.head(10))
-    # print (df.columns.tolist())
-    # print (df2.head(10))
-    # print (df2.columns.tolist())
-#   input('')
-
-
     parents = list()
     for x in df.index: parents.append('')
 
@@ -784,11 +772,10 @@ def update_treemap_coverage(project,project2,entitytype):
     #        width=700,
         height=900,
         paper_bgcolor="White",
+        title_font_size=12,
         title_text=projectname+' (Left) and '+projectname2+' (Right)',
         title_x=0.5,
     )
-
-
 
     return fig
 
@@ -813,6 +800,7 @@ def update_map_coverage(project):
     #        width=700,
         height=600,
         paper_bgcolor="White",
+        title_font_size=12,
         title_text=project+' Wikipedia Coverage of Total Geolocated Articles by Country',
         title_x=0.5,
     )
@@ -837,6 +825,7 @@ def update_map_extent(project):
         autosize=True,
     #        width=700,
         height=600,
+        title_font_size=12,
         paper_bgcolor="White",
         title_text='Country Extent in '+project+' Wikipedia Geolocated Articles',
         title_x=0.5,

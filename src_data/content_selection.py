@@ -25,7 +25,6 @@ import csv
 import codecs
 import unidecode
 # requests and others
-import requests
 import urllib
 import webbrowser
 import reverse_geocoder as rg
@@ -47,15 +46,10 @@ import gc
 # MAIN
 def main():
 
-    create_update_qitems_ccc_table()
+    languagecode = 'ca'
+    (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
 
-
-
-
-    return
-#    switch_ccc_binary_to_ccc_last_cycle_binary()
-    execution_block_wikidata_topics()
-    execution_block_ccc_features()
+    execution_block_potential_ccc_features()
     execution_block_classifying_ccc()
     execution_block_extract_datasets()
 
@@ -63,65 +57,11 @@ def main():
 ################################################################
 
 
-def execution_block_wikidata_topics():
-    wikilanguages_utils.send_email_toolaccount('WCDO - CCC SELECTION', '# INTRODUCE THE WIKIDATA TOPICS FEATURES')
+def execution_block_potential_ccc_features():
 
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        for languagecode in wikilanguagecodes: 
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-            for topic in ['gender', 'folk', 'monuments_and_buildings', 'earth', 'music_creations_and_organizations', 'sport_and_teams', 'food', 'paintings', 'glam', 'books', 'clothing_and_fashion','industry']:
-                executor.submit(label_diversity_topics_wd, topic, languagecode,page_titles_page_ids, page_titles_qitems)
+    wikilanguages_utils.send_email_toolaccount('WCDO - CONTENT SELECTION', '# INTRODUCE THE ARTICLE CCC FEATURES')
 
-
-def execution_block_ccc_features():
-
-    wikilanguages_utils.send_email_toolaccount('WCDO - CCC SELECTION', '# INTRODUCE THE ARTICLE CCC FEATURES')
-
-    # Obtaining CCC features for all WP  
-    # DATA STRATEGIES:
-    # 1. RETRIEVE AND SET ARTICLES AS CCC:
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        for languagecode in wikilanguagecodes:
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-            executor.submit(label_ccc_articles_keywords,languagecode,page_titles_qitems,page_titles_page_ids)
-            del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-            executor.submit(label_ccc_articles_geolocation_wd, languagecode,page_titles_page_ids)
-            del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-    with ProcessPoolExecutor(max_workers=3) as executor:
-        for languagecode in wikilanguagecodes: 
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-            executor.submit(label_ccc_articles_country_wd, languagecode,page_titles_page_ids)
-            executor.submit(label_ccc_articles_language_strong_wd,languagecode,page_titles_page_ids)
-            del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-    for languagecode in biggest:
-        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        label_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qitems,page_titles_page_ids)
-        del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-    with ProcessPoolExecutor(max_workers=5) as executor:
-        for languagecode in smallest:
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-            executor.submit(label_ccc_articles_geolocated_reverse_geocoding, languagecode,page_titles_qitems,page_titles_page_ids)
-            del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-    with ProcessPoolExecutor(max_workers=3) as executor:
-        for languagecode in wikilanguagecodes: 
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-            executor.submit(label_ccc_articles_part_of_properties_wd,languagecode,page_titles_page_ids)
-            executor.submit(label_ccc_articles_created_by_properties_wd,languagecode,page_titles_page_ids)
-            del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-    for languagecode in wikilanguagecodes: 
-        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        label_ccc_articles_location_wd(languagecode,page_titles_page_ids)
-        del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-
-    # 2. RETRIEVE (POTENTIAL) CCC ARTICLES THAT RELATE TO CCC:
+    # RETRIEVE (POTENTIAL) CCC ARTICLES THAT RELATE TO CCC:
     for languagecode in wikilanguagecodes:
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
         label_potential_ccc_articles_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems)
@@ -142,19 +82,7 @@ def execution_block_ccc_features():
             executor.submit(label_potential_ccc_articles_affiliation_properties_wd,languagecode,page_titles_qitems)
             del (page_titles_qitems, page_titles_page_ids); gc.collect()
 
-
-    wikilanguages_utils.send_email_toolaccount('WCDO - CCC SELECTION', '# RETRIEVE FEATURES FROM OTHER LANGUAGES CCC FOR ALL WP')
-    # Obtain non CCC features for all WP
-    # DATA STRATEGIES:
-    # 3. RETRIEVE ARTICLES THAT RELATE TO OTHER CCC:
-    for languagecode in wikilanguagecodes: 
-        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        label_other_ccc_country_properties(languagecode,page_titles_page_ids,page_titles_qitems)
-        label_other_ccc_wikidata_properties(languagecode,page_titles_page_ids,page_titles_qitems)
-        label_other_ccc_location_properties(languagecode,page_titles_page_ids,page_titles_qitems)
-        del (page_titles_qitems, page_titles_page_ids); gc.collect()
-
-    # 4. RETRIEVE (POTENTIAL) CCC ARTICLES THAT RELATE TO CCC AND ARTICLES THAT RELATE TO OTHER CCC:
+    # RETRIEVE (POTENTIAL) CCC ARTICLES THAT RELATE TO CCC AND ARTICLES THAT RELATE TO OTHER CCC:
     for languagecode in wikilanguagecodes: 
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
         label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,page_titles_qitems)
@@ -164,7 +92,7 @@ def execution_block_ccc_features():
 
 def execution_block_classifying_ccc():
 
-    wikilanguages_utils.send_email_toolaccount('WCDO - CCC SELECTION', '# CLASSIFYING AND CREATING THE DEFINITIVE CCC')
+    wikilanguages_utils.send_email_toolaccount('WCDO - CONTENT SELECTION', '# CLASSIFYING AND CREATING THE DEFINITIVE CCC')
     # Classifying and creating the definitive CCC
     for languagecode in wikilanguagecodes: groundtruth_reaffirmation(languagecode)
 
@@ -187,731 +115,35 @@ def execution_block_classifying_ccc():
 
 #    retrieving_ccc_surelist_list()
 
-    create_update_qitems_ccc_table()
+    create_update_qitems_single_ccc_table()
+
 
 
 
 def execution_block_extract_datasets():
 
     # EXTRACT CCC DATASETS INTO CSV AND CLEAN OLD DATABASES
-    wikilanguages_utils.send_email_toolaccount('WCDO - CCC SELECTION', '# EXTRACT CCC DATASETS INTO CSV AND CLEAN OLD DATABASES')
+    wikilanguages_utils.send_email_toolaccount('WCDO - CONTENT SELECTION', '# EXTRACT CCC DATASETS INTO CSV AND CLEAN OLD DATABASES')
     extract_ccc_tables_to_files()
     extract_ccc_google_schema_json()
     backup_db()
+
+#    wikilanguages_utils.copy_db_for_production(wikipedia_diversity_db, 'content_selection.py', databases_path) # not the right place. it should be in the history or article features.
 
 
 
 ################################################################
 
-# CCC STRATEGIES
-#################
+# DIVERSITY FEATURES
+####################
+# Obtain the Articles contained in the Wikipedia categories with a keyword in title (recursively). This is considered potential CCC.
+def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems):
 
-# Sets the ccc_binary to zero for another cycle.
-def switch_ccc_binary_to_ccc_last_cycle_binary():
-    function_name = 'switch_ccc_binary_to_ccc_last_cycle_binary'
-    if create_function_account_db(function_name, 'check','')==1: return
     functionstartTime = time.time()
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-
-    for languagecode in wikilanguagecodes:
-        query = 'UPDATE '+languagecode+'wiki SET ccc_binary_last_cycle = ccc_binary;'
-        cursor.execute(query)
-
-        query = 'UPDATE '+languagecode+'wiki SET ccc_binary = NULL;'
-        cursor.execute(query)
-    conn.commit()
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-# Obtain the Articles with coordinates gelocated in the territories associated to that language by reverse geocoding. Label them as CCC.
-def label_ccc_articles_geolocated_reverse_geocoding(languagecode,page_titles_qitems, page_titles_page_ids):
-    functionstartTime = time.time()
-    function_name = 'label_ccc_articles_geolocated_reverse_geocoding '+languagecode
+    function_name = 'label_potential_ccc_articles_category_crawling '+languagecode
     if create_function_account_db(function_name, 'check','')==1: return
 
     page_ids_page_titles = {v: k for k, v in page_titles_page_ids.items()}
-
-    # CREATING THE DICTIONARIES TO OBTAIN TERRITORY QITEMS
-    # with a territory name in Native you get a Qitem
-    # with a territory name in English you get a Qitem
-    # with a ISO3166 code you get a Qitem
-    # with a subdivision name you get a ISO 31662 (without the ISO3166 part)
-    ISO31662codes={}
-    territorynamesNative={}
-    territorynames={}
-    ISO3166codes={} 
-    try: qitems = territories.loc[languagecode]['QitemTerritory'].tolist()
-    except: qitems = [territories.loc[languagecode]['QitemTerritory']]
-#    print (qitems)
-    for qitem in qitems:
-#        print (qitem)
-        territorynameNative = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['territorynameNative']
-#        print (territorynameNative)
-        territoryname = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['territoryname']
-#        print (territoryname)
-        territorynamesNative[territorynameNative]=qitem
-        territorynames[territoryname]=qitem
-
-        if territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['regional']=='no':
-            ISO3166 = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO3166']
-            ISO3166codes[ISO3166]=qitem
-        if territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['regional']=='yes':
-            ISO31662 = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO31662']
-            if ISO31662 != '':
-                ISO31662codes[ISO31662]=qitem
-
-    # with a subdivision name you get a ISO 31662 (without the ISO3166 part), that allows you to get a Qitem
-    subdivisions = wikilanguages_utils.load_world_subdivisions_multilingual()
-    geolocated_pageids = {}
-    geolocated_pageids_coords = {}
-    mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
-
-
-    # It gets all the Articles with coordinates from a language. It stores them into an adhoc database.
-#    query = 'SELECT page_title, gt_page_id, gt_lat, gt_lon FROM '+languagecode+'wiki_p.page INNER JOIN '+languagecode+'wiki_p.geo_tags ON page_id=gt_page_id WHERE page_namespace=0 AND page_is_redirect=0 GROUP BY page_title' # if there is an Article with more than one geolocation it takes the first!
-
-    # now it takes the last.
-    query = 'SELECT gt_page_id, gt_lat, gt_lon FROM geo_tags;'
-
-#    query = 'SELECT page_title, gt_page_id, gt_lat, gt_lon FROM page INNER JOIN geo_tags ON page_id=gt_page_id WHERE page_namespace=0 AND page_is_redirect=0 GROUP by gt_page_id;'
-
-    mysql_cur_read.execute(query)
-    result = mysql_cur_read.fetchall()
-    for row in result:
-        page_id = row[0]
-        lat = row[1]
-        lon = row[2]
-        try:
-            page_title=page_ids_page_titles[page_id]
-            geolocated_pageids[page_id] = [page_title, page_titles_qitems[page_title], lat, lon]
-            geolocated_pageids_coords[page_id]=(lat,lon)
-        except:
-            pass
-
-    # It calculates the reverse geocoding data and updates the database.
-    if len(geolocated_pageids)==0: 
-#        print ('No Article geolocation in this language.'); 
-        duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)
-        return;
-
-
-    results = rg.search(list(geolocated_pageids_coords.values()))
-    print (str(len(results))+' coordinates reversed.')
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-
-    ccc_geolocated_items = []
-    page_ids = list(geolocated_pageids_coords.keys())
-    i = 0
-    for result in results:
-        page_id=page_ids[i]
-        i+=1
-
-        data = geolocated_pageids[page_id]
-        page_title = data[0]
-        qitem_specific = data[1]
-        lat = str(data[2])
-        lon = str(data[3])
-
-        del geolocated_pageids[page_id]
-
-        admin1=result['admin1']
-        iso3166=result['cc']
-        iso31662=''; 
-        try: iso31662=iso3166+'-'+subdivisions[admin1].split('-')[1]
-        except: pass
-        # print (page_title,page_id,admin1,iso3166,iso31662)
-
-        qitem=''
-        # try both country code and admin1, at the same time, just in case there is desambiguation ('Punjab' in India (IN) and in Pakistan (PK) for 'pa' language)
-        try: 
-            qitem=territories[(territories.ISO3166 == iso3166) & (territories.territoryname == admin1)].loc[languagecode]['QitemTerritory']
-            # print (qitem); print ('name and country')
-        except: 
-            pass
-        try:
-            # try to get qitem from country code.        
-            if qitem == '':
-                try:
-                    qitem = ISO3166codes[iso3166]
-                    # print (qitem); print ('country')
-                    # try to get qitem from admin1: in territorynames, territorynamesNative and subdivisions.
-                except:
-                    try:
-                        qitem=territorynames[admin1]
-                        # print (qitem); print ('territorynames in English.')
-                    except: 
-                        try:
-                            qitem=territorynamesNative[admin1]
-                            # print (qitem); print ('territorynames in Native.')
-                        except: 
-                            try:
-                                qitem=ISO31662codes[iso31662]
-                                # print (qitem); print ('ISO31662codes.')
-                            except:
-                                pass
-        except:
-            pass
-
-        coordinates = lat+','+lon
-        if qitem!='': 
-            ccc_geolocated = 1
-            ccc_binary = 1
-            # print ((page_id,page_title,coordinates,qitem)); print ('*** IN! ENTRA!\n')
-        else: 
-            ccc_geolocated = -1
-            ccc_binary = 0
-#            print ('### NO!\n')
-
-
-        ccc_geolocated_items.append((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
-
-        if i%20000 == 0: 
-
-            query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,ccc_geolocated,iso3166,iso31662,geocoordinates,main_territory) = (?,?,?,?,?,?) WHERE page_id = ? AND page_title = ? AND qitem = ?;'
-            cursor.executemany(query,ccc_geolocated_items)
-            conn.commit()
-
-            print (i)
-            ccc_geolocated_items = []
-
-    # It inserts the right Articles into the corresponding CCC database.
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,ccc_geolocated,iso3166,iso31662,geocoordinates,main_territory) = (?,?,?,?,?,?) WHERE page_id = ? AND page_title = ? AND qitem = ?;'
-    cursor.executemany(query,ccc_geolocated_items)
-    conn.commit()
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-# Obtain the Articles whose WikiData items have properties linked to territories and language names (groundtruth). Label them as CCC.
-# There is margin for optimization: Articles could be updated more regularly to the database, so in every loop it is not necessary to go through all the items.
-def label_ccc_articles_geolocation_wd(languagecode,page_titles_page_ids):
-
-    functionstartTime = time.time()
-    function_name = 'label_ccc_articles_geolocation_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-
-    # CREATING THE DICTIONARIES TO OBTAIN TERRITORY QITEMS
-    # with a territory name in Native you get a Qitem
-    # with a territory name in English you get a Qitem
-    # with a ISO3166 code you get a Qitem
-    # with a subdivision name you get a ISO 31662 (without the ISO3166 part)
-    ISO31662codes={}
-    territorynamesNative={}
-    territorynames={}
-    ISO3166codes={}
-    allISO3166=[]
-
-    try: qitems = territories.loc[languagecode]['QitemTerritory'].tolist()
-    except: qitems = [territories.loc[languagecode]['QitemTerritory']]
-    for qitem in qitems:
-        territorynameNative = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['territorynameNative']
-        territoryname = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['territoryname']
-
-#        print (territorynameNative,territoryname)
-        territorynamesNative[territorynameNative]=qitem
-        territorynames[territoryname]=qitem
-
-        if territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['regional']=='no':
-            ISO3166 = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO3166']
-            ISO3166codes[ISO3166]=qitem
-        if territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['regional']=='yes':
-            ISO31662 = territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO31662']
-            if ISO31662 != '':
-                ISO31662codes[ISO31662]=qitem
-
-        allISO3166.append(territories.loc[territories['QitemTerritory'] == qitem].loc[languagecode]['ISO3166'])
-    allISO3166 = list(set(allISO3166))
-#    print (allISO3166)
-
-    # with a subdivision name you get a ISO 31662 (without the ISO3166 part), that allows you to get a Qitem
-    subdivisions = wikilanguages_utils.load_world_subdivisions_multilingual()
-
-    # Get the Articles, evaluate them and insert the good ones.   
-    ccc_geolocated_items = []
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-#    query = 'SELECT geolocated_property.qitem, geolocated_property.coordinates, geolocated_property.admin1, geolocated_property.iso3166, sitelinks.page_title FROM geolocated_property INNER JOIN sitelinks ON sitelinks.qitem=geolocated_property.qitem WHERE sitelinks.langcode="'+languagecode+'wiki";'
-
-    page_asstring = ','.join( ['?'] * len(allISO3166) )
-    query = 'SELECT geolocated_property.qitem, geolocated_property.coordinates, geolocated_property.admin1, geolocated_property.iso3166, sitelinks.page_title FROM geolocated_property INNER JOIN sitelinks ON sitelinks.qitem=geolocated_property.qitem WHERE sitelinks.langcode="'+languagecode+'wiki" AND geolocated_property.iso3166 IN (%s) ORDER BY geolocated_property.iso3166, geolocated_property.admin1;' % page_asstring
-
-    x = 0
-    for row in cursor.execute(query,allISO3166):
-#        print (row)
-#        input('')
-        qitem_specific=str(row[0])
-        coordinates=str(row[1])
-        admin1=str(row[2]) # it's the Territory Name according to: https://github.com/thampiman/reverse-geocoder
-        iso3166=str(row[3])
-        iso31662=''; 
-        try: iso31662=iso3166+'-'+subdivisions[admin1].split('-')[1]
-        except: pass
-        page_title=str(row[4]).replace(' ','_')
-        try: page_id = page_titles_page_ids[page_title]
-        except: continue
-
-#        print (page_title,page_id,qitem_specific,admin1,iso3166,coordinates)
-
-        qitem=''
-        # try both country code and admin1, at the same time, just in case there is desambiguation ('Punjab' in India (IN) and in Pakistan (PK) for 'pa' language)
-        try: 
-            qitem=territories[(territories.ISO3166 == iso3166) & (territories.territoryname == admin1)].loc[languagecode]['QitemTerritory']
-#            print (qitem); print ('name and country')
-        except: 
-            pass
-        try:
-            # try to get qitem from country code.        
-            if qitem == '':
-
-                try:
-                    qitem = ISO3166codes[iso3166]
-    #                print (qitem); print ('country')
-                    # try to get qitem from admin1: in territorynames, territorynamesNative and subdivisions.
-                except:
-                    try:
-                        qitem=territorynames[admin1]
-    #                    print (qitem); print ('territorynames in English.')
-                    except: 
-                        try:
-                            qitem=territorynamesNative[admin1]
-    #                        print (qitem); print ('territorynames in Native.')
-                        except: 
-                            try:
-                                qitem=ISO31662codes[iso31662]
-                            except:
-                                pass
-        except:
-            pass
-
-
-        if qitem!='':
-            ccc_geolocated = 1
-            ccc_binary = 1
-#            print ((page_id,page_title,coordinates,qitem)); print ('*** IN! ENTRA!\n')
-        else: 
-            ccc_geolocated = -1
-            ccc_binary = 0
-#            print ('### NO!\n')
-
-        # if page_title == 'Nefertiti':
-        #     print (ccc_binary, ccc_geolocated, 'Nefertiti')
-        #     input('')
-
-
-        try:
-#            print ((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
-            ccc_geolocated_items.append((ccc_binary,ccc_geolocated,iso3166,iso31662,coordinates,qitem,page_id,page_title,qitem_specific))
-
-        except:
-            pass
-
-        if x%20000 == 0: print (x)
-        x = x + 1
-
-    num_art = wikipedialanguage_numberarticles[languagecode]
-    if num_art == 0: percent = 0
-    else: percent = 100*len(ccc_geolocated_items)/num_art
-
-    if len(ccc_geolocated_items)==0: 
-        duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)
-#        print ('No geolocated Articles in Wikidata for this language edition.');
-        return
-    # Insert to the corresponding CCC database.
-#    print ('Inserting/Updating Articles into the database.')
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,ccc_geolocated,iso3166,iso31662,geocoordinates,main_territory) = (?,?,?,?,?,?) WHERE page_id = ? AND page_title = ? AND qitem = ?;'
-    cursor2.executemany(query,ccc_geolocated_items)
-    conn2.commit()
-
-#    print ('All geolocated Articles from Wikidata validated through reverse geocoding are in. They are: '+str(len(ccc_geolocated_items))+'.')
-#    print ('They account for a '+str(percent)+'% of the entire Wikipedia.')
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-# Obtain the Articles with a country property related to a territory from the list of territories from the language. Label them as CCC.
-def label_ccc_articles_country_wd(languagecode,page_titles_page_ids):
-
-    functionstartTime = time.time()
-
-    function_name = 'label_ccc_articles_country_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + wikidata_db);cursor = conn.cursor()
-
-
-    # country qitems
-    try: countries = territories.loc[territories['regional'] == 'no'].loc[languagecode]['QitemTerritory'].tolist()
-    except: 
-        try: countries = list(); countries.append(territories.loc[territories['regional'] == 'no'].loc[languagecode]['QitemTerritory'])
-        except:
-            duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-            create_function_account_db(function_name, 'mark', duration)
-#            print ('there are no entire countries where the '+languagecode+' is official')
-            return
-#    print ((countries))
-
-    countries = countries + list(set(wikilanguages_utils.get_old_current_countries_pairs(languagecode,'regional').keys()))
-
-    # get Articles
-    qitem_properties = {}
-    qitem_page_titles = {}
-    ccc_country_items = []
-    query = 'SELECT country_properties.qitem, country_properties.property, country_properties.qitem2, sitelinks.page_title FROM country_properties INNER JOIN sitelinks ON sitelinks.qitem = country_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
-    for row in cursor.execute(query):
-        qitem = row[0]
-        wdproperty = row[1]
-        qitem2 = row[2]
-        page_title = row[3].replace(' ','_')
-        if qitem2 not in countries: continue
-
-#        print ((qitem, wdproperty, country_properties[wdproperty], page_title))
-        value = wdproperty+':'+qitem2
-        if qitem not in qitem_properties: qitem_properties[qitem]=value
-        else: qitem_properties[qitem]=qitem_properties[qitem]+';'+value
-        qitem_page_titles[qitem]=page_title
-
-    # Get the tuple ready to insert.
-    for qitem, values in qitem_properties.items():
-        try: 
-            page_id=page_titles_page_ids[qitem_page_titles[qitem]]
-            ccc_country_items.append((1,values,qitem_page_titles[qitem],qitem,page_id))
-        except: 
-            continue
-
-    num_art = wikipedialanguage_numberarticles[languagecode]
-    if num_art == 0: percent = 0
-    else: percent = 100*len(ccc_country_items)/num_art
-
-    # Insert to the corresponding CCC database.
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,country_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor2.executemany(query,ccc_country_items)
-    conn2.commit()
-#    print (str(len(ccc_country_items))+' country related Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
-#    print ('They account for a '+str(percent)+'% of the entire Wikipedia.')
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-# Obtain the Articles with a location property that is iteratively associated to the list of territories associated to the language. Label them as CCC.
-def label_ccc_articles_location_wd(languagecode,page_titles_page_ids):
-
-    functionstartTime = time.time()
-    function_name = 'label_ccc_articles_location_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-
-#    page_qitems_titles={}
-#    for row in cursor.execute('SELECT page_title, qitem FROM sitelinks WHERE langcode = "'+languagecode+'wiki";'): page_qitems_titles[row[1]]=row[0].replace(' ','_')
-    query = 'SELECT location_properties.qitem, location_properties.property, location_properties.qitem2, sitelinks.page_title FROM location_properties INNER JOIN sitelinks ON sitelinks.qitem = location_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
-    rows = []
-    for row in cursor.execute(query):
-        qitem = row[0]
-        wdproperty = row[1]
-        qitem2 = row[2]
-        page_title = row[3].replace(' ','_')
-        rows.append([qitem,wdproperty,qitem2,page_title])
-
-
-    
-    qitems_territories=[]
-    if languagecode not in languageswithoutterritory:
-        try: qitems_territories=territories.loc[languagecode]['QitemTerritory'].tolist()
-        except: qitems_territories=[];qitems_territories.append(territories.loc[languagecode]['QitemTerritory'])
-
-
-    if len(qitems_territories)==0: 
-        duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)
-#        print ('Oops. There are no territories for this language.'); 
-        return;
-#    print (qitems_territories)
-
-    selected_qitems = {}
-    for QitemTerritory in qitems_territories:
-        QitemTerritoryname = territories.loc[territories['QitemTerritory'] == QitemTerritory].loc[languagecode]['territoryname']
-#        print ('We start with this territory: '+QitemTerritoryname+' '+QitemTerritory)
-#        if QitemTerritory == 'Q5705': continue
-
-        target_territories={QitemTerritory:0}
-
-        counter = 1
-        updated = 0
-        round = 1
-        number_items_territory = 0
-        while counter != 0: # when there is no level below as there is no new items. there are usually 6 levels.
-#            print ('# Round: '+str(round))
-            round_territories = {}
-            counter = 0
-
-            for row in rows:
-                qitem = row[0]
-                wdproperty = row[1]
-                qitem2 = row[2]
-                page_title = row[3].replace(' ','_')
-
-                if qitem2 in target_territories:
-#                    print ((round,qitem,page_title,wdproperty,location_properties[wdproperty],page_qitems_titles[qitem2],page_qitems_titles[QitemTerritory]))
-                    try:
-                        selected_qitems[qitem]=selected_qitems[qitem]+[wdproperty,qitem2,QitemTerritory]
-                        updated = updated + 1
-                    except:
-                        selected_qitems[qitem]=[page_title,wdproperty,qitem2,QitemTerritory]
-                        counter = counter + 1
-                        round_territories[qitem]=0
-
-            target_territories = round_territories
-            number_items_territory = number_items_territory + len(round_territories)
-
-#            print ('In this iteration we added this number of NEW items: '+(str(counter)))
-#            print ('In this iteration we updated this number of items: '+(str(updated)))
-#            print ('The current number of selected items for this territory is: '+str(number_items_territory))
-            round = round + 1
-
-#        print ('- The number of items related to the territory '+QitemTerritoryname+' is: '+str(number_items_territory))
-#        print ('- The TOTAL number of selected items at this point is: '+str(len(selected_qitems))+'\n')
-#        break
-#    for keys,values in selected_qitems.items(): print (keys,values)
-
-    # Get the tuple ready to insert.
-    ccc_located_items = []
-    for qitem, values in selected_qitems.items():
-        page_title=values[0]
-        try: page_id=page_titles_page_ids[page_title]
-        except: continue
-        value = ''
-        for x in range(0,int((len(values)-1)/3)):
-            if value != '': value = value + ';'
-            value = value + values[x*3+1]+':'+values[x*3+2]+':'+values[x*3+3]
-        ccc_located_items.append((1,value,page_title,qitem,page_id))
-
-
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,location_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor2.executemany(query,ccc_located_items)
-    conn2.commit()
-
-    num_art = wikipedialanguage_numberarticles[languagecode]
-    if num_art == 0: percent = 0
-    else: percent = 100*len(ccc_located_items)/num_art
-#    print ('They account for a '+str(percent)+'% of the entire Wikipedia.')
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-# Obtain the Articles with a "strong" language property that is associated the language. Label them as CCC.
-def label_ccc_articles_language_strong_wd(languagecode,page_titles_page_ids):
-
-    functionstartTime = time.time()
-    function_name = 'label_ccc_articles_language_strong_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-
-    # language qitems
-    qitemresult = languages.loc[languagecode]['Qitem']
-    if ';' in qitemresult: qitemresult = qitemresult.split(';')
-    else: qitemresult = [qitemresult];
-
-    # get Articles
-    qitem_properties = {}
-    qitem_page_titles = {}
-    ccc_language_items = []
-    query = 'SELECT language_strong_properties.qitem, language_strong_properties.property, language_strong_properties.qitem2, sitelinks.page_title FROM language_strong_properties INNER JOIN sitelinks ON sitelinks.qitem = language_strong_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
-    for row in cursor.execute(query):
-        qitem = row[0]
-        wdproperty = row[1]
-        qitem2 = row[2]
-        page_title = row[3].replace(' ','_')
-        if qitem2 not in qitemresult: continue
-
-#        print ((qitem, wdproperty, language_properties[wdproperty], page_title))
-        # Put the items into a dictionary
-        value = wdproperty+':'+qitem2
-        if qitem not in qitem_properties: qitem_properties[qitem]=value
-        else: qitem_properties[qitem]=qitem_properties[qitem]+';'+value
-        qitem_page_titles[qitem]=page_title
-#    print ("Per P2936, hi ha aquest nombre: ")
-#    print (len(qitem_page_titles))
-#    input('ja hem acabat')
-#    return
-
-    # Get the tuple ready to insert.
-    for qitem, values in qitem_properties.items():
-        try: 
-            page_id=page_titles_page_ids[qitem_page_titles[qitem]]
-            ccc_language_items.append((1,values,qitem_page_titles[qitem],qitem,page_id))
-        except: 
-            pass
-
-    # Insert to the corresponding CCC database.
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,language_strong_wd,page_title) = (?,?,?) WHERE qitem = ? AND page_id = ?;'
-    cursor2.executemany(query,ccc_language_items)
-    conn2.commit()
-
-    num_art = wikipedialanguage_numberarticles[languagecode]
-    if num_art == 0: percent = 0
-    else: percent = 100*len(ccc_language_items)/num_art
-
-#    print (str(len(ccc_language_items))+' language related Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
-#    print ('They account for a '+str(percent)+'% of the entire Wikipedia')
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-# Obtain the Articles with a creation property that is related to the items already retrieved as CCC. Label them as CCC.
-def label_ccc_articles_created_by_properties_wd(languagecode,page_titles_page_ids):
-
-    functionstartTime = time.time()
-    function_name = 'label_ccc_articles_created_by_properties_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    ccc_articles={}
-    for row in cursor.execute('SELECT page_title, qitem FROM '+languagecode+'wiki WHERE ccc_binary=1;'): ccc_articles[row[1]]=row[0].replace(' ','_')
-
-#    potential_ccc_articles={}
-#    for row in cursor.execute('SELECT page_title, qitem FROM '+languagecode+'wiki;'):
-#        potential_ccc_articles[row[1]]=row[0].replace(' ','_')
-
-    selected_qitems={}
-    conn2 = sqlite3.connect(databases_path + wikidata_db); cursor2 = conn2.cursor()
-    query = 'SELECT created_by_properties.qitem, created_by_properties.property, created_by_properties.qitem2, sitelinks.page_title FROM created_by_properties INNER JOIN sitelinks ON sitelinks.qitem = created_by_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
-    for row in cursor2.execute(query):
-        qitem = row[0]
-        wdproperty = row[1]
-        qitem2 = row[2]
-        page_title = row[3].replace(' ','_')
-
-        if qitem2 in ccc_articles:
-#            if qitem not in potential_ccc_articles: 
-#                print ((qitem,page_title, wdproperty, created_by_properties[wdproperty],ccc_articles[qitem2], already_in))
-            if qitem not in selected_qitems:
-                selected_qitems[qitem]=[page_title,wdproperty,qitem2]
-            else:
-                selected_qitems[qitem]=selected_qitems[qitem]+[wdproperty,qitem2]
-
-    ccc_created_by_items = []
-    for qitem, values in selected_qitems.items():
-        page_title=values[0]
-        try: page_id=page_titles_page_ids[page_title]
-        except: continue
-        value = ''
-#        print (values)
-        for x in range(0,int((len(values)-1)/2)):
-            if x >= 1: value = value + ';'
-            value = value + values[x*2+1]+':'+values[x*2+2]
-#        print ((value,page_title,qitem,page_id))
-        ccc_created_by_items.append((1,value,page_title,qitem,page_id))
-
-#    input('')
-    # INSERT INTO CCC DATABASE
-    num_art = wikipedialanguage_numberarticles[languagecode]
-    if num_art == 0: percent = 0
-    else: percent = 100*len(ccc_created_by_items)/num_art
-
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,created_by_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor.executemany(query,ccc_created_by_items)
-    conn.commit()
-#    print (str(len(ccc_created_by_items))+' items/articles created by CCC Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
-#    print ('They account for a '+str(percent)+'% of the entire Wikipedia.')
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-# Obtain the Articles which are part of items already retrieved as CCC. Label them as CCC.
-def label_ccc_articles_part_of_properties_wd(languagecode,page_titles_page_ids):
-
-    functionstartTime = time.time()
-    function_name = 'label_ccc_articles_part_of_properties_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-
-    part_of_properties = {'P361':'part of'} 
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikidata_db); cursor2 = conn2.cursor()
-
-    ccc_articles={}
-    for row in cursor.execute('SELECT page_title, qitem FROM '+languagecode+'wiki WHERE ccc_binary=1;'):
-        ccc_articles[row[1]]=row[0].replace(' ','_')
-
-#    potential_ccc_articles={}
-#    for row in cursor.execute('SELECT page_title, qitem FROM '+languagecode+'wiki;'):
-#        potential_ccc_articles[row[1]]=row[0].replace(' ','_')
-
-    selected_qitems={}
-    query = 'SELECT part_of_properties.qitem, part_of_properties.property, part_of_properties.qitem2, sitelinks.page_title FROM part_of_properties INNER JOIN sitelinks ON sitelinks.qitem = part_of_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
-    for row in cursor2.execute(query):
-        qitem = row[0]
-        wdproperty = row[1]
-        qitem2 = row[2]
-        page_title = row[3].replace(' ','_')
-
-        if (qitem2 in ccc_articles):
-#            if (qitem in ccc_articles):
-#                continue
-#                print ((qitem, page_title, wdproperty, part_of_properties[wdproperty],ccc_articles[qitem2],'ALREADY IN!'))
-            
-#            elif (qitem in potential_ccc_articles):
-#                continue
-#                print ((qitem, page_title, wdproperty, part_of_properties[wdproperty],ccc_articles[qitem2],'ALMOST: POTENTIAL. NOW IN.'))
-
-#            else:
-#                print ((qitem, page_title, wdproperty, part_of_properties[wdproperty],ccc_articles[qitem2],'NEW NEW NEW NEW NEW!'))
-
-            if qitem not in selected_qitems:
-                selected_qitems[qitem]=[page_title,wdproperty,qitem2]
-            else:
-                selected_qitems[qitem]=selected_qitems[qitem]+[wdproperty,qitem2]
-#    for keys,values in selected_qitems.items(): print (keys,values)
-
-    ccc_part_of_items = []
-    for qitem, values in selected_qitems.items():
-        page_title=values[0]
-        try: page_id=page_titles_page_ids[page_title]
-        except: continue
-        value = ''
-#        print (values)
-        for x in range(0,int((len(values)-1)/2)):
-            if x >= 1: value = value + ';'
-            value = value + values[x*2+1]+':'+values[x*2+2]
-#        print ((value,page_title,qitem,page_id))
-        ccc_part_of_items.append((1,value,page_title,qitem,page_id))
-
-    num_art = wikipedialanguage_numberarticles[languagecode]
-    if num_art == 0: percent = 0
-    else: percent = 100*len(ccc_part_of_items)/num_art
-
-    # INSERT INTO CCC DATABASE
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,part_of_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor.executemany(query,ccc_part_of_items)
-    conn.commit()
-#    print (str(len(ccc_part_of_items))+' items/articles created by CCC Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
-#    print ('They account for a '+str(percent)+'% of the entire Wikipedia.')
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-
-# Obtain the Articles with a keyword in title. This is considered potential CCC.
-def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page_ids):
-
-    functionstartTime = time.time()
-    function_name = 'label_ccc_articles_keywords '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
 
     # CREATING KEYWORDS DICTIONARY
     keywordsdictionary = {}
@@ -931,59 +163,83 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
             except: pass
             keywords.append(territorynameNative)
             keywordsdictionary[qitem]=keywords
-   
+
     # language name
     languagenames = languages.loc[languagecode]['nativeLabel'].split(';')
     qitemresult = languages.loc[languagecode]['Qitem']
     keywordsdictionary[qitemresult]=languagenames
 
+    keywords = []
+    for values in keywordsdictionary.values():
+        for val in values: keywords.append(val.lower())
+    print (keywords)
+
+    # STARTING THE CRAWLING
     selectedarticles = {}
-    for item, keywords in keywordsdictionary.items():
-#        print (item)
-        for keyword in keywords:
-            if keyword == '': continue
-            keyword_rect = unidecode.unidecode(keyword).lower().replace(' ','_')
+    selectedarticles_level = {}
 
-            for page_title,page_id in page_titles_page_ids.items():
-                page_title_rect = unidecode.unidecode(page_title).lower().replace(' ','_')
-               
-                if keyword_rect in page_title_rect:
+    string = languagecode+' Starting selection of raw CCC.'; 
 
-                    try:
-                        selectedarticles[page_id].add(item)
-                    except:
-                        va = set()
-                        va.add(page_title)
-                        va.add(item)
-                        selectedarticles[page_id] = va
+    print ('With language '+ languagecode +" and Keywords: ")
+    print (keywordsdictionary)
+
+    print (keywords)
 
 
-    insertedarticles = []
-    for page_id, value in selectedarticles.items():
-        value=list(value)
-        page_title = str(value.pop(0))
-        keyword_title = str(';'.join(value))
-        try: 
-            qitem=page_titles_qitems[page_title]
-        except: 
-            qitem=None
-        insertedarticles.append((1,keyword_title,page_title,page_id,qitem))
+
+# PRIMER: s’han d’haver agafat totes les categories. també les que contenen paraules clau.
+# https://www.mediawiki.org/wiki/Manual:Category_table
+
+# tot el tema de l'unidecode ja està provat mb keywords.
+
+    dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-category.sql.gz'
+    
+    dump_in = gzip.open(dumps_path, 'r')
+
+    print ('Iterating the dump.')
+    while True:
+        line = dump_in.readline()
+        try: line = line.decode("utf-8")
+        except UnicodeDecodeError: line = str(line)
+
+        if line == '':
+            i+=1
+            if i==3: break
+        else: i=0
+
+        if wikilanguages_utils.is_insert(line):
+#            table_name = wikilanguages_utils.get_table_name(line)
+#            columns = wikilanguages_utils.get_columns(line)
+            values = wikilanguages_utils.get_values(line)
+            if wikilanguages_utils.values_sanity_check(values): rows = wikilanguages_utils.parse_values(values)
+
+            for row in rows:
+#                print(row)
+                cat_id = int(row[0])
+                cat_title = row[1]
+                print (cat_title)
+
+                for k in keywords:
+                    if unidecode.unidecode(k) in cat_title.replace('_',' ').lower():
+                        print (k, cat_title)
+                        print ('PREMI!')
+                        input('')
+
+# SEGON:
+# Category links. Muntar estructura de category links amb diccionaris i sets. Un diccionari amb les relacions entre cat-page i un altre entre cat-cat.
+# https://www.mediawiki.org/wiki/Manual:Categorylinks_table
 
 
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,keyword_title,page_title) = (?,?,?) WHERE page_id = ? AND qitem = ?;'
-    cursor.executemany(query,insertedarticles)
-    conn.commit()
 
-    print ('articles with keywords on titles in Wikipedia language '+(languagecode)+' have been inserted.');
-    print ('The number of inserted Articles are '+str(len(insertedarticles)))
 
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+
+
+
+
 
 
 # Obtain the Articles contained in the Wikipedia categories with a keyword in title (recursively). This is considered potential CCC.
-def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems):
+def label_potential_ccc_articles_category_crawling_(languagecode,page_titles_page_ids,page_titles_qitems):
 
     functionstartTime = time.time()
     function_name = 'label_potential_ccc_articles_category_crawling '+languagecode
@@ -1200,6 +456,14 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
 
 
 
+# HEY! IT NEEDS EXTENDING FOR THESE OTHER 5 TYPES OF DIVERSITY
+def label_potential_lgbt_articles_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems):
+    pass
+        # 'lgbt_binary integer, '
+        # 'category_crawling_lgbt text, '
+
+
+
 
 def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,page_titles_qitems):
 
@@ -1228,22 +492,21 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
     dump_in = gzip.open(dumps_path, 'r')
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    ccc_selection_page_title = {}
-    ccc_selection_page_id = {}
+    content_selection_page_title = {}
+    content_selection_page_id = {}
     query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE ccc_binary=1;'
     for row in cursor.execute(query):
-        ccc_selection_page_id[row[0]]=row[1]
-        ccc_selection_page_title[row[1]]=row[0]
+        content_selection_page_id[row[0]]=row[1]
+        content_selection_page_title[row[1]]=row[0]
 
-    other_ccc_selection_page_title = {}
-    other_ccc_selection_page_id = {}
+    other_content_selection_page_title = {}
+    other_content_selection_page_id = {}
     query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE ccc_binary=0;'
     for row in cursor.execute(query):
-        other_ccc_selection_page_id[row[0]]=row[1]
-        other_ccc_selection_page_title[row[1]]=row[0]
+        other_content_selection_page_id[row[0]]=row[1]
+        other_content_selection_page_title[row[1]]=row[0]
 
-    print (len(page_titles_page_ids),len(ccc_selection_page_id),len(other_ccc_selection_page_id))
-
+#    print (len(page_titles_page_ids),len(content_selection_page_id),len(other_content_selection_page_id))
     num_of_outlinks = {}
     num_outlinks_ccc = {}
     num_outlinks_other_ccc = {}
@@ -1304,7 +567,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                     pass
 
                 try:
-                    ccc=ccc_selection_page_id[pl_title_page_id]
+                    ccc=content_selection_page_id[pl_title_page_id]
                     num_outlinks_ccc[pl_from] = num_outlinks_ccc[pl_from] + 1
                     
 
@@ -1313,7 +576,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                     pass
 
                 try:
-                    abroad=other_ccc_selection_page_id[pl_title_page_id]
+                    abroad=other_content_selection_page_id[pl_title_page_id]
                     num_outlinks_other_ccc[pl_from] = num_outlinks_other_ccc[pl_from] + 1
 #                    print('num_outlinks_other_ccc')
 #                    print (num_outlinks_other_ccc[pl_from])
@@ -1330,7 +593,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                     pass
 
                 try:
-                    ccc=ccc_selection_page_id[pl_from]
+                    ccc=content_selection_page_id[pl_from]
                     num_inlinks_ccc[pl_title_page_id] = num_inlinks_ccc[pl_title_page_id] + 1
 #                    print('num_inlinks_ccc')                    
 #                    print (num_inlinks_ccc[page_titles_page_ids[pl_title]])
@@ -1338,15 +601,12 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                     pass
 
                 try:
-                    abroad=other_ccc_selection_page_id[pl_from]
+                    abroad=other_content_selection_page_id[pl_from]
                     num_inlinks_other_ccc[pl_title_page_id] = num_inlinks_other_ccc[pl_title_page_id] + 1
 #                    print('num_inlinks_other_ccc')                    
 #                    print (num_inlinks_other_ccc[page_titles_page_ids[pl_title]])
                 except:
                     pass
-
-#                print('.')
-#                input('')
 
 #    input('')
     print ('Done with the dump.')
@@ -1400,9 +660,8 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         if num_inlinks_from_CCC != 0: n_inlinks_ccc =n_inlinks_ccc+1
         if num_inlinks_from_geolocated_abroad != 0: n_inlinks_other_ccc =n_inlinks_other_ccc+1
 
-
-    print ((n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc))
-    print ('(n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc)')
+    # print ((n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc))
+    # print ('(n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc)')
     
     query = 'UPDATE '+languagecode+'wiki SET (num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad)=(?,?,?,?,?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
         
@@ -1432,47 +691,62 @@ def label_potential_ccc_articles_language_weak_wd(languagecode,page_titles_page_
     # get Articles
     qitem_properties = {}
     qitem_page_titles = {}
-    ccc_language_items = []
+    other_ccc_language = {}
     query = 'SELECT language_weak_properties.qitem, language_weak_properties.property, language_weak_properties.qitem2, sitelinks.page_title FROM language_weak_properties INNER JOIN sitelinks ON sitelinks.qitem = language_weak_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
     for row in cursor.execute(query):
         qitem = row[0]
         wdproperty = row[1]
         qitem2 = row[2]
         page_title = row[3].replace(' ','_')
-        if qitem2 not in qitemresult: continue
 
-#        print ((qitem, wdproperty, language_properties_weak[wdproperty], page_title))
-        # Put the items into a dictionary
-        value = wdproperty+':'+qitem2
-        if qitem not in qitem_properties: qitem_properties[qitem]=value
-        else: qitem_properties[qitem]=qitem_properties[qitem]+';'+value
+        if qitem2 not in qitemresult: 
+            if qitem not in other_ccc_language: other_ccc_language[qitem]=1
+            else: other_ccc_language[qitem]=other_ccc_language[qitem]+1
+
+        else:
+    #        print ((qitem, wdproperty, language_properties_weak[wdproperty], page_title))
+            # Put the items into a dictionary
+            value = wdproperty+':'+qitem2
+            if qitem not in qitem_properties: qitem_properties[qitem]=value
+            else: qitem_properties[qitem]=qitem_properties[qitem]+';'+value
+
         qitem_page_titles[qitem]=page_title
 
-#    print (len(qitem_page_titles))
-#    input('ja hem acabat')
-#    return
 
     # Get the tuple ready to insert.
+    ccc_language_items = []
     for qitem, values in qitem_properties.items():
         try: 
             page_id=page_titles_page_ids[qitem_page_titles[qitem]]
             ccc_language_items.append((values,qitem_page_titles[qitem],qitem,page_id))
         except: continue
 
+    # Get the tuple ready to insert for other language strong CCC.
+    other_ccc_language_items = []
+    for qitem, values in other_ccc_language.items():
+        try: 
+            page_id=page_titles_page_ids[qitem_page_titles[qitem]]
+            other_ccc_language_items.append((str(values),qitem_page_titles[qitem],qitem,page_id))
+        except: 
+            pass
+
+
     # Insert to the corresponding CCC database.
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-    query = 'UPDATE '+languagecode+'wiki SET (language_weak_wd) = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
+    query = 'UPDATE '+languagecode+'wiki SET language_weak_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor2.executemany(query,ccc_language_items)
     conn2.commit()
 
-    num_art = wikipedialanguage_numberarticles[languagecode]
-    if num_art == 0: percent = 0
-    else: percent = 100*len(ccc_language_items)/num_art
 
-#    print (str(len(ccc_language_items))+' language related Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
-#    print ('The number of inserted Articles account for a '+str(percent))
+   # Insert to the corresponding CCC database.
+    query = 'UPDATE '+languagecode+'wiki SET other_ccc_language_weak_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
+    cursor2.executemany(query,other_ccc_language_items)
+    conn2.commit()
+
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-#    create_function_account_db(function_name, 'mark', duration)
+    create_function_account_db(function_name, 'mark', duration)
+
+
 
 
 # Get the Articles with the number of affiliation-like properties to other Articles already retrieved as CCC.
@@ -1498,7 +772,10 @@ def label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_tit
 #    print (affiliation_properties)
 #    input('')
 
-    selected_qitems={}
+    
+    other_ccc_affiliation_qitems = {}
+    qitem_page_titles = {}
+    selected_qitems = {}
     query = 'SELECT affiliation_properties.qitem, affiliation_properties.property, affiliation_properties.qitem2, sitelinks.page_title FROM affiliation_properties INNER JOIN sitelinks ON sitelinks.qitem = affiliation_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
     for row in cursor2.execute(query):
         qitem = row[0]
@@ -1520,6 +797,14 @@ def label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_tit
 #    print (len(selected_qitems))
 #    for keys,values in selected_qitems.items(): print (keys,values)
 
+
+        else:
+            if qitem not in other_ccc_affiliation_qitems: other_ccc_affiliation_qitems[qitem]=1
+            else: other_ccc_affiliation_qitems[qitem]=other_ccc_affiliation_qitems[qitem]+1
+
+        qitem_page_titles[qitem]=page_title
+
+
     ccc_affiliation_items = []
     for qitem, values in selected_qitems.items():
         page_title=values[0]
@@ -1533,13 +818,28 @@ def label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_tit
         ccc_affiliation_items.append((value,page_title,qitem,page_id))
 #    print (len(ccc_affiliation_items))
 
+
+    other_ccc_affiliation_items = []
+    for qitem, values in other_ccc_affiliation_qitems.items():
+        try: 
+            page_id=page_titles_page_ids[qitem_page_titles[qitem]]
+            other_ccc_affiliation_items.append((str(values),qitem_page_titles[qitem],qitem,page_id))
+        except: 
+            pass
+
+
     # INSERT INTO CCC DATABASE
     query = 'UPDATE '+languagecode+'wiki SET affiliation_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor.executemany(query,ccc_affiliation_items)
     conn.commit()
-#    print (str(len(ccc_affiliation_items))+' items/articles which have an affiliation to other CCC')
+
+    query = 'UPDATE '+languagecode+'wiki SET other_ccc_affiliation_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
+    cursor.executemany(query,other_ccc_affiliation_items)
+    conn.commit()
+
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     create_function_account_db(function_name, 'mark', duration)
+
 
 
 # Get the Articles with the properties that state that has Articles already retrieved as CCC as part of them.
@@ -1561,6 +861,9 @@ def label_potential_ccc_articles_has_part_properties_wd(languagecode,page_titles
     for row in cursor.execute('SELECT page_title, qitem FROM '+languagecode+'wiki;'):
         potential_ccc_articles[row[1]]=row[0].replace(' ','_')
 
+
+    qitem_page_titles = {}
+    other_ccc_has_part_properties = {}
     selected_qitems={}
     query = 'SELECT has_part_properties.qitem, has_part_properties.property, has_part_properties.qitem2, sitelinks.page_title FROM has_part_properties INNER JOIN sitelinks ON sitelinks.qitem = has_part_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
     for row in cursor2.execute(query):
@@ -1576,8 +879,20 @@ def label_potential_ccc_articles_has_part_properties_wd(languagecode,page_titles
             else:
                 selected_qitems[qitem]=selected_qitems[qitem]+[wdproperty,qitem2]
 
+
+        if (qitem2 not in ccc_articles) and (qitem not in potential_ccc_articles) and (qitem not in ccc_articles):
+
+            if qitem not in other_ccc_has_part_properties:
+                other_ccc_has_part_properties[qitem] =
+
+            if qitem2 not in other_ccc_has_part_properties: other_ccc_has_part_properties[qitem]=1
+            else: other_ccc_has_part_properties[qitem]=other_ccc_has_part_properties[qitem]+1
+
+        qitem_page_titles[qitem] = page_title
+
 #    for keys,values in selected_qitems.items(): print (keys,values)
 #    input('')
+
     ccc_has_part_items = []
     for qitem, values in selected_qitems.items():
         page_title=values[0]
@@ -1591,290 +906,86 @@ def label_potential_ccc_articles_has_part_properties_wd(languagecode,page_titles
 #        print ((value,page_title,qitem,page_id))
         ccc_has_part_items.append((value,page_title,qitem,page_id))
 
+    other_ccc_has_part_items = []
+    for qitem, values in other_ccc_has_part_properties.items():
+        try: 
+            page_id=page_titles_page_ids[qitem_page_titles[qitem]]
+            other_ccc_has_part_items.append((str(values),qitem_page_titles[qitem],qitem,page_id))
+        except: 
+            pass
+
+
     # INSERT INTO CCC DATABASE
     query = 'UPDATE '+languagecode+'wiki SET has_part_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor.executemany(query,ccc_has_part_items)
     conn.commit()
 
-#    print (str(len(ccc_has_part_items))+' items/articles which have a part of CCC items/articles')
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-def label_other_ccc_country_properties(languagecode,page_titles_page_ids,page_titles_qitems):
-
-    function_name = 'label_other_ccc_country_properties '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-    functionstartTime = time.time()
-
-
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-
-    (iso_qitem, label_qitem) = wikilanguages_utils.load_all_countries_qitems()
-
-    try: countries_language = set(territories.loc[languagecode]['ISO3166'].tolist())
-    except: 
-        try: countries_language = set(); countries_language.add(territories.loc[languagecode]['ISO3166'])
-        except: pass
-    countries_language = list(set(countries_language)&set(iso_qitem.keys())) # these iso3166 codes
-    qitems_countries_language = []
-    for country in countries_language: qitems_countries_language.append(iso_qitem[country])
-    qitems_countries_language = qitems_countries_language + list(set(wikilanguages_utils.get_old_current_countries_pairs(languagecode,'').keys()))
-
-
-    page_asstring = ','.join( ['?'] * (len(iso_qitem)) ) # total
-    query = 'SELECT country_properties.qitem, page_title, count(country_properties.qitem) FROM country_properties INNER JOIN sitelinks ON sitelinks.qitem = country_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki" AND country_properties.qitem2 IN (%s)' % page_asstring
-
-    page_asstring = ','.join( ['?'] * (len(qitems_countries_language)) ) # local
-    query += ' AND country_properties.qitem2 NOT IN (%s) GROUP BY country_properties.qitem' % page_asstring
-
-    parameters = list(iso_qitem.values())+qitems_countries_language
-
-#    print (query)
-#    print (parameters)
-    table_update = []
-    for row in cursor.execute(query, parameters):
-#        print (row)
-        qitem=row[0]
-        page_title=row[1].replace(' ','_')
-        try: page_id = page_titles_page_ids[page_title]
-        except: continue
-        count=row[2]
-        table_update.append((0,count,page_title,qitem,page_id))
-
-    query = 'UPDATE '+languagecode+'wiki SET ccc_binary = ?, other_ccc_country_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor2.executemany(query,table_update)
-    conn2.commit()
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-def label_other_ccc_location_properties(languagecode,page_titles_page_ids,page_titles_qitems):
-
-    function_name = 'label_other_ccc_location_properties '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    functionstartTime = time.time()
-
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-
-    qitem_page_titles = {v: k for k, v in page_titles_qitems.items()}
-
-    (iso_qitem, label_qitem) = wikilanguages_utils.load_all_countries_qitems()
-
-    try: 
-        countries_language = territories.loc[languagecode]['ISO3166'].tolist()
-    except: 
-        try: countries_language = set(); countries_language.add(territories.loc[languagecode]['ISO3166'])
-        except: pass
-
-    qitems_countries_language = []
-    for country in countries_language:
-        if country in iso_qitem:
-            qitems_countries_language.append(iso_qitem[country])
-
-    qitems_countries_language = list(set(qitems_countries_language))
-
-    query = 'SELECT qitem FROM '+languagecode+'wiki WHERE location_wd IS NOT NULL;'
-    ccc_location_qitems=[]
-    for row in cursor2.execute(query): ccc_location_qitems.append(row[0])
-
-    table_update = []
-    length=len(ccc_location_qitems)
-#    length=500000
-    if length<200000:
-#        print ('short')
-
-        page_asstring = ','.join( ['?'] * (len(ccc_location_qitems)) ) # local
-        page_asstring2 = ','.join( ['?'] * (len(qitems_countries_language)) ) # local
-
-        query = 'SELECT location_properties.qitem, page_title, count(location_properties.qitem) FROM location_properties INNER JOIN sitelinks ON sitelinks.qitem = location_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki" AND location_properties.qitem NOT IN (%s)' % page_asstring
-        query = query + ' AND location_properties.qitem2 NOT IN (%s)' % page_asstring2
-        query = query + ' GROUP BY location_properties.qitem;'
-
-        for row in cursor.execute(query, ccc_location_qitems+qitems_countries_language):
-            qitem=row[0]
-            page_title=row[1].replace(' ','_')
-            try: page_id = page_titles_page_ids[page_title]
-            except: continue
-            count=row[2]
-            table_update.append((0,count,page_title,qitem,page_id))
-
-    else:
-#        print ('long')
-        page_asstring2 = ','.join( ['?'] * (len(qitems_countries_language)) ) # local
-        query = 'SELECT DISTINCT location_properties.qitem, count(location_properties.qitem) FROM location_properties INNER JOIN sitelinks ON sitelinks.qitem = location_properties.qitem WHERE sitelinks.langcode = "'+languagecode+'wiki" AND location_properties.qitem2 NOT IN (%s) GROUP BY location_properties.qitem;' % page_asstring2
-
-        location_qitems_count = {}
-        location_qitems = []
-        for row in cursor.execute(query,qitems_countries_language): 
-            location_qitems.append(row[0])
-            location_qitems_count[row[0]]=row[1]
-
-#        print (len(location_qitems))
-        location_qitems = list(set(location_qitems) ^ set(location_qitems) & set(ccc_location_qitems))
-#        print (len(location_qitems))
-
-        # ^ is subtract
-        # & is intersection
-        # it is read from right to left
-
-        num_art=0
-        for qitem in location_qitems:
-            num_art+=1
-            try:
-                page_title = qitem_page_titles[qitem]
-                page_id = page_titles_page_ids[page_title]
-                table_update.append((0,location_qitems_count[qitem],page_title,qitem,page_id))
-#                print ((0,1,page_title,qitem,page_id))
-            except:
-                pass
-#            if num_art % 1000 == 0: print (num_art)
-
-#    print (len(table_update))
-#    input('')
-    query = 'UPDATE '+languagecode+'wiki SET ccc_binary = ?, other_ccc_location_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor2.executemany(query,table_update)
-    conn2.commit()
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-def label_other_ccc_wikidata_properties(languagecode,page_titles_page_ids,page_titles_qitems):
-
-    function_name = 'label_other_ccc_wikidata_properties '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    functionstartTime = time.time()
-
-    qitems = page_titles_qitems.values()
-
-    tables = ['language_strong_properties', 'created_by_properties','part_of_properties','language_weak_properties', 'has_part_properties', 'affiliation_properties']
-
-    columns = ['language_strong_wd', 'created_by_wd', 'part_of_wd', 'language_weak_wd', 'has_part_wd', 'affiliation_wd']
-    columns_update = ['other_ccc_language_strong_wd','other_ccc_created_by_wd','other_ccc_part_of_wd','other_ccc_language_weak_wd','other_ccc_has_part_wd','other_ccc_affiliation_wd']
-
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-
-#    print (tables)
-    for x in range(0,len(tables)):
-        print (tables[x])
-
-        table_update = []
-        for qitem in qitems:
-            negative_ccc_property_count = 0
-
-            total_property_count = 0
-            query = 'SELECT count(qitem) FROM '+tables[x]+' WHERE qitem = "'+str(qitem)+'"'
-            cursor.execute(query)
-
-            value = cursor.fetchone()
-            if value != None: total_property_count = value[0]
-
-            query = 'SELECT '+columns[x]+', page_id, page_title FROM '+languagecode+'wiki WHERE qitem = "'+str(qitem)+'"'
-            cursor2.execute(query)
-            ccc_property_count = 0
-            value2 = cursor2.fetchone()
-            page_id = None
-            page_title = None
-
-            if value2 != None: 
-                page_id = value2[1]
-                properties = value2[0]
-                page_title = value2[2]
-                if properties != None: 
-                    ccc_property_count = properties.count(';')
-                    if ccc_property_count == 0: ccc_property_count = 1
-#                print (properties,ccc_property_count, page_id)
-
-            negative_ccc_property_count = total_property_count - ccc_property_count
-#            print (total_property_count,negative_ccc_property_count,ccc_property_count,qitem,page_id,page_title)
-
-            if negative_ccc_property_count != 0:
-                table_update.append((negative_ccc_property_count,qitem,page_id))
-
-#        print ('The number of Articles that are going to be updated for this table: '+columns_update[x]+' are: '+str(len(table_update)))
-        cursor2.executemany('UPDATE '+languagecode+'wiki SET '+columns_update[x]+'=? WHERE qitem = ? AND page_id = ?', table_update)
-        conn2.commit()
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-def label_other_ccc_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems):
-
-    function_name = 'label_other_ccc_category_crawling '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: retur
-
-    functionstartTime = time.time()
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    qitem_page_titles = {v: k for k, v in page_titles_qitems.items()}
-
-    qitems = page_titles_qitems.values()
-
-    qitems_keywords_binary = {}
-    qitems_category_crawling_level = {}
-
-    for queried_languagecode in wikilanguagecodes:
-        if queried_languagecode == languagecode: continue
-        query = 'SELECT MAX(category_crawling_level) FROM '+queried_languagecode+'wiki;'
-        level_max = 0
-        cursor.execute(query)
-        value = cursor.fetchone()
-        if value != None: level_max = value[0]
-        if level_max == 0 or level_max == None: continue
-#        print (queried_languagecode)
-
-        query = 'SELECT '+queried_languagecode+'wiki.qitem, '+queried_languagecode+'wiki.category_crawling_level, '+queried_languagecode+'wiki.keyword_title, '+languagecode+'wiki.page_title FROM '+queried_languagecode+'wiki INNER JOIN '+languagecode+'wiki ON '+queried_languagecode+'wiki.qitem = '+languagecode+'wiki.qitem WHERE '
-        query += ''+languagecode+'wiki.ccc_binary IS NULL AND ('+languagecode+'wiki.category_crawling_level IS NOT NULL OR '+languagecode+'wiki.language_weak_wd IS NOT NULL OR '+languagecode+'wiki.affiliation_wd IS NOT NULL OR '+languagecode+'wiki.has_part_wd IS NOT NULL);'
-
-        count = 0
-        for row in cursor.execute(query):
-            qitem=row[0]
-#            if queried_languagecode == 'ar': print (row[3],row[1])
-
-            if row[2] != None: qitems_keywords_binary[qitem]=1
-            if row[1] != None: 
-                category_crawling_level=row[1]
-                if category_crawling_level != 0: category_crawling_level=category_crawling_level-1
-                if category_crawling_level > 6: category_crawling_level = 6
-
-                relative_level=1-float(category_crawling_level/6)
-                # we choose always the lowest category crawling level in case the Article is in category crawling of different languages.
-                if qitem in qitems_category_crawling_level:
-                    if qitems_category_crawling_level[qitem]>relative_level: qitems_category_crawling_level[qitem]=relative_level
-                else: 
-                    qitems_category_crawling_level[qitem]=relative_level
-                    count+=1
-#        print (count)
-
-    table_update = []
-    for qitem in qitems:
-        keyword = 0; relative_level = 0;
-
-        page_id=page_titles_page_ids[qitem_page_titles[qitem]]
-
-        if qitem in qitems_keywords_binary: keyword = 1
-        else: keyword = 0
-
-        if qitem in qitems_category_crawling_level:
-            relative_level = qitems_category_crawling_level[qitem]
-        else: relative_level = 0
-
-        if keyword != 0 or relative_level != 0:
-            table_update.append((relative_level,keyword,qitem,page_id))
-
-#    print ('\nThe number of Articles that are going to be updated for this language edition CCC: '+languagecode+' that relate to other language edition keywords/category crawling are: '+str(len(table_update)))
-    cursor.executemany('UPDATE '+languagecode+'wiki SET other_ccc_category_crawling_relative_level = ?, other_ccc_keyword_title = ? WHERE qitem = ? AND page_id = ?', table_update)
+    query = 'UPDATE '+languagecode+'wiki SET other_ccc_has_part_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
+    cursor.executemany(query,other_ccc_has_part_items)
     conn.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     create_function_account_db(function_name, 'mark', duration)
+
+
+
+def label_time_interval_wd():
+
+
+    query = 'SELECT qitem, property, qitem2 FROM instance_of_subclasses_of_properties WHERE qitem2 IN ("","")';
+
+
+
+# obtains the blacklisted/whitelist articles from the previous CCC, stores them in the new database and uses them to assign them ccc_binary = 0.
+def retrieving_ccc_surelist_list():
+
+    function_name = 'retrieving_ccc_surelist_list '+languagecode
+    if create_function_account_db(function_name, 'check','')==1: return
+
+    functionstartTime = time.time()
+
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS ccc_surelist (languagecode text, qitem text, ccc_binary int, PRIMARY KEY (languagecode, qitem));")
+
+    conn2 = sqlite3.connect(databases_path + 'ccc_old.db'); cursor2 = conn2.cursor()
+    query = 'SELECT languagecode, qitem FROM ccc_surelist WHERE page_namespace=0;'
+
+    (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+
+    lang_articles = {}
+    for languagecode in wikilanguagecodes:
+        lang_articles[languagecode]=[]
+
+    qitem = ''
+    parameters = []
+    for row in cursor.execute(query):
+        languagecode = row[0]
+        if languagecode != old_languagecode and qitem!='':
+            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+            qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+
+        qitem = row[1]
+        ccc_binary = row[2]
+        page_id = page_titles_page_ids[qitems_page_titles[qitem]]
+
+        parameters.append((languagecode,qitem,ccc_binary))
+        lang_articles[languagecode]=lang_articles[languagecode].append((ccc_binary,page_id,qitem))
+
+        old_languagecode = languagecode
+
+    query = "INSERT INTO ccc_surelist (languagecode, qitem, ccc_binary) VALUES (?,?,?);"
+    cursor.executemany(query,parameters)
+    conn.commit()
+
+    for languagecode in wikilanguagecodes:
+        query = 'UPDATE '+languagecode+'wiki SET ccc_binary=? WHERE page_id = ? AND qitem = ?;'
+        cursor.executemany(query,lang_articles[languagecode])
+        conn.commit()
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    create_function_account_db(function_name, 'mark', duration)
+
+
 
 
 ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- ### --- 
@@ -2203,7 +1314,7 @@ def calculate_articles_ccc_binary_classifier(languagecode,classifier,page_titles
     print ('\nThis algorithm CLASSIFIED '+str(len(selected))+' Articles as ccc_binary = 1 from a total of '+str(len(potential))+' from the testing data. This is a: '+str(round(100*len(selected)/len(potential),3))+'%.')
     print ('With '+str(num_articles_ccc+len(selected))+' Articles, the current and updated percentage of CCC is: '+percent_selected+'% of the WP language edition.\n')
 
-#    evaluate_ccc_selection_manual_assessment(languagecode,selected,page_titles_page_ids)
+#    evaluate_content_selection_manual_assessment(languagecode,selected,page_titles_page_ids)
 #    input('')
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -2215,6 +1326,16 @@ def calculate_articles_ccc_binary_classifier(languagecode,classifier,page_titles
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     create_function_account_db(function_name, 'mark', duration)
+
+
+
+def calculate_articles_lgbt_binary_classifier():
+    # using category_crawling_lgbt, outlinks_to_lgbt, inlinks_from_lgbt,....
+
+    pass
+
+
+
 
 
 def calculate_articles_ccc_main_territory(languagecode):
@@ -2561,9 +1682,9 @@ def check_current_groundtruth(languagecode):
         print (row[0],row[1])
 
 
-def evaluate_ccc_selection_manual_assessment(languagecode, selected, page_titles_page_ids):
+def evaluate_content_selection_manual_assessment(languagecode, selected, page_titles_page_ids):
 
-    print("start the CCC selection manual assessment ")
+    print("start the CONTENT selection manual assessment ")
 
     if selected is None:
         print ('Retrieving the CCC Articles from the .db')
@@ -2687,61 +1808,12 @@ def evaluate_ccc_selection_manual_assessment(languagecode, selected, page_titles
     print (result)
 
 
-# obtains the blacklisted/whitelist articles from the previous CCC, stores them in the new database and uses them to assign them ccc_binary = 0.
-def retrieving_ccc_surelist_list():
-
-    function_name = 'retrieving_ccc_surelist_list '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    functionstartTime = time.time()
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS ccc_surelist (languagecode text, qitem text, ccc_binary int, PRIMARY KEY (languagecode, qitem));")
-
-    conn2 = sqlite3.connect(databases_path + 'ccc_old.db'); cursor2 = conn2.cursor()
-    query = 'SELECT languagecode, qitem FROM ccc_surelist WHERE page_namespace=0;'
-
-    (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-
-    lang_articles = {}
-    for languagecode in wikilanguagecodes:
-        lang_articles[languagecode]=[]
-
-    qitem = ''
-    parameters = []
-    for row in cursor.execute(query):
-        languagecode = row[0]
-        if languagecode != old_languagecode and qitem!='':
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-            qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
-
-        qitem = row[1]
-        ccc_binary = row[2]
-        page_id = page_titles_page_ids[qitems_page_titles[qitem]]
-
-        parameters.append((languagecode,qitem,ccc_binary))
-        lang_articles[languagecode]=lang_articles[languagecode].append((ccc_binary,page_id,qitem))
-
-        old_languagecode = languagecode
-
-    query = "INSERT INTO ccc_surelist (languagecode, qitem, ccc_binary) VALUES (?,?,?);"
-    cursor.executemany(query,parameters)
-    conn.commit()
-
-    for languagecode in wikilanguagecodes:
-        query = 'UPDATE '+languagecode+'wiki SET ccc_binary=? WHERE page_id = ? AND qitem = ?;'
-        cursor.executemany(query,lang_articles[languagecode])
-        conn.commit()
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
 
 
+def create_update_qitems_single_ccc_table():
 
-def create_update_qitems_ccc_table():
-
-    function_name = 'create_update_qitems_ccc_table'
-    if create_function_account_db(function_name, 'check','')==1: return
+    function_name = 'create_update_qitems_single_ccc_table'
+#    if create_function_account_db(function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -2759,15 +1831,18 @@ def create_update_qitems_ccc_table():
 
     qitems_langs = {} 
     for languagecode in wikilanguagecodes:
+        print(languagecode)
         query = 'SELECT qitem FROM '+languagecode+'wiki WHERE ccc_binary = 1;'
+        i=0
         for row in cursor.execute(query): 
+            i+=1
             qitem = row[0]
             try:
                 langs = qitems_langs[qitem]
-                qitems_langs[qitem] = qitems_langs[qitem] + '"\t"' + languagecode+'"'
+                qitems_langs[qitem] = langs + '\t' + languagecode
             except:
-                qitems_langs[qitem] = '"'+languagecode+'"'
-
+                qitems_langs[qitem] = languagecode
+        print(i)
     params = []
     for qitem, langs in qitems_langs.items():
         params.append((qitem, langs))
@@ -2776,15 +1851,22 @@ def create_update_qitems_ccc_table():
     cursor.executemany(query, params); # to top_diversity_articles.db
     conn.commit()
 
+    for languagecode in wikilanguagecodes:
+        query = "SELECT COUNT(*) FROM "+languagecode+"wiki INNER JOIN qitems_lang_ccc on "+languagecode+"wiki.qitem = qitems_lang_ccc.qitem WHERE "+languagecode+"wiki.ccc_binary=0;"
+        cursor.execute(query)
+        value = cursor.fetchone()
+        print (languagecode)
+        if value != None: 
+            print(value[0])
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     create_function_account_db(function_name, 'mark', duration)
 
 
-
+    
 
 def restore_ccc_binary_create_old_ccc_binary(languagecode,file):
-#    print("start the CCC selection restore to the original ccc binary for language: "+languagecode)
+#    print("start the CONTENT selection restore to the original ccc binary for language: "+languagecode)
 
     functionstartTime = time.time()
 
@@ -3066,190 +2148,14 @@ def extract_ccc_count(languagecode, filename, message):
         f.write(languagename+'\t'+message+'\t'+row1+'\t'+row2+'\n')
 
 
-
-################################################################
-
-# HEY! IT NEEDS EXTENDING FOR THESE OTHER 5 TYPES OF DIVERSITY
-
-# 'sexual_orientation text, '+
-# 'gender text, '+
-# 'religion text, '+
-# 'race_and_ethnia text, '+
-# 'time integer, '+
-
-
-# Extends the Articles table with the topic (e.g. gender) from wikidata.
-#topic = ['gender', 'folk', 'monuments_and_buildings', 'earth', 'music_creations_and_organizations', 'sport', 'food', 'paintings', 'glam', 'books', 'clothing_and_fashion']
-
-def label_diversity_topics_wd(topic, languagecode, page_titles_page_ids, page_titles_qitems):
-
-    functionstartTime = time.time()
-    function_name = 'label_diversity_topics_wd '+languagecode+' '+topic
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-#    conn2 = sqlite3.connect(databases_path + 'ccc_old.db'); cursor2 = conn2.cursor()
-
-    qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
-
-    updated = []
-
-    if topic == 'gender':
-        query = "SELECT people_properties.qitem, people_properties.qitem2 FROM people_properties WHERE people_properties.property = 'P21' AND people_properties.qitem IN (SELECT people_properties.qitem FROM people_properties INNER JOIN sitelinks ON sitelinks.qitem = people_properties.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki' AND people_properties.qitem2 = 'Q5');"
-    elif topic == 'industry':
-        query = "SELECT industry_properties.qitem, industry_properties.qitem2 FROM industry_properties INNER JOIN sitelinks ON sitelinks.qitem = industry_properties.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki';"
-    else:
-        query = "SELECT "+topic+".qitem, "+topic+".qitem2 FROM "+topic+" INNER JOIN sitelinks ON sitelinks.qitem = "+topic+".qitem WHERE sitelinks.langcode = '"+languagecode+"wiki';"
-
-
-    for row in cursor.execute(query):
-        try:
-            qitem=row[0]
-            qualifier=row[1] # for people the qualifier is gender
-            page_id=page_titles_page_ids[qitems_page_titles[qitem]]
-            updated.append((qualifier,page_id,qitem))
-#            print (page_id,qitem,iw_count)
-        except:
-            pass
-
-    query = 'UPDATE '+languagecode+'wiki SET '+topic+'=? WHERE page_id = ? AND qitem = ?;'
-    cursor2.executemany(query,updated)
-    conn2.commit()
-
-    print (len(updated))
-    print ('CCC '+topic+' properties updated.')
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-
-def label_potential_lgbt_articles_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems):
-    pass
-        # 'lgbt_binary integer, '
-        # 'category_crawling_lgbt text, '
-
-def calculate_articles_lgbt_binary_classifier():
-    # using category_crawling_lgbt, outlinks_to_lgbt, inlinks_from_lgbt,....
-
-    pass
-
-
-
 #######################################################################################
-
-
-### SYNCHRONISATION AND SAFETY FUNCTIONS ###
-def backup_db():
-    function_name = 'backup_db ccc_selection'
-    if create_function_account_db(function_name, 'check','')==1: return
-    functionstartTime = time.time()
-
-    try:
-        shutil.copyfile(databases_path + 'wikipedia_diversity.db', databases_path + "wikipedia_diversity_backup.db")
-        print ('File wikipedia_diversity.db copied as wikipedia_diversity_backup.db at the end of the ccc_selection.py script.')
-    except:
-        print ('Not possible to create the backup.')
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-def create_function_account_db(function_name, action, duration):
-    function_name_string = function_name
-    cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db)
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS function_account (function_name text, year_month text, finish_time text, duration text, PRIMARY KEY (function_name, year_month));")
-
-    if action == 'check':
-        query = 'SELECT duration FROM function_account WHERE function_name = ? AND year_month = ?;'
-        cursor.execute(query,(function_name,cycle_year_month))
-        function_name = cursor.fetchone()
-        if function_name != None:
-            print ('= Process Accountant: The function "'+function_name_string+'" has already been run. It lasted: '+function_name[0])
-            return 1
-        else:
-            print ('- Process Accountant: The function "'+function_name_string+'" has not run yet. Do it! Now: '+str(datetime.datetime.utcnow().strftime("%Y/%m/%d-%H:%M:%S")))
-            return 0
-
-    if action == 'mark':
-        finish_time = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S");
-        query = "INSERT INTO function_account (function_name, year_month, finish_time, duration) VALUES (?,?,?,?);"
-        cursor.execute(query,(function_name,cycle_year_month,finish_time,duration))
-        conn.commit()
-        print ('+ Process Accountant: '+function_name+' DONE! After '+duration+'.\n')
-
-
-
-def check_run_failed_functions():
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-
-    function_parameters = [{'label_ccc_articles_geolocation_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_geolocated_reverse_geocoding':(languagecode,page_titles_qitems, page_titles_page_ids),'label_ccc_articles_country_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_location_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_language_strong_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_created_by_properties_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_part_of_properties_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_keywords':(languagecode,page_titles_qitems)},{'label_potential_ccc_articles_category_crawling':(languagecode,page_titles_page_ids,page_titles_qitems),'label_potential_ccc_articles_with_inlinks ccc':(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'),'label_potencial_ccc_articles_with_outlinks ccc':(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'),'label_potential_ccc_articles_language_weak_wd':(languagecode,page_titles_page_ids),'label_potential_ccc_articles_affiliation_properties_wd':(languagecode,page_titles_page_ids),'label_potential_ccc_articles_has_part_properties_wd':(languagecode,page_titles_page_ids)},{'label_other_ccc_country_properties':(languagecode,page_titles_page_ids,page_titles_qitems),'label_other_ccc_location_properties':(languagecode,page_titles_page_ids,page_titles_qitems),'label_other_ccc_wikidata_properties':(languagecode,page_titles_page_ids,page_titles_qitems),'label_potential_ccc_articles_with_inlinks no_ccc':(languagecode,page_titles_qitems,'no ccc'),'label_potencial_ccc_articles_with_outlinks no_ccc':(languagecode,page_titles_page_ids,'no ccc')},{'calculate_articles_ccc_binary_classifier':(languagecode,'RandomForest',page_titles_page_ids,page_titles_qitems),'calculate_articles_ccc_main_territory':(languagecode),'calculate_articles_ccc_retrieval_strategies':(languagecode)}]
-
-    for languagecode in wikilanguagecodes:
-        for functions in function_parameters:
-            for function,parameters in functions.items():
-                query = 'SELECT count(*) FROM function_account WHERE function_name = "'+function+ ' ' + languagecode
-                cursor.execute(query)
-                row = cursor.fetchone()
-                if row != None: num = 0
-                else: num = 1
-
-                if num == 0:                
-                    (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-                    exec(function,parameters)
-
-
-
-
-
-
-def clean_failed_function_account():
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-
-    function_parameters = {'label_diversity_topics_wd':'gender','label_ccc_articles_geolocation_wd':'geocoordinates','label_ccc_articles_geolocated_reverse_geocoding':'ccc_geolocated','label_ccc_articles_country_wd':'country_wd','label_ccc_articles_location_wd':'location_wd','label_ccc_articles_language_strong_wd':'language_strong_wd','label_ccc_articles_created_by_properties_wd':'created_by_wd','label_ccc_articles_part_of_properties_wd':'part_of_wd','label_ccc_articles_keywords':'keyword_title','label_potential_ccc_articles_category_crawling':'category_crawling_level','label_potential_ccc_articles_with_inlinks ccc':'num_inlinks','label_potencial_ccc_articles_with_outlinks ccc':'num_outlinks','label_potential_ccc_articles_language_weak_wd':'language_weak_wd','label_potential_ccc_articles_affiliation_properties_wd':'affiliation_wd','label_potential_ccc_articles_has_part_properties_wd':'has_part_wd','label_other_ccc_country_properties':'other_ccc_country_wd','label_other_ccc_location_properties':'other_ccc_location_wd','label_other_ccc_wikidata_properties':'other_ccc_language_strong_wd','label_other_ccc_category_crawling':'other_ccc_category_crawling_relative_level','label_potential_ccc_articles_with_inlinks no_ccc':'num_inlinks_from_geolocated_abroad','label_potencial_ccc_articles_with_outlinks no_ccc':'num_outlinks_to_geolocated_abroad','calculate_articles_ccc_main_territory':'main_territory','calculate_articles_ccc_retrieval_strategies':'num_retrieval_strategies'}
-
-
-    for languagecode in wikilanguagecodes:
-        print ('\n'+languagecode)
-
-        for function, parameter in function_parameters.items():
-            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+parameter+' IS NOT NULL;'
-            cursor.execute(query)
-            row = cursor.fetchone()
-            if row != None: num = row[0]
-
-            query = 'SELECT count(*) FROM function_account WHERE function_name = "'+function+ ' ' + languagecode
-            if function == 'label_diversity_topics_wd': query+= ' gender"'
-            else: query+='"'
-
-            cursor.execute(query)
-            row = cursor.fetchone()
-            if row != None: num2 = row[0]
-
-#            if num2 != 0 and num != 0:
-#                print(function+' exists and the database is full. nothing to do, everything is fine.')
-            if num2 != 0 and num == 0:
-                print(function+' '+languagecode+' exists and the database is empty. we delete function account so the function runs again next time.')
-                query = 'DELETE FROM function_account WHERE function_name = "'+function+' '+languagecode
-                if function == 'label_diversity_topics_wd': query+= ' gender"'
-                else: query+='"'
-
-                cursor.execute(query)
-            if num != 0 and num2 == 0:
-                print(parameter+' '+languagecode+' is in the database but the function '+function+' '+languagecode+' has not been accounted.')
-        conn.commit()
 
 
 def main_with_exception_email():
     try:
         main()
     except:
-    	wikilanguages_utils.send_email_toolaccount('WCDO - CCC SELECTION ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.')
+    	wikilanguages_utils.send_email_toolaccount('WCDO - CONTENT SELECTION ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.')
 
 
 def main_loop_retry():
@@ -3260,38 +2166,20 @@ def main_loop_retry():
             page = 'done.'
         except:
             print('There was an error in the main. \n')
-            path = '/srv/wcdo/src_data/ccc_selection.err'
+            path = '/srv/wcdo/src_data/content_selection.err'
             file = open(path,'r')
             lines = file.read()
-            wikilanguages_utils.send_email_toolaccount('WCDO - CCC SELECTION ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.' + lines); print("Now let's try it again...")
+            wikilanguages_utils.send_email_toolaccount('WCDO - CONTENT SELECTION ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.' + lines); print("Now let's try it again...")
             time.sleep(900)
             continue
 
 
-def verify_time_for_iteration():
-    print ("Let's check it is the right time for Stats generation iteration...")
-
-    # CONDITION 1: CCC created this month.
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    query = 'SELECT function_name FROM function_account WHERE function_name = "" AND year_month = ?;'
-    cursor.execute(query,cycle_year_month)
-    function_name1 = cursor.fetchone()
-
-    # CONDITION 2: TOP CCC created this month.
-    conn = sqlite3.connect(databases_path + top_wikipedia_diversity_db); cursor = conn.cursor()
-    query = 'SELECT function_name FROM function_account WHERE function_name = "update_top_ccc_articles_titles translations" AND year_month = ?;'
-    cursor.execute(query,cycle_year_month)
-    function_name2 = cursor.fetchone()
-
-    if function_name1 != None and function_name2 != None: return True
-
-
-#######################################################################################
+######################################################################################
 
 class Logger_out(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("ccc_selection"+".out", "w")
+        self.log = open("content_selection"+".out", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -3300,7 +2188,7 @@ class Logger_out(object): # this prints both the output to a file and to the ter
 class Logger_err(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("ccc_selection"+".err", "w")
+        self.log = open("content_selection"+".err", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -3312,25 +2200,11 @@ class Logger_err(object): # this prints both the output to a file and to the ter
 if __name__ == '__main__':
     sys.stdout = Logger_out()
     sys.stderr = Logger_err()
-    startTime = time.time()
 
-    datasets_path = '/srv/wcdo/datasets/'
-    dumps_path = '/srv/wcdo/dumps/'
-    databases_path = '/srv/wcdo/databases/'
-    wikipedia_diversity_db = 'wikipedia_diversity.db'
-    wikidata_db = 'wikidata.db'
-
-#    while True:
-#    time.sleep(84600) # every ninety days
-#    print ("Good morning. It is: "+time.today()+". Let's see if today is the day to update the articles features...")
-
-#        # CHAINED TO WIKIPEDIA DIVERSITY (DATA)
-#        if verify_time_for_iteration():
-
-    # Import the language-territories mappings
-    # Import the Wikipedia languages characteristics
-    startTime = time.time()
+    script_name = 'content_selection.py'
     cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
+#    check_time_for_script_run(script_name, cycle_year_month)
+    startTime = time.time()
 
     territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
     languages = wikilanguages_utils.load_wiki_projects_information();
@@ -3355,16 +2229,13 @@ if __name__ == '__main__':
     biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
 
 
-    print ('\n* Starting the CCC SELECTION CYCLE '+cycle_year_month+' at this exact time: ' + str(datetime.datetime.now()))
-
+     wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '')
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
 
-    finishTime = time.time()
-    print ('* Done with the CCC SELECTION CYCLE. Completed successfuly after: ' + str(datetime.timedelta(seconds=finishTime - startTime)))
-    wikilanguages_utils.finish_email(startTime,'ccc_selection.out','CCC Selection')
-
-
+    wikilanguages_utils.finish_email(startTime,'content_selection.out','Content Selection')
 

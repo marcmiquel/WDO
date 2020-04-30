@@ -46,10 +46,18 @@ full_text = '''In this page, you can consult a list of articles that are related
 
 It is possible to query articles by changing the URL parameters or by using the following menus. You first need to select the *Source Languages*. The first language selected will set the reference CCC, and the other languages will be used to filter the resulting list of articles depending on how related they are to it. The *Target Languages* parameter allows you to select a list of languages in which you want to check whether the resulting list of articles exist in their language editions.
 
-You can retrieve different results and filter content by setting requirements. Selecting a *Topic* allows you obtain articles geolocated, related to people, GLAM, among others. The parameter *CCC requirement* allows you to select whether the set the requirement that the resulting articles need also to be part of the other languages’ CCC in addition to the first. It is highly recommended for better results, although it is a limitation to its number. The *% Outlinks to CCC* filters the articles that do not have a minimal percentage of their outgoing links to their CCC. Thus, the higher the percentage the more the easier they’d be part of their CCC (by default it is set to 20%).
+You can retrieve different results and filter content by setting requirements. Selecting a *Topic* allows you obtain articles geolocated, related to people, GLAM, among others. The parameter *CCC requirement* allows you to select whether the set the requirement that the resulting articles need also to be part of the other source languages’ CCC in addition to the first language. It is highly recommended for better results, although it is a limitation to its number. The *% Outlinks to CCC* sets the criterion for which articles are selected: the minimal percentage of their outgoing links to their CCC. Articles with a lower percentage of Outlinks to CCC are filtered out of the results. Thus, the higher the percentage the more the easier they’d be part of their CCC (by default it is set to 20%).
 
-Finally, you can modify three parameters in order to filter the final resulting list of articles. You can use *Order by feature* in order to sort the results according to some features (by default it is pageviews), *Show the gaps* to show only the articles that are missing in the target languages and *Limit the results* to display only a specific number of articles (by default it is 100).'''
+Finally, you can modify three parameters in order to filter the final resulting list of articles. You can use *Order by feature* in order to sort the results according to some features (by default it is pageviews). Using *Show the gaps* you can limit the results to only the articles that are missing in the target languages (All Gaps), that are missing in at least one language (At least one gap) or that are not missing (No language gaps). Using *Limit the results* you can choose to display only a specific number of articles (by default it is 100).'''
 
+
+results_text = '''
+The following table shows the resulting list of articles common to the source languages’ CCC, and its availability in the target languages.
+
+The column Source Langs. provides links to the article version in each of the selected source languages. The next column shows the title in the first source language (SL1). The next columns (editors, edits, pageviews, interwiki, creation date) show the value for some features in the first source language. If the content is ordered by another feature, this is added as an extra column. The next column shows the title in the first target language (TL1). The column Target Langs. provides links to the article version in each of the selected target languages. Finally, the Qitem column provides the id and a link to the Wikidata corresponding page.
+
+The results provided are only an approximation to common local content and may contain unrelated articles. For the best results, set the CCC requirement to 'CCC in all source languages'.
+'''
 
 
 def dash_app33_build_layout(params):
@@ -58,7 +66,7 @@ def dash_app33_build_layout(params):
 
     if len(params)!=0 and params['target_langs'].lower()!='none' and params['source_langs'].lower()!='none':
    
-        conn = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cur = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cur = conn.cursor()
 
         # SOURCE lANGUAGE
         source_langs=params['source_langs'].lower()
@@ -296,9 +304,9 @@ def dash_app33_build_layout(params):
                 columns[x]=columns_dict[columns[x]]
             except:
                 columns[x]=columns[x]
-        print(columns)
+#        print(columns)
 
-        print(df.columns)
+#        print(df.columns)
 
 #        df['average_1_3'] = df[['salary_1', 'salary_3']].mean(axis=1)
 
@@ -308,19 +316,11 @@ def dash_app33_build_layout(params):
         if len(df) == 0:
             layout = html.Div([
                 navbar,
+
                 html.H3('Common CCC Articles', style={'textAlign':'center'}),
-
-                html.H5('Unfortunately there are not articles proposed for the local content for this language. Try another combination of parameters.'),
-
                 html.Br(),
 
-                dcc.Markdown(
-                    full_text.replace('  ', '')),
-
-            # here there is the interface
-            # here there is the interface
-
-
+                dcc.Markdown(full_text.replace('  ', '')),
 
                 html.H5('Select the Languages'),
 
@@ -449,6 +449,16 @@ def dash_app33_build_layout(params):
 
                 html.A(html.Button('Query Results!'),
                     href=''),
+
+                html.Br(),
+                html.Br(),
+
+                html.Hr(),
+                html.H5('Results'),
+                dcc.Markdown(results_text.replace('  ', '')),
+                html.Br(),
+                html.H6('There are not results. Unfortunately there are no common articles for these languages and these parameters.'),
+
                 footbar,
 
             ], className="container")
@@ -590,23 +600,15 @@ def dash_app33_build_layout(params):
         df1.columns = columns
 
 
-        title = 'Common CCC Articles'
-        results_text = '''
-        The following table shows the resulting list of articles common to the source languages’ CCC, and its availability in the target languages.
-
-        The column Source Langs. provides links to the article version in each of the selected source languages. The next column shows the title in the first source language (SL1). The next columns (editors, edits, pageviews, interwiki, creation date) show the value for some features in the first source language. If the content is ordered by another feature, this is added as an extra column. The next column shows the title in the first target language (TL1). The column Target Langs. provides links to the article version in each of the selected target languages. Finally, the Qitem column provides the id and a link to the Wikidata corresponding page.
-
-        The results provided are only an approximation to common local content and may contain unrelated articles. For the best results, set the CCC requirement to 'CCC in all source languages'.
-        '''
-
         layout = html.Div([
             navbar,
-            html.H3(title, style={'textAlign':'center'}),
-            dcc.Markdown(
-                results_text.replace('  ', '')),
+            html.H3('Common CCC Articles', style={'textAlign':'center'}),
+
+            dcc.Markdown(full_text.replace('  ', '')),
+            html.Br(),
 
             # here there is the interface
-            html.H5('Select the Wikipedia'),
+            html.H5('Select the Wikipedias'),
 
             html.Div(
             html.P("Source Languages' CCC"),
@@ -639,10 +641,7 @@ def dash_app33_build_layout(params):
                 style={'width': '380px'}
              ), style={'display': 'inline-block','width': '390px'}),
 
-
             html.Br(),
-
-
             html.H5('Filter content'),
 
             html.Div(
@@ -734,12 +733,14 @@ def dash_app33_build_layout(params):
             html.A(html.Button('Query Results!'),
                 href=''),
 
-            # here there is the table
-            
+            # here there is the table            
             html.Br(),
             html.Br(),
 
+            html.Hr(),
             html.H5('Results'),
+            dcc.Markdown(results_text.replace('  ', '')),
+            html.Br(),
 
             html.Table(
             # Header
@@ -892,18 +893,8 @@ def dash_app33_build_layout(params):
 
             html.Br(),
             html.Br(),
-            html.Hr(),
-            html.A(html.Div([
-                    html.P('Wikipedia Cultural Diverstiy Observatory (Meta-Wiki Project Page)', style = {'width': '400px'}),
-                    ]),
-                    href='https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory', 
-                    target="_blank", 
-                    style={'color': '#000000', 'textAlign': 'left', 'text-decoration':'none','display': 'inline-block', 'width':'50%'}),
 
-            html.Div(id = 'current_data', children=[        
-                'Updated with dataset from: ',
-                html.B(current_dataset_period_stats)],
-                style = {'textAlign':'right','display': 'inline-block', 'width':'50%'}),
+            footbar,
 
         ], className="container")
 

@@ -14,7 +14,6 @@ dash_app32.layout = html.Div([
 ])
 
 
-
 text_default = '''
 In this page you can look for gaps in images from different sources of content, whether it is a Top CCC list or a list of articles you introduce. 
 
@@ -22,9 +21,10 @@ You can simply paste the list of article titles, the URLs, or select the list an
 
 It is especially interesting to query excluding existing images or query articles with a low number of images.
 
-Some queries might time more time than usual or return a blank page. This is because the table imagelinks in the replicas performance might not be optimal at the moment.
+Some queries might time more time than usual or return a blank page. This is because the table imagelinks in the replicas performance might not be optimal at the moment.'''
 
-'''    
+
+
 
 language_names_2 = language_names.copy()
 
@@ -106,7 +106,7 @@ def dash_app32_build_layout(params):
 
     #    lists = ['editors','featured','geolocated','keywords','women','men','created_first_three_years','created_last_year','pageviews','discussions']
 
-            conn = sqlite3.connect(databases_path + 'top_ccc_articles.db'); cur = conn.cursor()
+            conn = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cur = conn.cursor()
 
             # COLUMNS
             query = 'SELECT r.qitem, f.page_title_original, f.num_images, f.num_interwiki '
@@ -150,7 +150,7 @@ def dash_app32_build_layout(params):
 
         else:
 
-            conn = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cursor = conn.cursor()
+            conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cursor = conn.cursor()
 
             # COLUMNS
             query = 'SELECT qitem, page_title, num_images, num_interwiki '
@@ -194,25 +194,36 @@ def dash_app32_build_layout(params):
             df = pd.read_sql_query(query, conn, params = page_titles)#, parameters)
             df = df.fillna(0)
 
+        
+
+
+        if lists == 1:
+            text = '''The following table shows the Top 500 articles list '''+list_dict_inv[list_name] + ''' from '''+source_language+''' CCC and its images. '''
+
+            main_title = 'Images in the ' + source_language + ' Top CCC articles list "'+list_dict_inv[list_name]+'"'
+
+        else:
+            main_title = 'Images in the ' + source_language + ' Wikipedia queried articles'
+
+            text = '''The following table shows the articles that have been queried.'''
+
+        text += ''' The columns present the position in the list, the Qitem in Wikidata, the article title in the source language, the number of images, the value of a feature (in case you set order by), and the number of images you selected to see.
+
+        Below each image there is the number of languages in which this image to illustrate their version of the article and the total number of languages in which the article exists. The color green or red means that the image either is or is not used in the article version of the language you are querying ('''+ source_language+ ''').
+        '''
 
 
         if len(df) == 0: # there are no results.
 
             layout = html.Div([
-                navbar,
-                html.H3('Top CCC articles images', style={'textAlign':'center'}),
 
-                html.H5('There are not results. Unfortunately this list is empty for this language. Try another language and list.'),
+                navbar,
+                html.H3('Visual CCC articles', style={'textAlign':'center'}),
 
                 html.Br(),
 
                 dcc.Markdown(
                     text_default.replace('  ', '')),
-
-                # html.Div([
-                #     dcc.Markdown(text_default2.replace('  ', '')),
-                #     ],
-                #     style={'font-size': 12}),
 
 
                 html.H5('Source of content'),
@@ -361,6 +372,17 @@ def dash_app32_build_layout(params):
                 html.A(html.Button('Query Results!'),
                     href=''),
 
+
+                html.Br(),
+                html.Br(),
+
+                html.Hr(),
+                html.H5('Results'),
+                dcc.Markdown(text.replace('  ', '')),
+                html.Br(),
+                html.H5('There are not results. Unfortunately there are no images for this language and list of articles.'),
+
+
                 footbar,
 
             ], className="container")
@@ -461,39 +483,17 @@ def dash_app32_build_layout(params):
         df1 = pd.DataFrame(df_list)
 
         df1.columns = columns
-
-
         df_list = df1.values.tolist()
 
-#        print (df1.head())
-        
-        if lists == 1:
-            text = '''The following table shows the Top 500 articles list '''+list_dict_inv[list_name] + ''' from '''+source_language+''' CCC and its images. '''
-
-            title = 'Images in the ' + source_language + ' Top CCC articles list "'+list_dict_inv[list_name]+'"'
-
-        else:
-            title = 'Images in the ' + source_language + ' Wikipedia queried articles'
-
-            text = '''The following table shows the articles that have been queried.'''
-
         ## LAYOUT
-        text += ''' The columns present the position in the list, the Qitem in Wikidata, the article title in the source language, the number of images, the value of a feature (in case you set order by), and the number of images you selected to see.
-
-        Below each image there is the number of languages in which this image to illustrate their version of the article and the total number of languages in which the article exists. The color green or red means that the image either is or is not used in the article version of the language you are querying ('''+ source_language+ ''').
-        '''
-
         countries_sel = language_countries[source_lang]
 
-
-
         layout = html.Div([
-            html.H3(
-                navbar,
-                title, style={'textAlign':'center'}),
-            dcc.Markdown(
-                text.replace('  ', '')),
+            navbar,
+            html.H3('Visual CCC Articles', style={'textAlign':'center'}),
 
+            dcc.Markdown(text_default.replace('  ', '')),
+            html.Br(),
 
             html.H5('Source of content'),
 
@@ -644,7 +644,11 @@ def dash_app32_build_layout(params):
             html.Br(),
             html.Br(),
 
+            html.Hr(),
             html.H5('Results'),
+            dcc.Markdown(text.replace('  ', '')),
+            html.Br(),
+            html.H6(main_title, style={'textAlign':'center'}),
 
             html.Table(
             # Header
@@ -661,12 +665,12 @@ def dash_app32_build_layout(params):
     else:
 
         layout = html.Div([
+            navbar,
+
             html.H3('Visual CCC articles', style={'textAlign':'center'}),
             dcc.Markdown(
                 text_default.replace('  ', '')),
 
-
-#            html.Br(),
             html.Br(),
 
             html.H5('Source of content'),
@@ -871,7 +875,7 @@ def page_titles_to_current_images(page_titles, languagecode):
 
 def page_titles_to_rank_images(df, page_id_images, qitems_num_interwiki, languagecode, number_images, exclude_images):
 
-    conn = sqlite3.connect(databases_path + 'images.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + 'images_production.db'); cursor = conn.cursor()
 
     qitems = df.qitem.tolist()
 

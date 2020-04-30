@@ -7,7 +7,7 @@ from dash_apps import *
 dash_app7 = Dash(server = app, url_base_pathname = webtype + '/top_ccc_articles/', external_stylesheets = external_stylesheets)
 dash_app7.config['suppress_callback_exceptions']=True
 
-dash_app7.title = 'Top CCC Articles Lists from Cultural Context Content'+title_addenda
+dash_app7.title = 'Top CCC Articles Lists'+title_addenda
 dash_app7.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content') 
@@ -20,7 +20,6 @@ In this page, you can consult Top 500 CCC articles lists from any language CCC g
 You need to choose a *source language* from which you want to retrieve articles and a *target language* where you want to see the gap, the available and unavailable articles. The *source country* is used to filter some part of the language context, in case it encompasses more than one country (i.e. English is used in several countries besides the United Kingdom, you can choose among them). In case no country is selected, the default is 'all'. Then, you can choose among the following *lists*. In case no list is selected, the default list is 'editors'. If you have any idea for a new list, please, ask: tools.wcdo@tools.wmflabs.org. These are the current lists:
 
 '''    
-
 
 text_default2 = '''
 * Lists of CCC articles based on relevance: most pageviews during the last month (**Pageviews**), most number of editors (**Editors**), most number of edits (**Edits**), most number of edits during the last month (**Edited Last Month**), most number of edits in talk pages (**Discussions**), created during the first three years and with most edits (**First 3Y.**), created during the last year and with most edits **Last Y.**), the highest Wikirank (**Wikirank**), featured article distinction (**Featured**) most bytes and references (weights: 0.8, 0.1 and 0.1 respectively), most number of images (**Images**), most bytes and references (weights: 0.8, 0.1 and 0.1 respectively), most number of properties in Wikidata (**WD Properties**), most number of number of Interwiki links (**Interwiki**), least number of interwiki and most number of editors (**Least Interwiki Most Editors**), and least number interwiki and most number of properties (**Least Interwiki Most With Wikidata Properties**).
@@ -74,7 +73,7 @@ def dash_app7_build_layout(params):
 
     #    lists = ['editors','featured','geolocated','keywords','women','men','created_first_three_years','created_last_year','pageviews','discussions']
 
-        conn = sqlite3.connect(databases_path + 'top_ccc_articles.db'); cur = conn.cursor()
+        conn = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cur = conn.cursor()
 
         columns_dict = {'position':'Nº','page_title_original':'Article Title','num_editors':'Editors','num_edits':'Edits','num_pageviews':'Pageviews','num_bytes':'Bytes','num_images':'Images','wikirank':'Wikirank','num_references':'References','num_inlinks':'Inlinks','num_wdproperty':'Wikidata Properties','num_interwiki':'Interwiki Links','featured_article':'Featured Article','num_discussions':'Discussions','date_created':'Creation Date','num_inlinks_from_CCC':'Inlinks from CCC','related_languages':'Related Languages','page_title_target':' Article Title'}
 
@@ -237,10 +236,25 @@ def dash_app7_build_layout(params):
 
 
 #        print (query)
-
         df = pd.read_sql_query(query, conn)#, parameters)
         df = df.fillna(0)
 
+
+        if country == 'all':
+            main_title = source_language + ' Top CCC articles list "'+list_dict_inv[list_name]+'" and its coverage by '+target_language+' Wikipedia'
+
+            source_country = ' '
+        else:
+            source_country = country_names[country]
+
+            main_title = source_language + ' Top CCC articles list "'+list_dict_inv[list_name]+'" related to '+source_country+' and its coverage by '+target_language+' Wikipedia'
+            source_country = '('+source_country+')'
+
+        results_text = '''
+        The following table shows the Top 500 articles list '''+list_dict_inv[list_name] + ''' from '''+source_language+''' CCC '''+source_country+''' and its article availability in '''+target_language+''' Wikipedia. The columns present complementary features that are explicative of the article relevance (number of editors, edits, pageviews, Bytes, Wikidata properties or Interwiki links). In particular, number of Inlinks from CCC (incoming links from the CCC group of articles) highlights the article importance in terms of how much it is required by other articles. The column named Related Languages present Interwiki links to the article version when available in the four languages closer to the target language (those that cover best this language and therefore it is likely their editors consult it).
+
+        The table's last column shows the article title in its target language, in ***blue*** when it exists, in ***red*** as a proposal generated with the Wikimedia Content Translation tool or as an existing Wikidata label in the same language, and ***empty*** when the article does not exist or there is no title proposal available.
+        '''    
 
         if len(df) == 0: # there are no results.
 
@@ -249,11 +263,7 @@ def dash_app7_build_layout(params):
             layout = html.Div([
                 navbar,
                 html.H3('Top CCC articles lists', style={'textAlign':'center'}),
-
-                html.H5('There are not results. Unfortunately this list is empty for this language. Try another language and list.'),
-
                 html.Br(),
-
                 dcc.Markdown(
                     text_default.replace('  ', '')),
 
@@ -357,6 +367,15 @@ def dash_app7_build_layout(params):
 
                 html.A(html.Button('Query Results!'),
                     href=''),
+
+                html.Br(),
+                html.Br(),
+
+                html.Hr(),
+                html.H5('Results'),
+                dcc.Markdown(results_text.replace('  ', '')),
+                html.Br(),
+                html.H6('There are not results. Unfortunately this list is empty for this language.'),
 
                 footbar,
 
@@ -531,40 +550,27 @@ def dash_app7_build_layout(params):
 
 
         workbook.close()
-
-        if country == 'all':
-            title = source_language + ' Top CCC articles list "'+list_dict_inv[list_name]+'" and its coverage by '+target_language+' Wikipedia'
-
-            source_country = ' '
-        else:
-            source_country = country_names[country]
-
-            title = source_language + ' Top CCC articles list "'+list_dict_inv[list_name]+'" related to '+source_country+' and its coverage by '+target_language+' Wikipedia'
-            source_country = '('+source_country+')'
     #    dash_app7.title = title+title_addenda
 
 
-        ## LAYOUT
         col_len = len(columns)
         columns[1]=source_language+' '+columns[1]
         columns[col_len-1]=target_language+columns[col_len-1]
-
-        text = '''
-        The following table shows the Top 500 articles list '''+list_dict_inv[list_name] + ''' from '''+source_language+''' CCC '''+source_country+''' and its article availability in '''+target_language+''' Wikipedia. 
-
-        The rest of columns present complementary features that are explicative of the article relevance (number of editors, edits, pageviews, Bytes, Wikidata properties or Interwiki links). In particular, number of Inlinks from CCC (incoming links from the CCC group of articles) highlights the article importance in terms of how much it is required by other articles. The column named Related Languages present Interwiki links to the article version when available in the four languages closer to the target language (those that cover best this language and therefore it is likely their editors consult it).
-
-        The table's last column shows the article title in its target language, in ***blue*** when it exists, in ***red*** as a proposal generated with the Wikimedia Content Translation tool or as an existing Wikidata label in the same language, and ***empty*** when the article does not exist or there is no title proposal available.
-        '''    
 #        countries_sel = language_countries[source_lang]
 
-        # RESULTS PAGE
 
+        ## LAYOUT
+        # RESULTS PAGE
         layout = html.Div([
             navbar,
-            html.H3(title, style={'textAlign':'center'}),
+            html.H3('Top CCC articles lists', style={'textAlign':'center'}),
             dcc.Markdown(
-                text.replace('  ', '')),
+                text_default.replace('  ', '')),
+
+            html.Div([
+                dcc.Markdown(text_default2.replace('  ', '')),
+                ],
+                style={'font-size': 12}),
 
             html.Div(
             html.A(
@@ -574,6 +580,8 @@ def dash_app7_build_layout(params):
                 href='/downloads/top_ccc_lists/'+filename+'.xlsx',
                 target="_blank"),
             style={'float': 'right','width': '200px'}),
+
+            html.Br(),
 
             html.H5('Select the parameters'),
 
@@ -672,7 +680,11 @@ def dash_app7_build_layout(params):
             html.Br(),
             html.Br(),
 
+            html.Hr(),
             html.H5('Results'),
+            dcc.Markdown(results_text.replace('  ', '')),
+            html.Br(),
+            html.H6(main_title, style={'textAlign':'center'}),
 
             html.Table(
             # Header
@@ -689,8 +701,6 @@ def dash_app7_build_layout(params):
     else:
 
         # FIRST PAGE
-
-
         layout = html.Div([
             navbar,
             html.H3('Top CCC articles lists', style={'textAlign':'center'}),
@@ -702,7 +712,7 @@ def dash_app7_build_layout(params):
                 ],
                 style={'font-size': 12}),
 
-    #            html.Br(),
+            html.Br(),
 
             html.H5('Select the parameters'),
 

@@ -6,7 +6,7 @@ import wikilanguages_utils
 # time
 import time
 import datetime
-from dateutil import relativedelta
+from dateutil import relativedelta, rrule
 import calendar
 # system
 import os
@@ -27,7 +27,7 @@ import csv
 class Logger(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("ccc_selection"+''+".out", "w")
+        self.log = open("history_features"+''+".out", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -37,263 +37,340 @@ class Logger(object): # this prints both the output to a file and to the termina
 # MAIN
 def main():
 
-    get_all_languages_editors_flags()
+
+    languagecode = 'en'
+    functionstartTime = time.time()
+    dataset_date_month = '2019-08'
+    d_paths = []
+
+    dumps_path = '/public/dumps/public/other/mediawiki_history/'+dataset_date_month+'/'+languagecode+'wiki/all-time.tsv.bz2'
+    print (dumps_path)
+    if os.path.isfile(dumps_path):
+        d_paths.append(dumps_path)
+
+    else:
+        for year in range (2001, 2025):
+            dumps_path = '/public/dumps/public/other/mediawiki_history/'+dataset_date_month+'/'+languagecode+'wiki/'+str(year)+'.tsv.bz2'
+            loop = os.path.isfile(dumps_path)
+            if loop == True: 
+                d_paths.append(dumps_path)
+            else:
+                break
+
+        if len(d_paths) == 0:
+            for year in range(2001, 2025): # months
+                for month in range(1, 13):
+                    if month > 9:
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+dataset_date_month+'/'+languagecode+'wiki/'+str(year)+'-'+str(month)+'.tsv.bz2'
+                    else:
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+dataset_date_month+'/'+languagecode+'wiki/'+str(year)+'-0'+str(month)+'.tsv.bz2'
+
+                    last = os.path.isfile(dumps_path)
+                    if last == True:
+                        d_paths.append(dumps_path)
+
+    print(len(d_paths))
+    print (d_paths)
+
+    page_title_page_id = {}
+    for dump_path in d_paths:
+
+        print(dump_path)
+        iterTime = time.time()
+
+        dump_in = bz2.open(dump_path, 'r')
+        line = dump_in.readline()
+        line = line.rstrip().decode('utf-8')[:-1]
+        values=line.split(' ')
+
+        iter = 0
+        while line != '':
+            iter += 1
+            if iter % 10000000 == 0: print (str(iter/10000000)+' million lines.')
+            line = dump_in.readline()
+            line = line.rstrip().decode('utf-8')[:-1]
+            values=line.split('\t')
+#            print (values)
+
+        print (str(datetime.timedelta(seconds=time.time() - iterTime)))
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    print (duration)
+    return
+
+
+
+
 
     for languagecode in wikilanguagecodes:
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+        extend_articles_revision_features(languagecode, page_titles_qitems, page_titles_page_ids)
 
-        store_editors(languagecode, 'create')
-        store_editor_multilingualism_aggregated(languagecode, 'create')
+    for languagecode in wikilanguagecodes:
+        store_all_history_table(languagecode)
+        store_all_history_table_monthly(languagecode,'last month')
+        revisions_extend_editor_iterator(languagecode)
 
-        download_revision_table_db(languagecode)
-        download_revision_table_monthly(languagecode,'last month')
-
-        create_editor_engagement_metrics_table(languagecode)
-        create_editor_characteristics_metrics_table(languagecode)
-        create_ccc_distributed_table(languagecode)
-        revisions_store_iterator(languagecode)
-
-
-"""
-FALTA AIXÒ!!!
-
-source data:
-* revision.db
-wiki_articles_revisions (rev_page integer, rev_user integer, rev_user_text text, rev_timestamp integer, rev_id integer, PRIMARY KEY (rev_user,rev_timestamp)
-wiki_articles_revisions_monthly (rev_page integer, rev_user integer, rev_user_text text, rev_timestamp integer, rev_id integer, PRIMARY KEY (rev_user,rev_timestamp)
-
-target data:
-* editor_engagement.db
-wiki_editor_engagement_aggregated
-wiki_editor_characteristics_aggregated
-
-wiki_editors (user_id integer, user_name text, edit_count integer, registration text, PRIMARY KEY (user_name, user_id))
-
-wiki_multilingualism_aggregated (user_id integer, user_name text, primarybinary integer, primarylang text, numberlangs integer, PRIMARY KEY (user_name, user_id)
---> aquí hi falta l'edit count a casa.
---> aquí hi falta l'edit count total.
-
-wiki_ccc_distributed (user_id integer, user_name text, content_type text, target_lang text PRIMARY KEY (user_name, user_id))
--> els editors de cawiki i el què han editat de jawikiccc a cawiki.
-
-
-"""
 
 #### --- #### --- #### --- #### --- #### --- #### --- #### --- #### --- #### --- ####
 
 
 
-# BASIC (USER TABLE) # https://www.mediawiki.org/wiki/Manual:User_table
-def store_editors(languagecode, create_update_table):
-
-    function_name = 'store_editors '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+def extend_articles_revision_features(languagecode, page_titles_qitems, page_titles_page_ids):
 
     functionstartTime = time.time()
-    last_period_time = functionstartTime
+    function_name = 'extend_articles_revision_features '+languagecode
+    if create_function_account_db(function_name, 'check','')==1: return
+
+    num_editors = {}
+    num_edits = {}
+    num_edits_last_month = {}
+    first_edit_timestamp = {}
+    num_discussions = {}
 
 
-    # https://www.mediawiki.org/wiki/Manual:Database_layout
-    table_name = languagecode+'wiki_editors'
+    page_ids_qitems = {}
+    for page_title,page_id in page_titles_page_ids.items():
+        page_ids_qitems[page_id]=page_titles_qitems[page_title]
 
-    conn = sqlite3.connect(databases_path + editor_engagement_db)
-    cursor = conn.cursor()
+    for page_id in page_titles_page_ids.values():
+        num_discussions[page_id]=0
+        num_editors[page_id]=set()
+        num_edits[page_id]=0
+        num_edits_last_month[page_id]=0
+        first_edit_timestamp[page_id]=''
 
-    if create_update_table == 'create':
-        try:
-            cursor.execute("DROP TABLE "+table_name+";")
-            print ('table dropped.')
-            conn.commit()
-        except:
-            print ('table not dropped.')
+    last_month_date = datetime.date.today() - relativedelta.relativedelta(months=1)
+    first_day = int(last_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S'))
+    last_day = int(last_month_date.replace(day = calendar.monthrange(last_month_date.year, last_month_date.month)[1]).strftime('%Y%m%d%H%M%S'))
 
-        cursor.execute("CREATE TABLE IF NOT EXISTS "+table_name+" (user_id integer, user_name text, edit_count integer, registration text, PRIMARY KEY (user_name, user_id));")
-        conn.commit()
+    d_paths = []
+    i = 0
+    loop = True
+    while (loop):
+        i+=1
+        dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-stub-meta-history'+str(i)+'.xml.gz'
+        loop = os.path.isfile(dumps_path)
+        dumps_path = '/srv/wcdo/dumps/enwiki-latest-stub-meta-history'+str(i)+'.xml'#.gz'
+        if loop == True: 
+            d_paths.append(dumps_path)
+        if i==1 and loop == False:#True:
+            d_paths.append('/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-stub-meta-history.xml.gz')
+
+    print(len(d_paths))
+
+    page_title_page_id = {}
+    for dump_path in d_paths:
+
+        print(dump_path)
+
+        page_title = None
+        cur_page_title = None
+        ns = None
+        page_id = None
+
+        cur_time = time.time()
+        i=0
+
+        n_discussions = 0
+        n_edits = 0
+        n_editors = set()
 
 
-    mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
+#        with gzip.open(dump_path, 'rb') as xml_file:
+        pages = etree.iterparse(dump_path, events=("start", "end"))
+        for event, elem in pages:
 
+            if event == 'start':
+
+                if elem.tag == '{http://www.mediawiki.org/xml/export-0.10/}mediawiki':
+                    root = elem
+
+            elif event == 'end':
+                # SECTION PAGETITLE, PAGEID, NS
+
+                taggy = elem.tag.replace('{http://www.mediawiki.org/xml/export-0.10/}','')
+                text =  elem.text
+#                print (taggy)
+#                print (text)
+
+                if taggy == 'title': 
+                    page_title = text.replace(' ','_')
+
+                # if elem.attrib != None:
+                #     try:
+                #         page_title = elem.attrib['title'].replace(' ','_')
+                #     except:
+                #         pass
+
+                if page_title != cur_page_title and cur_page_title != None:
+                    num_edits[page_id] = n_edits
+                    n_edits = 0
+                    num_editors[page_id]=len(n_editors)
+                    n_editors=set()
+                    num_discussions[page_id]=n_discussions
+                    page_id = None
+
+                    i+=1
+                    if i%100==0: 
+                        last_time=cur_time
+                        cur_time=time.time()
+                        print('\t'+str(i)+' '+str(datetime.timedelta(seconds=cur_time - last_time)))
+                        print(str(round(100/(cur_time - last_time),3))+' '+'pages per second.')
+
+                cur_page_title = page_title
+
+                if taggy == 'id' and page_id == None:
+                    page_id = int(text)
+
+                    if ns == 0:
+                        try:
+                          qitem = page_ids_qitems[page_id] # only to create a page_id None in case it is not there
+                          page_title_page_id[cur_page_title]=page_id
+                        except:
+                            page_id = None
+
+                    if ns == 1:
+                        title = cur_page_title.split(':')[1]
+                        try:
+                            page_id = page_title_page_id[title]
+                            qitem = page_ids_qitems[page_id] # only to create a page_id None in case it is not there
+                        except:
+                            page_id = None
+
+                if taggy == 'ns':
+                    ns = int(text)
+
+                if (taggy == 'username' or taggy == 'ip') and page_id != None:
+                    username = text
+
+                    if ns == 0:
+                        n_editors.add(username)
+                        n_edits+=1
+
+                    if ns == 1 and page_id!= None:
+                        n_discussions+=1
+#                        print(page_id,ns,cur_page_title)
+
+                if taggy == 'timestamp' and ns == 0 and page_id != None: 
+
+                    timestamp = datetime.datetime.strptime(text,'%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d%H%M%S')
+                    if first_edit_timestamp[page_id]=='': first_edit_timestamp[page_id] = timestamp
+                    timestamp = int(timestamp)
+                    if timestamp > first_day and timestamp < last_day:
+                        num_edits_last_month[page_id]+=1
+
+                elem.clear()
+
+    print('parsed')
+
+    page_ids_page_titles = {v: k for k, v in page_title_page_id.items()}
     parameters = []
+    for page_id in num_editors:
+        # print((len(num_editors[page_id]), 
+        #     num_edits[page_id], 
+        #     num_edits_last_month[page_id], 
+        #     first_edit_timestamp[page_id], 
+        #     num_discussions[page_id], 
+        #     page_id, 
+        #     page_ids_qitems[page_id], 
+        #     page_ids_page_titles[page_id]))
 
+        try:
+            parameters.append((num_editors[page_id], num_edits[page_id], num_edits_last_month[page_id], first_edit_timestamp[page_id], num_discussions[page_id], page_id, page_ids_qitems[page_id], page_ids_page_titles[page_id]))
+        except:
+            pass
+#    print (len(parameters),len(page_titles_qitems))
 
-    mysql_cur_read.execute("SELECT max(user_id) FROM user;")
-    maxval = int(mysql_cur_read.fetchone()[0])
-    print (maxval)
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
-    if maxval < 10000000:
-        print ('Trying the big query.')
-        query = 'SELECT user_name, user_id, user_registration, user_editcount FROM user;'
-        mysql_cur_read.execute(query)
-
-        rows = mysql_cur_read.fetchall()
-        for row in rows:
-            username = str(row[0].decode('utf-8'))
-            user_id = str(row[1])
-            user_registration = row[2]
-            user_editcount = str(row[3])
-            parameters.append((username,user_id,user_registration,user_editcount))
-    else:
-        print ('Trying to run the query with batches.')
-
-        increment = 500000
-        range_values = 0
-        while (range_values < maxval):
-            val1 = range_values
-            range_values = range_values + increment
-            if range_values > maxval: range_values = maxval
-            val2 = range_values
-
-            pastparameterslength = len(parameters)
-
-            interval = 'user_id BETWEEN '+str(val1)+' AND '+str(val2)
-            query = "SELECT user_name, user_id, user_registration, user_editcount FROM user WHERE "+interval+";"
-            print (query)
-
-            mysql_cur_read.execute(query)
-            rows = mysql_cur_read.fetchall()
-            for row in rows: 
-                try: 
-                    username = str(row[0].decode('utf-8'))
-                    user_id = str(row[1])
-                    user_registration = row[2]
-                    user_editcount = str(row[3])
-                    parameters.append((username,user_id,user_registration,user_editcount))
-
-                except: continue
-            print (len(parameters))
-
-            print (str(datetime.timedelta(seconds=time.time() - last_period_time))+' seconds.')
-
-            seconds = int(datetime.timedelta(seconds=time.time() - last_period_time).total_seconds())
-            if seconds == 0: seconds = 1
-            print (str((len(parameters)-pastparameterslength)/seconds)+' rows per second.')
-            last_period_time = time.time()
-
-
-    print ('In this language '+languagecode+' there is this number of editors: '+str(len(parameters)))
-
-    if create_update_table == 'create':
-        query = 'INSERT OR IGNORE INTO '+table_name+' (user_name, user_id, registration, edit_count) VALUES (?,?,?,?);';
-        print ('insert')
-    else:
-        query = 'UPDATE '+table_name+' (user_name, user_id, registration, edit_count) VALUES (?,?,?,?);'
-        print ('update')
-
+    query = 'UPDATE '+languagecode+'wiki SET (num_editors, num_edits, num_edits_last_month, date_created,num_discussions)=(?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
     cursor.executemany(query,parameters)
     conn.commit()
-    conn.close()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     create_function_account_db(function_name, 'mark', duration)
 
 
 
-def store_editor_multilingualism_aggregated(languagecode, create_update_table):
-    # QUEDA EL DUBTE SI AQUESTA FUNCIÓ TAMBÉ HAURIA DE FER UN INSERT A LA DE MULTILINGUALISM DISTRIBUTED PEL QUÈ FA A WP.
-
-    # FIRST WE OBTAIN THE MAIN TABLE DATA
-    # fem-ho tot en base a joins i deixem-nos de diccionaris.
-    # PRIMER: carregar en memòria els editors de la llengua principal. diccionari i paràmeters.
-    # SEGON: fer el inner join i treure aquells que en la llengua estrangera superen la principal en edits i modificar l'array.
-
-    function_name = 'store_editor_multilingualism_aggregated '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    functionstartTime = time.time()
-
-    conn = sqlite3.connect(databases_path + editor_engagement_db)
-    cursor = conn.cursor()
-
-    table_name = languagecode+'wiki_multilingualism_aggregated'
-
-    if create_update_table == 'create':
-        try:
-            cursor.execute("DROP TABLE "+table_name+";")
-            conn.commit()
-            print ('table dropped.')
-
-        except:
-            print ('table not dropped.')
-
-        cursor.execute("CREATE TABLE IF NOT EXISTS "+table_name+" (user_id integer, user_name text, primarybinary integer, primarylang text, numberlangs integer, PRIMARY KEY (user_name, user_id));")
-        conn.commit()
-
-    languagecode_editors = {}
-    languagecode_editors_edit_count = {}
-
-    query = "SELECT user_name, edit_count, user_id FROM "+languagecode+'wiki_editors;'
-    cursor.execute(query)
-    for row in cursor.execute(query):
-        user_name=row[0]
-        edit_count=row[1]
-        user_id=row[2]
-
-        primarylang=languagecode
-        primarybinary=1
-        numberlangs=1
-
-        array = [user_id,primarylang,primarybinary,numberlangs]
-        languagecode_editors_edit_count[user_name] = edit_count
-        languagecode_editors[user_name]=array
 
 
-    # THEN WE CONSULT EVERY OTHER TABLE DATA
-    for langcode in wikilanguagecodes:
-        if languagecode == langcode: continue
-       # BONA QUERY 'SELECT ca.user_name, en.edit_count FROM cawiki_editors ca INNER JOIN enwiki_editors en ON ca.user_name = en.user_name WHERE en.edit_count > 0 AND en.edit_count > ca.edit_count;'
+def extend_articles_first_timestamp_lang():
+    function_name = 'extend_articles_first_timestamp_lang'
+    # if create_function_account_db(function_name, 'check','')==1: return
+    # functionstartTime = time.time()
 
-        query = 'SELECT '+languagecode+'wiki'+'.user_name, '+langcode+'wiki'+'.edit_count FROM '+languagecode+'wiki_editors '+languagecode+'wiki'+' INNER JOIN '+langcode+'wiki_editors '+langcode+'wiki'+' ON '+languagecode+'wiki'+'.user_name = '+langcode+'wiki'+'.user_name WHERE '+langcode+'wiki'+'.edit_count > 0;'
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+    
+    lang_qitems_is_first_timestamp = {}
+    qitems_timestamp_lang = {}
+    for languagecode in wikilanguagecodes:
+        print (languagecode)
+        lang_qitems_is_first_timestamp[languagecode]=[]
 
-#        query = 'SELECT '+languagecode+'wiki'+'.user_name, '+langcode+'wiki'+'.edit_count FROM '+languagecode+'wiki_editors '+languagecode+'wiki'+' INNER JOIN '+langcode+'wiki_editors '+langcode+'wiki'+' ON '+languagecode+'wiki'+'.user_name = '+langcode+'wiki'+'.user_name WHERE '+langcode+'wiki'+'.edit_count > 0 AND '+langcode+'wiki'+'.edit_count > '+languagecode+'wiki'+'.edit_count;'
-
-        print (query)
-        i = 0
+        query = 'SELECT qitem, date_created FROM '+languagecode+'wiki;'
         for row in cursor.execute(query):
-            i+=1
-            user_name=row[0]
-            edit_count_new=row[1]
+            qitem = row[0]
+            first_timestamp = row[1]
 
             try:
-                array=languagecode_editors[user_name]
-                user_id=array[0]
-                primarylang = array[1]
-                primarybinary = array[2]
-                numberlangs = array[3]+1
+                lang_timestamp = qitems_timestamp_lang[qitem]
 
-                edit_count = languagecode_editors_edit_count[user_name]
-                if edit_count_new>edit_count:
-                    primarylang = langcode
-                    primarybinary = 0
-                    languagecode_editors_edit_count[user_name] = edit_count_new
+                stored_timestamp = lang_timestamp[0]
+                stored_lang = lang_timestamp[1]
 
-                languagecode_editors[user_name]=[user_id,primarylang,primarybinary,numberlangs]
-#                print ([user_id,primarylang,primarybinary,numberlangs])
+                if stored_timestamp > first_timestamp:
+                    qitems_timestamp_lang[qitem] = [first_timestamp,languagecode]
+
             except:
-                pass
-        print (langcode+'\t'+str(i))
+                qitems_timestamp_lang[qitem] = [first_timestamp,languagecode]
 
     parameters = []
-    for user_name, array in languagecode_editors.items():
-        parameters.append((array[0],user_name,array[1],array[2],array[3]))
+    for qitem,lang_timestamp in qitems_timestamp_lang.items():
+        parameters.append((str(lang_timestamp[1]),str(qitem)))
+        stored_lang = lang_timestamp[1]
 
-    # FINALLY WE INTRODUCE THE DATA TO THE FINAL TABLE
-    if create_update_table == 'create':
-        query = 'INSERT OR IGNORE INTO '+table_name+' (user_id, user_name, primarylang, primarybinary, numberlangs) VALUES (?,?,?,?,?);';
-        print ('insert')
-    else:
-        query = 'UPDATE '+table_name+' (user_id, user_name, primarylang, primarybinary, numberlangs) VALUES (?,?,?,?,?);'
-        print ('update')
+    print (len(parameters))
+    print ('now introducing...')
 
-    cursor.executemany(query,parameters)
-    conn.commit()
-    conn.close()
+    for languagecode in wikilanguagecodes:
+        print (languagecode)
+        query = 'UPDATE '+languagecode+'wiki SET first_timestamp_lang = ? WHERE qitem = ?;'
+        cursor.executemany(query,parameters)
+        conn.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     create_function_account_db(function_name, 'mark', duration)
 
 
-def download_revision_table_db(languagecode):
 
-    function_name = 'download_revision_table_db '+languagecode
+#######################################################################################
+
+
+"""
+USER DATA LEGEND:
+
+source data:
+* revision.db
+wiki_revisions (rev_page integer, rev_user integer, rev_user_text text, rev_timestamp integer, rev_id integer, PRIMARY KEY (rev_user,rev_timestamp)
+wiki_revisions_monthly (rev_page integer, rev_user integer, rev_user_text text, rev_timestamp integer, rev_id integer, PRIMARY KEY (rev_user,rev_timestamp)
+
+target data:
+* editor_diversity.db
+wiki_editor_engagement_aggregated
+wiki_editor_characteristics_aggregated
+wiki_editors (user_id integer, user_name text, primarybinary integer, primarylang text, primarybinary_ecount, total_ecount, numberlangs integer, PRIMARY KEY (user_name, user_id
+
+wiki_multilingualism_aggregated (user_id integer, user_name text, primarybinary integer, primarylang text, numberlangs integer, PRIMARY KEY (user_name, user_id)
+
+wiki_ccc_distributed (user_id integer, user_name text, content_type text, target_lang text PRIMARY KEY (user_name, user_id))
+-> els editors de cawiki i el què han editat de jawikiccc a cawiki.
+"""
+
+
+def store_all_history_table(languagecode):
+
+    function_name = 'store_all_history_table '+languagecode
     if create_function_account_db(function_name, 'check','')==1: return
 
     functionstartTime = time.time()
@@ -390,9 +467,9 @@ def download_revision_table_db(languagecode):
     create_function_account_db(function_name, 'mark', duration)
 
 
-def download_revision_table_monthly(languagecode, time_range):
+def store_all_history_table_monthly(languagecode, time_range):
 
-    function_name = 'download_revision_table_monthly '+languagecode + ' '+time_range
+    function_name = 'store_all_history_table_monthly '+languagecode + ' '+time_range
     if create_function_account_db(function_name, 'check','')==1: return
 
     functionstartTime = time.time()
@@ -477,15 +554,15 @@ def download_revision_table_monthly(languagecode, time_range):
 
 
 # EXTENDED (REVISION TABLE) # https://www.mediawiki.org/wiki/Manual:Revision_table
-def revisions_store_iterator(languagecode):
+def revisions_extend_editor_iterator(languagecode):
 
-    function_name = 'revisions_store_iterator '+languagecode
+    function_name = 'revisions_extend_editor_iterator '+languagecode
     if create_function_account_db(function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     last_period_time = functionstartTime
 
-    conn = sqlite3.connect(databases_path + editor_engagement_db); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + editor_diversity_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + revision_db); cursor2 = conn2.cursor()
 
     query = 'SELECT count(user_id) FROM '+languagecode+'wiki_editors;'
@@ -494,15 +571,12 @@ def revisions_store_iterator(languagecode):
 
     edits_page_ids = []; edits_timestamps = []
 
-
     # page_ids to intersect
     """
-    page_ids_language_ccc = get_page_ids_language_ccc(languagecode)
-
-    page_ids_namespaces = get_language_page_ids_namespaces(languagecode)
+    page_ids_language_ccc = get_language_ccc_page_ids(languagecode)
+    page_ids_namespaces = get_language_namespaces_page_ids(languagecode)
     user_id_userpage_page_id, user_id_userpage_talk_page_id = get_language_editors_user_page_ids(languagecode)
     """
-
 
     ccc_count = {}; 
     for languagecode2 in wikilanguagecodes: ccc_count[languagecode2]=0
@@ -533,12 +607,12 @@ def revisions_store_iterator(languagecode):
 
             # check the revisions
             """
-            ccc_params += store_ccc_distributed(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_language_ccc, ccc_count)
+            ccc_params += extend_editors_ccc_distributed(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_language_ccc, ccc_count)
             
-            characteristics_params += store_namespaces_edits(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_namespaces, user_id_userpage_page_id, user_id_userpage_talk_page_id)
+            characteristics_params += extend_editors_namespaces_edits(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_namespaces, user_id_userpage_page_id, user_id_userpage_talk_page_id)
             """
 
-            engagement_params += store_engagement_metrics(languagecode, rev_user, rev_user_text, edits_timestamps, month_period)
+            engagement_params += extend_editors_engagement_metrics(languagecode, rev_user, rev_user_text, edits_timestamps, month_period)
 
             edits_page_ids = []; edits_timestamps = []
 
@@ -593,37 +667,7 @@ def revisions_store_iterator(languagecode):
 # * EDITOR CHARACTERISTICS METRICS
 # e.g. cawiki_editors_characteristic
 
-def create_editor_characteristics_metrics_table(languagecode):
-
-    function_name = 'create_editor_characteristics_metrics_table '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + editor_engagement_db)
-    cursor = conn.cursor()
-
-    table_name = languagecode+'wiki_editor_characteristics_aggregated'
-    create_update_table = 'create'
-    if create_update_table == 'create':
-        try:
-            cursor.execute("DROP TABLE "+table_name+";")
-            conn.commit()
-            print ('table dropped.')
-        except:
-            print ('table not dropped.')
-
-    query = ("CREATE TABLE IF NOT EXISTS "+table_name+" (user_id integer, user_name text, "+
-        "namespace_0_edits integer, namespace_1_edits integer, namespace_2_edits integer, namespace_3_edits integer, namespace_4_edits integer, namespace_5_edits integer, namespace_6_edits integer, namespace_7_edits integer, namespace_8_edits integer, namespace_9_edits integer, namespace_10_edits integer, namespace_11_edits integer, namespace_12_edits integer, namespace_13_edits integer, namespace_14_edits integer, namespace_15_edits integer,"
-            "userpage_edits integer, userpage_talk_edits integer,"
-        "PRIMARY KEY (user_name, user_id));")
-
-    cursor.execute(query)
-    conn.commit()
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-def store_namespaces_edits(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_namespaces, user_id_userpage_page_id, user_id_userpage_talk_page_id):
+def extend_editors_namespaces_edits(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_namespaces, user_id_userpage_page_id, user_id_userpage_talk_page_id):
 
     try: userpage_page_id = user_id_userpage_page_id[rev_user]
     except: userpage_page_id = None
@@ -663,56 +707,15 @@ def store_namespaces_edits(languagecode, rev_user, rev_user_text, edits_page_ids
     return characteristics_params
 
 
-
-# * EDITOR ENGAGEMENT METRICS
-# e.g. cawiki_editors_engagementmetric
-
-def create_editor_engagement_metrics_table(languagecode):
-
-    function_name = 'create_editor_engagement_metrics_table '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + editor_engagement_db)
-    cursor = conn.cursor()
-
-    table_name = languagecode+'wiki_editor_engagement_aggregated'
-    create_update_table = 'create'
-    if create_update_table == 'create':
-        try:
-            cursor.execute("DROP TABLE "+table_name+";")
-            conn.commit()
-            print ('table dropped.')
-        except:
-            print ('table not dropped.')
-
-
-    query = ("CREATE TABLE IF NOT EXISTS "+table_name+" (user_id integer, user_name text, "+
-        "first_edit_timestamp integer, last_edit_timestamp integer, " # period
-        "registered_within_month integer, registered_within_year integer," # new editor
-        "active_editor_last_month integer," # active editor status
-        "edit_count integer, onemonthago_edit_count integer, twomonthago_edit_count integer, threemonthago_edit_count integer integer," # edit count
-        "edit_count_24h integer, edit_count_7d, edit_count_30d integer, edit_count_60d integer, edit_count_after_60d integer," # retention period
-        "active_months integer, total_months integer, max_months_row integer," # time
-        "lifetime_days integer, drop_off_days integer," # drop off
-
-        "PRIMARY KEY (user_name, user_id));")
-
-    cursor.execute(query)
-    conn.commit()
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
 # general
-def store_engagement_metrics(languagecode, rev_user, rev_user_text, edits_timestamps, month_period):
+def extend_editors_engagement_metrics(languagecode, rev_user, rev_user_text, edits_timestamps, month_period):
     # aquí faríem tots els càlculs amb els timestamps passats a datetime.
 
     # INITIAL DATA
     user_id = rev_user
     user_name = rev_user_text
 
-    first = edits_timestamps[0]; 
+    first = edits_timestamps[0]
     first_edit_timestamp = first.strftime('%Y%m%d%H%M%S')
     last = edits_timestamps[len(edits_timestamps)-1]; 
     last_edit_timestamp = last.strftime('%Y%m%d%H%M%S')
@@ -734,100 +737,68 @@ def store_engagement_metrics(languagecode, rev_user, rev_user_text, edits_timest
     one_month_ago = datetime.date.today() - relativedelta.relativedelta(months=1)
     two_month_ago = datetime.date.today() - relativedelta.relativedelta(months=2)
     three_month_ago = datetime.date.today() - relativedelta.relativedelta(months=3)
-
-    24h_after_firstedit = first + relativedelta.relativedelta(hours=24)
-    7d_after_firstedit = first + relativedelta.relativedelta(days=7)
-    60d_after_firstedit = first + relativedelta.relativedelta(days=60)
-
     one_year_ago = datetime.date.today() - relativedelta.relativedelta(year=1)
 
-    total_months = r.relativedelta.relativedelta(last,first).months
+#    24h_after_firstedit = first + relativedelta.relativedelta(hours=24)
+#    7d_after_firstedit = first + relativedelta.relativedelta(days=7)
+#    60d_after_firstedit = first + relativedelta.relativedelta(days=60)
 
 
-    # ITERATION
-    months_active = []
-    i = 0
-    for cur_edit_date in edits_timestamps:
-        i+=1
-
-        if cur_edit_date > 24h_after_firstedit and edit_count_24h == '': edit_count_24h = i
-        if cur_edit_date > 7d_after_firstedit and edit_count_7d == '': edit_count_7d = i
-        if cur_edit_date > 30d_after_firstedit and edit_count_30d == '': edit_count_30d = i
-        if cur_edit_date > 60d_after_firstedit and edit_count_60d == '': edit_count_60d = i
-        if cur_edit_date > three_month_ago and threemonthago_edit_count == '': threemonthago_edit_count = i
-        if cur_edit_date > two_month_ago and twomonthago_edit_count == '': twomonthago_edit_count = i
-        if cur_edit_date > one_month_ago and onemonthago_edit_count == '': onemonthago_edit_count = i
-
-        cur_month = cur_edit_date.strftime('%Y-%m')
-        if cur_month not in months_active: months_active.append(cur_month)
-
-    active_months = len(months_active)
+    # total_months = r.relativedelta.relativedelta(last,first).months
 
 
-    j = 0
-    for month in months_active:
+    # # ITERATION
+    # months_active = []
+    # i = 0
+    # for cur_edit_date in edits_timestamps:
+    #     i+=1
+    #     if cur_edit_date > 24h_after_firstedit and edit_count_24h == '': edit_count_24h = i
+    #     if cur_edit_date > 7d_after_firstedit and edit_count_7d == '': edit_count_7d = i
+    #     if cur_edit_date > 30d_after_firstedit and edit_count_30d == '': edit_count_30d = i
+    #     if cur_edit_date > 60d_after_firstedit and edit_count_60d == '': edit_count_60d = i
+    #     if cur_edit_date > three_month_ago and threemonthago_edit_count == '': threemonthago_edit_count = i
+    #     if cur_edit_date > two_month_ago and twomonthago_edit_count == '': twomonthago_edit_count = i
+    #     if cur_edit_date > one_month_ago and onemonthago_edit_count == '': onemonthago_edit_count = i
 
-        cur_month = datetime.datetime.strptime(month,'%Y-%m')
-        expected_next_month = prev_month + relativedelta.relativedelta(months=1)
+    #     cur_month = cur_edit_date.strftime('%Y-%m')
+    #     if cur_month not in months_active: months_active.append(cur_month)
 
-        if cur_month == expected_next_month:
-            j+= 1
-        else:
-            j=0
+    # active_months = len(months_active)
 
-        prev_month = cur_month
 
-    max_months_row = str(j)
+    # j = 0
+    # for month in months_active:
 
-    edit_count_after_60d = edit_count - edit_count_60d
-    
-    if first < one_month_ago: registered_within_month = 1
-    else: registered_within_month = 0
-   
-    if last > one_month_ago: active_editor_last_month = 1
-    else: active_editor_last_month = 0
+    #     cur_month = datetime.datetime.strptime(month,'%Y-%m')
+    #     expected_next_month = prev_month + relativedelta.relativedelta(months=1)
 
-    engagement_params = []
+    #     if cur_month == expected_next_month:
+    #         j+= 1
+    #     else:
+    #         j=0
 
-    return engagement_params
+    #     prev_month = cur_month
+
+    # max_months_row = str(j)
+
+    # edit_count_after_60d = edit_count - edit_count_60d
+
+    # if first < one_month_ago: registered_within_month = 1
+    # else: registered_within_month = 0
+
+    # if last > one_month_ago: active_editor_last_month = 1
+    # else: active_editor_last_month = 0
+
+    # engagement_params = []
+
+    # return engagement_params
 
 
 
 
 #### --- ########################################################################
 
-
-
-def create_ccc_distributed_table(languagecode):
-
-    function_name = 'create_ccc_distributed_table '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    functionstartTime = time.time()
-
-    conn = sqlite3.connect(databases_path + editor_engagement_db)
-    cursor = conn.cursor()
-
-    table_name = languagecode+'wiki_ccc_distributed'
-    create_update_table = 'create'
-    if create_update_table == 'create':
-        try:
-            cursor.execute("DROP TABLE "+table_name+";")
-            conn.commit()
-            print ('table dropped.')
-        except:
-            print ('table not dropped.')
-
-        cursor.execute("CREATE TABLE IF NOT EXISTS "+table_name+" (user_id integer, user_name text, "
-            "edit_count, lang_ccc text,"
-            "PRIMARY KEY (user_id, lang_ccc));")
-
-        conn.commit()
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
-
-def store_ccc_distributed(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_language_ccc, ccc_count):
+def extend_editors_ccc_distributed(languagecode, rev_user, rev_user_text, edits_page_ids, page_ids_language_ccc, ccc_count):
 
     ccc_count = dict(ccc_count)
     edit_count = len(edits_page_ids)
@@ -847,39 +818,34 @@ def store_ccc_distributed(languagecode, rev_user, rev_user_text, edits_page_ids,
     return ccc_params
 
 
-def update_flag_characteristics(languagecode):
-    print ('')
+def delete_all_history_tables(monthly):
 
-def update_userpage_len_characteristic(languagecode):
-    print ('')
+    function_name = 'delete_all_history_tables'
+    if create_function_account_db(function_name, 'check','')==1: return
 
-def update_ccc_characteristics(languagecode):
-    print ('')
+    functionstartTime = time.time()
+    last_period_time = functionstartTime
 
+    conn = sqlite3.connect(databases_path + revision_db)
+    cursor = conn.cursor()
+    if _monthly != None:
+        query = "DROP TABLE "+languagecode+"wiki_revisions;"
+    else:
+        query = "DROP TABLE "+languagecode+"wiki_revisions_monthly"
+    cursor.execute(query)
+    conn.commit()
 
-    """
-    "ccc_edits integer,"
-    "ccc_exporter_edits integer,"       
-    """
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    create_function_account_db(function_name, 'mark', duration)
+
 
 
 
 #### --- ####
 # OTHER UTILITIES
 
-def delete_create_database(name):  
-    try: os.remove(databases_path + name + ".db");
-    except: pass;
-    conn = sqlite3.connect(databases_path + name + '.db')
-    cursor = conn.cursor()
 
-
-# EXTRACT TO CSV
-def extract_to_csv():
-    print('')
-
-
-def get_page_ids_language_ccc(languagecode):
+def get_language_ccc_page_ids(languagecode):
     
     page_ids_language_ccc = {}
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -887,7 +853,7 @@ def get_page_ids_language_ccc(languagecode):
     for languagecode2 in wikilanguagecodes:
         if languagecode2 == languagecode: continue
         page_ids = {}
-        query = 'SELECT page_id FROM ccc_'+languagecode+'wiki WHERE qitem IN (SELECT qitem FROM ccc_'+languagecode2+'wiki WHERE ccc_binary=1);'
+        query = 'SELECT page_id FROM '+languagecode+'wiki WHERE qitem IN (SELECT qitem FROM '+languagecode2+'wiki WHERE ccc_binary=1);'
 
         c = 0
         try:
@@ -902,7 +868,7 @@ def get_page_ids_language_ccc(languagecode):
             pass
 #        print (languagecode2,c)
 
-    for row in cursor.execute('SELECT page_id FROM ccc_'+languagecode+'wiki WHERE ccc_binary=1;'):
+    for row in cursor.execute('SELECT page_id FROM '+languagecode+'wiki WHERE ccc_binary=1;'):
         page_id = row[0]
         if page_id not in page_ids_language_ccc:
             page_ids_language_ccc[page_id]=[languagecode]
@@ -915,7 +881,7 @@ def get_page_ids_language_ccc(languagecode):
 
 
 
-def get_language_page_ids_namespaces(languagecode):
+def get_language_namespaces_page_ids(languagecode):
 
     page_ids_namespaces = {}
     mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
@@ -941,9 +907,7 @@ def get_language_page_ids_namespaces(languagecode):
 
 """
 
-
-
-def get_language_editors_user_page_ids(languagecode):
+def get_language_editors_user_pages_page_ids(languagecode):
 
     mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(languagecode); 
     mysql_cur_read = mysql_con_read.cursor()
@@ -965,52 +929,6 @@ def get_language_editors_user_page_ids(languagecode):
     return user_id_userpage_page_id, user_id_userpage_talk_page_id
 
 
-def get_all_languages_editors_flags():
-
-    conn = sqlite3.connect(databases_path + editor_engagement_db)
-    cursor = conn.cursor()
-    query = ("CREATE TABLE IF NOT EXISTS flags (languagecode text, user_id integer, user_name text, flag text, PRIMARY KEY (languagecode, user_id, flag));")
-    cursor.execute(query)
-    conn.commit()
-
-    for languagecode in wikilanguagecodes:
-        print (languagecode)
-
-        parameters = []
-
-        mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(languagecode); 
-        mysql_cur_read = mysql_con_read.cursor()
-
-        query = 'SELECT user_id, user_name, ug_group FROM user_groups INNER JOIN user ON ug_user=user_id order by ug_group, user_name;'
-
-        mysql_cur_read.execute(query)
-        rows = mysql_cur_read.fetchall()
-
-        for row in rows:
-            user_id = row[0]
-            user_name = row[1]
-            ug_group = row[2]
-            parameters.append((languagecode, user_id,user_name,ug_group))
-
-        query = 'SELECT user_id, user_name FROM user WHERE CONVERT(user_name USING utf8mb4) COLLATE utf8mb4_general_ci LIKE "%bot%" AND user_id NOT IN (SELECT user_id FROM user_groups INNER JOIN user ON ug_user=user_id WHERE ug_group != "bot" AND ug_group != "flow-bot") AND user_editcount > 1000;'
-
-        mysql_cur_read.execute(query)
-        rows = mysql_cur_read.fetchall()
-
-        for row in rows:
-            user_id = row[0]
-            user_name = row[1]
-            parameters.append((languagecode, user_id,user_name,'bot'))
-
-        query = 'INSERT OR IGNORE INTO flags (languagecode, user_id, user_name, flag) VALUES (?,?,?,?);';
-        cursor.executemany(query,parameters)
-        conn.commit()
-
-    print ('All the editors flags from all languages were introduced in flags database.')
-
-
-
-
 #######################################################################################
 
 ### SAFETY FUNCTIONS ###
@@ -1019,7 +937,7 @@ def get_all_languages_editors_flags():
 def create_function_account_db(function_name, action, duration):
     function_name_string = function_name
 
-    conn = sqlite3.connect(databases_path + editor_engagement_db)
+    conn = sqlite3.connect(databases_path + editor_diversity_db)
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS function_account (function_name text, year_month text, finish_time text, duration text, PRIMARY KEY (function_name, year_month));")
 
@@ -1046,7 +964,7 @@ def main_with_exception_email():
     try:
         main()
     except:
-        wikilanguages_utils.send_email_toolaccount('Editor Retrieval: '+ cycle_year_month, 'ERROR.')
+        wikilanguages_utils.send_email_toolaccount('HISTORY FEATURES: '+ cycle_year_month, 'ERROR.')
 
 
 def main_loop_retry():
@@ -1059,12 +977,12 @@ def main_loop_retry():
             path = '/srv/wcdo/src_data/editor_retrieval.err'
             file = open(path,'r')
             lines = file.read()
-            wikilanguages_utils.send_email_toolaccount('Editor Retrieval: '+ cycle_year_month, 'ERROR.' + lines); print("Now let's try it again...")
+            wikilanguages_utils.send_email_toolaccount('HISTORY FEATURES: '+ cycle_year_month, 'ERROR.' + lines); print("Now let's try it again...")
             continue
 
 
 def verify_time_for_iteration():
-    print ("Let's check it is the right time for Editor engagement iteration...")
+    print ("Let's check it is the right time for HISTORY FEATURES iteration...")
 
     # CONDITION 1: CCC created this month.
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -1084,7 +1002,8 @@ def verify_time_for_iteration():
     cursor.execute(query,cycle_year_month)
     function_name3 = cursor.fetchone()
 
-    if function_name1 != None and function_name2 != None: and function_name3 != None: return True
+    if function_name1 != None and function_name2 != None and function_name3 != None: 
+        return True
 
 
 
@@ -1095,7 +1014,7 @@ def verify_time_for_iteration():
 class Logger_out(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("editors_retrieval"+".out", "w")
+        self.log = open("history_features"+".out", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -1104,7 +1023,7 @@ class Logger_out(object): # this prints both the output to a file and to the ter
 class Logger_err(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("editors_retrieval"+".err", "w")
+        self.log = open("history_features"+".err", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -1119,44 +1038,77 @@ if __name__ == '__main__':
 
     databases_path = '/srv/wcdo/databases/'
     wikipedia_diversity_db = 'wikipedia_diversity.db'
-    editor_engagement_db = 'editor_engagement.db'
+    editor_diversity_db = 'editor_diversity.db'
     revision_db = 'revision.db'
     stats_db = 'stats.db'
 
 
-    while True:
-        time.sleep(84600*90) # every ninety days
-        print ("Good morning. It is: "+time.today()+". Let's see if today is the day to generate the Editor retrieval...")
+    first_time = True
+    if first_time == True:
 
-        # CHAINED TO CCC CREATION (ONCE A MONTH) AND TOP CCC
-        if verify_time_for_iteration():
-            wikilanguages_utils.send_email_toolaccount('WCDO - EDITOR RETRIEVAL', '# EDITOR RETRIEVAL')
-
-            startTime = time.time()
-            today = datetime.date.today().strftime('%Y%m%d%H%M%S')
-            #year_month = datetime.date.today().strftime('%Y-%m')
-            cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
-            periods_monthly,periods_accum = wikilanguages_utils.get_months_queries()
+        startTime = time.time()
+        today = datetime.date.today().strftime('%Y%m%d%H%M%S')
+        #year_month = datetime.date.today().strftime('%Y-%m')
+        cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
+        periods_monthly,periods_accum = wikilanguages_utils.get_months_queries()
 
 
-            # Import the Wikipedia languages characteristics
-            languages = wikilanguages_utils.load_wiki_projects_information();
-            wikilanguagecodes = sorted(languages.index.tolist())
+        # Import the Wikipedia languages characteristics
+        languages = wikilanguages_utils.load_wiki_projects_information();
+        wikilanguagecodes = sorted(languages.index.tolist())
 
-            print ('checking languages Replicas databases and deleting those without one...')
-            # Verify/Remove all languages without a replica database
-            for a in wikilanguagecodes:
-                if wikilanguages_utils.establish_mysql_connection_read(a)==None:
-                    wikilanguagecodes.remove(a)
-            print (wikilanguagecodes)
+        print ('checking languages Replicas databases and deleting those without one...')
+        # Verify/Remove all languages without a replica database
+        for a in wikilanguagecodes:
+            if wikilanguages_utils.establish_mysql_connection_read(a)==None:
+                wikilanguagecodes.remove(a)
+        print (wikilanguagecodes)
 
-            print ('\n* Starting the EDITOR ENGAGEMENT retrieving and storing: ' + str(datetime.datetime.now()))
+        print ('\n* Starting the HISTORY FEATURES retrieving and storing: ' + str(datetime.datetime.now()))
 
-            main()
-        #    main_with_exception_email()
-        #    main_loop_retry()
+        main()
+    #    main_with_exception_email()
+    #    main_loop_retry()
 
-            finishTime = time.time()
-            print ('* Done with EDITOR ENGAGEMENT DATA AND STORING CYCLE completed successfuly after: ' + str(datetime.timedelta(seconds=finishTime - startTime)))
-            wikilanguages_utils.finish_email(startTime,'relevance_features.out', 'WIKIPEDIA DIVERSITY')
+        finishTime = time.time()
+        print ('* Done with HISTORY FEATURES DATA AND STORING CYCLE completed successfuly after: ' + str(datetime.timedelta(seconds=finishTime - startTime)))
+        wikilanguages_utils.finish_email(startTime,'history_features.out', 'WIKIPEDIA DIVERSITY')
+
+    else:
+
+        while True:
+            time.sleep(84600*90) # every ninety days
+            print ("Good morning. It is: "+time.today()+". Let's see if today is the day to generate the HISTORY FEATURES...")
+
+            # CHAINED TO CCC CREATION (ONCE A MONTH) AND TOP CCC
+            if verify_time_for_iteration():
+                wikilanguages_utils.send_email_toolaccount('WCDO - HISTORY FEATURES', '# HISTORY FEATURES')
+
+                startTime = time.time()
+                today = datetime.date.today().strftime('%Y%m%d%H%M%S')
+                #year_month = datetime.date.today().strftime('%Y-%m')
+                cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
+                periods_monthly,periods_accum = wikilanguages_utils.get_months_queries()
+
+
+                # Import the Wikipedia languages characteristics
+                languages = wikilanguages_utils.load_wiki_projects_information();
+                wikilanguagecodes = sorted(languages.index.tolist())
+
+                print ('checking languages Replicas databases and deleting those without one...')
+                # Verify/Remove all languages without a replica database
+                for a in wikilanguagecodes:
+                    if wikilanguages_utils.establish_mysql_connection_read(a)==None:
+                        wikilanguagecodes.remove(a)
+                print (wikilanguagecodes)
+
+                print ('\n* Starting the HISTORY FEATURES retrieving and storing: ' + str(datetime.datetime.now()))
+
+                main()
+            #    main_with_exception_email()
+            #    main_loop_retry()
+
+                finishTime = time.time()
+                print ('* Done with HISTORY FEATURES DATA AND STORING CYCLE completed successfuly after: ' + str(datetime.timedelta(seconds=finishTime - startTime)))
+                wikilanguages_utils.finish_email(startTime,'history_features.out', 'WIKIPEDIA DIVERSITY')
 

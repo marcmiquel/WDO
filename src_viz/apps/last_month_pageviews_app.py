@@ -5,7 +5,7 @@ from dash_apps import *
 
 #### PAGEVIEWS DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
-conn = sqlite3.connect(databases_path + 'stats.db'); cursor = conn.cursor() 
+conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
 
 
 ### PAGEVIEWS
@@ -314,6 +314,7 @@ dash_app6.layout = html.Div([
 ###
     dcc.Tabs([
         dcc.Tab(label='Extent of Geolocated Entities in Pageviews (Treemap)', children=[
+            html.Br(),
 
             html.H5('Extent of Geolocated Entities (Countries and Regions) in Pageviews Treemap'),
             dcc.Markdown('''* **What is the extent of pageviews dedicated to each country and world region in each Wikipedia language edition?**
@@ -345,6 +346,7 @@ dash_app6.layout = html.Div([
         ]),
 
         dcc.Tab(label="Extent of Languages' CCC in Pageviews (Treemap)", children=[
+            html.Br(),
 
             html.H5("Extent of Languages' CCC in Pageviews Treemap"),
             dcc.Markdown('''* **What is the extent of pageviews dedicated to each language CCC in each Wikipedia language edition?**
@@ -373,6 +375,7 @@ dash_app6.layout = html.Div([
 
 ###
         dcc.Tab(label="Extent of Languages' CCC in Pageviews (Table)", children=[
+            html.Br(),
 
             html.H5("Last Month Pageviews in CCC by Wikipedia language edition"),
             dcc.Markdown('''The following table shows for each language edition the relative popularity 
@@ -417,6 +420,7 @@ dash_app6.layout = html.Div([
 ###
 
         dcc.Tab(label="Extent of Languages' Top CCC in Pageviews (Scatterplot)", children=[
+            html.Br(),
 
             html.H5("Extent of Languages' Top CCC in Pageviews Scatterplot"),
             dcc.Markdown('''
@@ -435,6 +439,7 @@ dash_app6.layout = html.Div([
 
 ###
         dcc.Tab(label='Gender Gap in Pageviews (Barchart)', children=[
+            html.Br(),
 
             html.H5('Gender Gap in Pageviews Barchart'),
             dcc.Markdown('''
@@ -557,6 +562,7 @@ def update_treemap_geolocated(language,geographicalentity):
         autosize=True,
     #        width=700,
         height=900,
+        titlefont_size=12,
         paper_bgcolor="White",
         title_text=geographicalentity+" Extent in Geolocated Articles (Left) and "+geographicalentity+" Extent in Geolocated Articles' Pageviews (Right)",
         title_x=0.5,
@@ -618,6 +624,7 @@ def update_treemap_ccc(language):
         autosize=True,
 #        width=700,
         height=900,
+        titlefont_size=12,
 #        paper_bgcolor="White",
         title_text="Languages CCC Extent in "+languageproject+"Wikipedia Articles (Left) and Languages CCC Extent in "+languageproject+" Articles' Pageviews (Right)",
         title_x=0.5,
@@ -655,7 +662,6 @@ def set_langs_options_spread(selected_group):
 
     return re
 
-    # return ['Cebuano (ceb)', 'Dutch (nl)', 'English (en)', 'French (fr)', 'German (de)', 'Italian (it)', 'Polish (pl)', 'Russian (ru)', 'Spanish (es)', 'Swedish (sv)']
 
 
 # GENDER GAP BARCHART
@@ -752,42 +758,6 @@ def update_barchart(langs):
     #     hovertemplate='<b>%{label} </b><br>Extent: %{customdata}%<br>Pv.: %{value}<br><extra></extra>',
     # ))
     return fig
-
-
-# # GENDER GAP BARCHART
-# @dash_app6.callback(
-#     Output('language_gendergap_barchart2', 'figure'),
-#     [Input('sourcelangdropdown_gendergap', 'value')])
-# def update_barchart(langs):
-
-#     languagecodes = []
-#     for l in langs:
-#         languagecodes.append(language_names[l])
-
-#     df = df_gender_final_male.loc[df_gender_final_male['Wiki'].isin(languagecodes)]
-#     df2 = df_gender_final_female.loc[df_gender_final_female['Wiki'].isin(languagecodes)]
-
-#     fig = go.Figure()
-#     fig.add_trace(go.Bar(
-#         x=df['Language (Wiki)'],
-#         y=df['Extent Pageviews (%)'],
-#         name='Men Pageviews',
-#         marker_color='violet',
-#         customdata = df['Pageviews'],
-#         hovertemplate='<b>%{label} </b><br>Extent: %{customdata}%<br>Pv.: %{value}<br><extra></extra>',
-
-#     ))
-#     fig.add_trace(go.Bar(
-#         x=df2['Language (Wiki)'],
-#         y=df2['Extent Pageviews (%)'],
-#         name='Women Pageviews',
-#         marker_color='orange',
-#         customdata = df2['Pageviews'],
-#         hovertemplate='<b>%{label} </b><br>Extent: %{customdata}%<br>Pv.: %{value}<br><extra></extra>',
-#     ))
-#     fig.update_layout(barmode='stack')
-
-#     return fig
 
 
 # DATATABLE

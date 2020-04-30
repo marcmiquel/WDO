@@ -3,7 +3,7 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 
-conn = sqlite3.connect(databases_path + 'stats.db'); cursor = conn.cursor()
+conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor()
 
 #### CCC DATA
 df = pd.DataFrame(wikilanguagecodes)
@@ -205,6 +205,7 @@ dash_app2.layout = html.Div([
 
     dcc.Tabs([
         dcc.Tab(label='Extent of Cultural Context Content in Wikipedias (Table)', children=[
+            html.Br(),
 
             html.H5('Extent of Cultural Context Content in each Wikipedia Table', style={'textAlign':'left'}),
             dcc.Markdown(
@@ -247,6 +248,7 @@ dash_app2.layout = html.Div([
         ]),
 
         dcc.Tab(label="Extent of Territories in Languages' CCC (Table)", children=[
+            html.Br(),
 
             html.H5('Extent of Language Territories in their Language CCC Table', style={'textAlign':'left'}),
             dcc.Markdown(

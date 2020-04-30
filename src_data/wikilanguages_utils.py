@@ -21,6 +21,20 @@ import colour
 
 
 databases_path = '/srv/wcdo/databases/'
+dumps_path = '/srv/wcdo/dumps/'
+
+wikidata_db = 'wikidata.db'
+
+diversity_observatory_log = 'diversity_observatory_log.db'
+wikipedia_diversity_db = 'wikipedia_diversity.db'
+stats_db = 'stats.db'
+top_diversity_db = 'top_diversity_articles.db'
+missing_ccc_db = 'missing_ccc.db'
+
+editor_diversity_db = 'editor_diversity.db'
+revision_db = 'revision.db'
+imageslinks_db = 'imagelinks.db'
+images_db = 'images.db'
 
 
 # Loads language_territories_mapping.csv file
@@ -32,6 +46,8 @@ def load_wikipedia_languages_territories_mapping():
 
     territories = pd.read_sql_query(query, conn)
     territories = territories.set_index(['WikimediaLanguagecode'])
+
+#    print (territories.head(20))
 
 # READ FROM META: 
 # check if there is a table in meta:
@@ -50,7 +66,7 @@ def load_wiki_projects_information():
 
     conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
 
-    query = 'SELECT languagename, Qitem, WikimediaLanguagecode, Wikipedia, WikipedialanguagearticleEnglish, languageISO, languageISO3, languageISO5, languageofficialnational, languageofficialregional, languageofficialsinglecountry, nativeLabel, numbercountriesOfficialorRegional, region, subregion, intermediateregion FROM wiki_projects;'
+    query = 'SELECT languagename, Qitem, WikimediaLanguagecode, Wikipedia, WikipedialanguagearticleEnglish, languageISO, languageISO3, languageISO5, nativeLabel, region, subregion, intermediateregion FROM wiki_projects;'
 
     languages = pd.read_sql_query(query, conn)
     languages = languages.set_index(['WikimediaLanguagecode'])
@@ -200,9 +216,12 @@ def load_iso_3166_to_geographical_regions():
 
 
 def load_countries_subdivisions_from_language(languagecode,territories):
+    # print (languagecode)
     subdivisions=territories.loc[languagecode].ISO31662
+
     if isinstance(subdivisions,str): subdivisions = [subdivisions]
-    else: subdivisions = list(set(subdivisions))
+    elif subdivisions is not None: subdivisions = list(subdivisions.unique())
+    else: subdivisions = []
 
     return subdivisions
 
@@ -591,7 +610,7 @@ def obtain_proximity_wikipedia_languages_lists(languagecode, wikipedialanguage_n
 
 
 """
-def obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, num):
+obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, num):
 
     closest_langs = {}
     if not os.path.exists(databases_path + 'obtain_closest_for_all_languages.csv'):
@@ -654,6 +673,45 @@ def obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilangu
     return closest_langs
 
 
+def get_langs_group(all_groups, topX, region, subregion, wikipedialanguage_numberarticles, territories, languages):
+    if all_groups != None:
+        if 'Top' in all_groups:
+            topX = int(all_groups.split('Top ')[1])
+
+        if all_groups in territories['subregion'].unique().tolist():
+            subregion = all_groups
+
+        if all_groups in territories['region'].unique().tolist():
+            region = all_groups
+
+    if all_groups == "All languages":
+        topX = len(wikipedialanguage_numberarticles)
+
+    langlist = []
+    if topX != None:
+        i = 0
+        for w in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=True):
+            if i==topX: 
+                break
+            langlist.append(w)
+            i+=1
+
+    if region != None:
+        langlist = list(set(territories.loc[territories['region']==region].index.tolist()))
+
+    if subregion != None:
+        langlist = list(set(territories.loc[territories['subregion']==subregion].index.tolist()))
+
+    langlistnames = {}
+    for languagecode in langlist:
+        lang_name = languages.loc[languagecode]['languagename']+' ('+languagecode+')'
+        langlistnames[lang_name] = languagecode
+
+    return langlist, langlistnames
+
+
+
+
 
 # It returns a list of languages based on the region preference introduced.
 def obtain_region_wikipedia_language_list(languages, region, subregion, intermediateregion):
@@ -672,6 +730,10 @@ def obtain_region_wikipedia_language_list(languages, region, subregion, intermed
         languages_region = languages[languages['intermediateregion'].str.contains(intermediateregion)]
 
     return languages_region
+
+
+
+
 
 
 # Create a database connection.
@@ -756,11 +818,7 @@ def extract_check_new_wiki_projects():
             'languageISO': ";".join(languageISO),
             'languageISO3': ";".join(languageISO3),
             'languageISO5': ";".join(languageISO5),
-            'languageofficialnational': '',
-            'languageofficialregional': '',
-            'languageofficialsinglecountry': '',
             'nativeLabel': ";".join(nativeLabel),
-            'numbercountriesOfficialorRegional':''
             })
 
             #print (extracted_languages)
@@ -819,7 +877,12 @@ def extract_check_new_wiki_projects():
 
     # CHECK IF THERE IS ANY NEW LANGUAGE
     languages = load_wiki_projects_information()
-
+    langs_qitems = languages.Qitem.tolist()
+    df_qitems = df.Qitem.tolist()
+    for q in df_qitems:
+        if q in langs_qitems:
+            df.drop(df.loc[df['Qitem']==q].index, inplace=True)
+    
     # exceptions
     languages=languages.rename(index={'be_x_old': 'be_tarask'})
     languages=languages.rename(index={'zh_min_nan': 'nan'})
@@ -827,19 +890,22 @@ def extract_check_new_wiki_projects():
     languageid_file.append('nb')
 
     languageid_calculated = df['WikimediaLanguagecode'].tolist();
-
 #    print ('These are the ones just extracted from Wikidata: ')
 #    print (languageid_calculated)
 
     newlanguages = list(set(languageid_calculated) - set(languageid_file))
 
+    exceptions = ['mo']
     indexs = []
-    for x in newlanguages: indexs = indexs + df.index[(df['WikimediaLanguagecode'] == x)].tolist()
+    for x in newlanguages:
+        if x in exceptions: continue
+        indexs = indexs + df.index[(df['WikimediaLanguagecode'] == x)].tolist()
     newlanguages = indexs
 
     if len(newlanguages)>0: 
         message = 'These are the new languages: '+', '.join(newlanguages)
         print (message)
+        df = df.loc[~df.index.duplicated(keep='first')]
         df=df.reindex(newlanguages)
         send_email_toolaccount('WCDO: New languages to introduce into the file.', message)
         print ('The new languages are in a file named: ')
@@ -847,7 +913,6 @@ def extract_check_new_wiki_projects():
         df.to_csv(databases_path + filename+'.csv',sep='\t')
     else:
         print ('There are no new Wikipedia language editions.')
-
 
     return newlanguages
 
@@ -863,17 +928,11 @@ def get_months_queries():
     periods_accum = {}
     periods_monthly = {}
 
+    current_cycle = get_current_cycle_year_month()
+    endDay = datetime.datetime.strptime(str(current_cycle),'%Y-%m').date()+datetime.timedelta(days=30)
 
-    """
-    # calculate last month
-    last_month_date = datetime.date.today().replace(day=1) - datetime.timedelta(days=61)
-    first_day = last_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S')
-    last_day = last_month_date.replace(day = calendar.monthrange(last_month_date.year, last_month_date.month)[1]).strftime('%Y%m%d%H%M%S')
-    month_condition = 'date_created >= "'+ first_day +'" AND date_created < "'+last_day+'"'
-    print (month_condition)
-    """
-
-    for day in datespan(datetime.date(2001, 1, 16), datetime.date.today(),delta=datetime.timedelta(days=30)):
+#    endDay = datetime.date.today()
+    for day in datespan(datetime.date(2001, 1, 16), endDay, delta=datetime.timedelta(days=30)):
         month_period = day.strftime('%Y-%m')
 
         first_day = day.replace(day = 1).strftime('%Y%m%d%H%M%S')
@@ -893,25 +952,33 @@ def get_months_queries():
         periods_accum[month_period]=month_condition
 #        print (month_condition)
 
+#    print (periods_monthly,periods_accum)
     return periods_monthly,periods_accum
 
 
-def get_current_cycle_year_month():
-    try:
-        pathf = databases_path+'wikidata.db'
-        current_cycle_date = time.strftime('%Y%m%d%H%M%S', time.gmtime(os.path.getmtime(pathf)))
-        current_cycle_date = datetime.datetime.strptime(current_cycle_date,'%Y%m%d%H%M%S')-dateutil.relativedelta.relativedelta(months=1)
-        current_cycle = current_cycle_date.strftime('%Y-%m')
-        print ('wikidata.db exists.')
-    except:
-        pathf = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
-        current_cycle_date = time.strftime('%Y%m%d%H%M%S', time.gmtime(os.path.getmtime(pathf)))
-        current_cycle_date = datetime.datetime.strptime(current_cycle_date,'%Y%m%d%H%M%S')-dateutil.relativedelta.relativedelta(months=1)
-        current_cycle = current_cycle_date.strftime('%Y-%m')
-        print ('wikidata.db does not exist.')
-    print (current_cycle)
 
+def get_new_cycle_year_month():
+
+    pathf = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
+    current_cycle_date = time.strftime('%Y%m%d%H%M%S', time.gmtime(os.path.getmtime(pathf)))
+    current_cycle_date = datetime.datetime.strptime(current_cycle_date,'%Y%m%d%H%M%S')-dateutil.relativedelta.relativedelta(months=1)
+    current_cycle = current_cycle_date.strftime('%Y-%m')
+
+    print ('new cycle for the data: '+current_cycle)
     return current_cycle
+
+
+def get_current_cycle_year_month():
+
+    query = 'SELECT MAX(year_month) FROM function_account WHERE script_name = "wikipedia_diversity.py" AND function_name = "wd_dump_iterator";'
+    conn = sqlite3.connect(databases_path + diversity_observatory_log); cursor = conn.cursor()
+
+    cursor.execute(query)
+    current_cycle = cursor.fetchone()[0]
+
+    print ('current cycle for the data: '+current_cycle)
+    return current_cycle
+
 
 
 def is_insert(line):
@@ -978,6 +1045,20 @@ def parse_values(values):
 
 
 
+def copy_db_for_production(dbname, scriptname, databases_path):
+    function_name = 'copy_db_for_production content_selection'
+    dbname_production = dbname.split('.')[0]+'_production.db'
+
+    # if verify_function_run_db(function_name, 'check','')==1: return
+    functionstartTime = time.time()
+    try:
+        shutil.copyfile(databases_path + dbname, databases_path + dbname_production)
+        duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+        print ('File '+dbname+' copied as '+dbname_production+' at the end of the '+scriptname+' script. It took: '+duration)
+    except:
+        print ('Not possible to create the production version.')
+    # verify_function_run_db(function_name, 'mark', duration)
+
 
 ############################################################################
 
@@ -995,3 +1076,220 @@ def finish_email(startTime, filename, title):
         sys.stdout=None; send_email_toolaccount(title + ' aborted because of an error', open(filename, 'r').read()+'err')
 
 
+############################################################################
+
+
+def backup_db():
+    try:
+        shutil.copyfile(databases_path + 'wikipedia_diversity.db', databases_path + "wikipedia_diversity_backup.db")
+        print ('File wikipedia_diversity.db copied as wikipedia_diversity_backup.db at the end of the content_retrieval.py script.')
+    except:
+        print ('Not possible to create the backup.')
+
+
+
+def verify_function_run(cycle_year_month, script_name, function_name, action, duration):
+    function_name_string = function_name
+
+    conn = sqlite3.connect(databases_path + diversity_observatory_log); cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS function_account (script_name text, function_name text, year_month text, finish_time text, duration text, PRIMARY KEY (script_name, function_name, year_month));")
+
+    if action == 'check':
+        query = 'SELECT duration FROM function_account WHERE script_name = ? AND function_name = ? AND year_month = ?;'
+        cursor.execute(query,(script_name, function_name, cycle_year_month))
+        duration = cursor.fetchone()
+        if duration != None:
+            print ('= Process Accountant: The function "'+function_name_string+'" has already been run. It lasted: '+duration[0])
+            return 1
+        else:
+            print ('- Process Accountant: The function "'+function_name_string+'" has not run yet. Do it! Now: '+str(datetime.datetime.utcnow().strftime("%Y/%m/%d-%H:%M:%S")+'. Year Month Cycle: '+cycle_year_month))
+            return 0
+
+    if action == 'mark':
+        finish_time = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S");
+        query = "INSERT INTO function_account (script_name, function_name, year_month, finish_time, duration) VALUES (?,?,?,?,?);"
+        cursor.execute(query,(script_name, function_name, cycle_year_month, finish_time, duration))
+        conn.commit()
+        print ('+ Process Accountant. Function: '+function_name+' is NOW RUN! Script: '+script_name+'. After '+duration+'.\n')
+
+
+
+def verify_script_run(cycle_year_month, script_name, action, duration):
+    script_name_string = script_name
+
+    conn = sqlite3.connect(databases_path + diversity_observatory_log)
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS script_account (script_name text, year_month text, finish_time text, duration text, PRIMARY KEY (script_name, year_month));")
+
+    if action == 'check':
+        query = 'SELECT duration FROM script_account WHERE script_name = ? AND year_month = ?;'
+        cursor.execute(query,(script_name, cycle_year_month))
+        duration = cursor.fetchone()
+        if duration != None:
+            print ('= Process Accountant: The script "'+script_name_string+'" has already been run. It lasted: '+duration[0])
+            return 1
+        else:
+            print ('- Process Accountant: The script "'+script_name_string+'" has not run yet. Do it! Now: '+str(datetime.datetime.utcnow().strftime("%Y/%m/%d-%H:%M:%S")+'. Year Month Cycle: '+cycle_year_month))
+            return 0
+
+    if action == 'mark':
+        finish_time = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S");
+        query = "INSERT INTO script_account (script_name, year_month, finish_time, duration) VALUES (?,?,?,?);"
+        cursor.execute(query,(script_name, cycle_year_month, finish_time, duration))
+        conn.commit()
+        print ('+ Process Accountant. Script: '+script_name+' is NOW RUN! After '+duration+'.\n')
+
+
+
+# CONTENT RETRIEVAL SCRIPT
+def check_time_for_script_run(script_name, cycle_year_month):
+
+    not_ready = True
+    while (not_ready):
+
+        print ("Let's check if it is time for "+script_name+' to run: '+str(datetime.datetime.utcnow().strftime("%Y/%m/%d-%H:%M:%S"))+'. Cycle: '+cycle_year_month)
+
+        conn = sqlite3.connect(databases_path + diversity_observatory_log); cursor = conn.cursor()
+        query = 'SELECT function_name FROM script_account WHERE function_name = "" AND year_month = ?;'
+        scripts_run = []
+
+        for row in cursor.execute(query,cycle_year_month):
+            script_run.append(row[0])
+
+        if script_name == 'wikipedia_diversity.py': not_ready = False
+
+        if script_name == 'content_retrieval.py':
+            if 'wikipedia_diversity.py' in scripts_run: not_ready = False
+
+        if script_name == 'article_features.py':
+            if 'wikipedia_diversity.py' in scripts_run: not_ready = False
+
+        if script_name == 'content_selection.py':
+            if 'content_retrieval.py' in scripts_run: not_ready = False
+
+        if script_name == 'top_diversity_selection.py':
+            if 'content_selection.py' in scripts_run and 'article_features.py' in scripts_run: not_ready = False
+
+        if script_name == 'stats_generation.py':
+            if 'content_selection.py' in scripts_run and 'top_diversity_selection.py' in scripts_run: not_ready = False
+
+        if script_name == 'missing_ccc_selection.py':
+            if 'content_selection.py' in scripts_run and 'article_features.py' in scripts_run: not_ready = False
+
+        if not_ready == True:
+            print ('Not ready yet: waiting one more day before asking again.')
+            time.sleep(86400)
+
+    print ('* It is time for '+script_name+' to run: '+str(datetime.datetime.utcnow().strftime("%Y/%m/%d-%H:%M:%S"))+'. Cycle: '+cycle_year_month)
+
+
+
+def store_lines_per_second(db_name, duration, lines, function_name, file, period):
+
+    conn = sqlite3.connect(databases_path + 'diversity_observatory_log.db')
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS lines_per_second (linespersecond real, lines integer, duration integer, function_name text, file text, year_month text, PRIMARY KEY (function_name, year_month));")
+
+    linespersecond = lines/duration
+
+    query = "INSERT OR IGNORE INTO lines_per_second (linespersecond, lines, duration, function_name, file, year_month) VALUES (?,?,?,?,?,?);"
+    cursor.execute(query,(linespersecond, lines, duration, function_name, file, period))
+    conn.commit()
+
+    print ('in function '+function_name+' reading the dump '+file+', the speed is '+str(linespersecond)+' lines/second, at this period: '+period)
+
+
+
+def check_run_failed_functions():
+
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+    function_parameters = [{'label_ccc_articles_geolocation_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_geolocated_reverse_geocoding':(languagecode,page_titles_qitems, page_titles_page_ids),'label_ccc_articles_country_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_location_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_language_strong_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_created_by_properties_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_part_of_properties_wd':(languagecode,page_titles_page_ids),'label_ccc_articles_keywords':(languagecode,page_titles_qitems)},{'label_potential_ccc_articles_category_crawling':(languagecode,page_titles_page_ids,page_titles_qitems),'label_potential_ccc_articles_with_inlinks ccc':(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'),'label_potencial_ccc_articles_with_outlinks ccc':(languagecode,page_titles_page_ids,page_titles_qitems,'ccc'),'label_potential_ccc_articles_language_weak_wd':(languagecode,page_titles_page_ids),'label_potential_ccc_articles_affiliation_properties_wd':(languagecode,page_titles_page_ids),'label_potential_ccc_articles_has_part_properties_wd':(languagecode,page_titles_page_ids)},{'label_other_ccc_wikidata_properties':(languagecode,page_titles_page_ids,page_titles_qitems),'label_potential_ccc_articles_with_inlinks no_ccc':(languagecode,page_titles_qitems,'no ccc'),'label_potencial_ccc_articles_with_outlinks no_ccc':(languagecode,page_titles_page_ids,'no ccc')},{'calculate_articles_ccc_binary_classifier':(languagecode,'RandomForest',page_titles_page_ids,page_titles_qitems),'calculate_articles_ccc_main_territory':(languagecode),'calculate_articles_ccc_retrieval_strategies':(languagecode)}]
+
+    for languagecode in wikilanguagecodes:
+        for functions in function_parameters:
+            for function,parameters in functions.items():
+                query = 'SELECT count(*) FROM function_account WHERE function_name = "'+function+ ' ' + languagecode
+                cursor.execute(query)
+                row = cursor.fetchone()
+                if row != None: num = 0
+                else: num = 1
+
+                if num == 0:                
+                    (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+                    exec(function,parameters)
+
+
+
+def clean_failed_function_account():
+
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+    function_parameters = {'label_diversity_groups_related_topics_wd':'gender','label_ccc_articles_geolocation_wd':'geocoordinates','label_ccc_articles_geolocated_reverse_geocoding':'ccc_geolocated','label_ccc_articles_country_wd':'country_wd','label_ccc_articles_location_wd':'location_wd','label_ccc_articles_language_strong_wd':'language_strong_wd','label_ccc_articles_created_by_properties_wd':'created_by_wd','label_ccc_articles_part_of_properties_wd':'part_of_wd','label_ccc_articles_keywords':'keyword_title','label_potential_ccc_articles_category_crawling':'category_crawling_level','label_potential_ccc_articles_with_inlinks ccc':'num_inlinks','label_potencial_ccc_articles_with_outlinks ccc':'num_outlinks','label_potential_ccc_articles_language_weak_wd':'language_weak_wd','label_potential_ccc_articles_affiliation_properties_wd':'affiliation_wd','label_potential_ccc_articles_has_part_properties_wd':'has_part_wd','label_other_ccc_wikidata_properties':'other_ccc_language_strong_wd','label_other_ccc_category_crawling':'other_ccc_category_crawling_relative_level','label_potential_ccc_articles_with_inlinks no_ccc':'num_inlinks_from_geolocated_abroad','label_potencial_ccc_articles_with_outlinks no_ccc':'num_outlinks_to_geolocated_abroad','calculate_articles_ccc_main_territory':'main_territory','calculate_articles_ccc_retrieval_strategies':'num_retrieval_strategies'}
+
+
+    for languagecode in wikilanguagecodes:
+        print ('\n'+languagecode)
+
+        for function, parameter in function_parameters.items():
+            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+parameter+' IS NOT NULL;'
+            cursor.execute(query)
+            row = cursor.fetchone()
+            if row != None: num = row[0]
+
+            query = 'SELECT count(*) FROM function_account WHERE function_name = "'+function+ ' ' + languagecode
+            if function == 'label_diversity_groups_related_topics_wd': query+= ' gender"'
+            else: query+='"'
+
+            cursor.execute(query)
+            row = cursor.fetchone()
+            if row != None: num2 = row[0]
+
+#            if num2 != 0 and num != 0:
+#                print(function+' exists and the database is full. nothing to do, everything is fine.')
+            if num2 != 0 and num == 0:
+                print(function+' '+languagecode+' exists and the database is empty. we delete function account so the function runs again next time.')
+                query = 'DELETE FROM function_account WHERE function_name = "'+function+' '+languagecode
+                if function == 'label_diversity_groups_related_topics_wd': query+= ' gender"'
+                else: query+='"'
+
+                cursor.execute(query)
+            if num != 0 and num2 == 0:
+                print(parameter+' '+languagecode+' is in the database but the function '+function+' '+languagecode+' has not been accounted.')
+        conn.commit()
+
+
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+    function_parameters = {'extend_articles_timestamp':'date_created', 'extend_articles_editors':'num_editors', 'extend_articles_discussions':'num_discussions','extend_article_edits':'num_edits','extend_articles_edits_last_month':'num_edits_last_month','extend_articles_references':'num_references','extend_articles_bytes':'num_bytes','extend_articles_interwiki':'num_interwiki','extend_articles_qitems_properties':'num_wdproperty','extend_articles_featured':'featured_article','extend_articles_images':'num_images','extend_articles_pageviews':'num_pageviews'}
+
+
+    for languagecode in wikilanguagecodes:
+        print ('\n'+languagecode)
+
+        for function, parameter in function_parameters.items():
+            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+parameter+' IS NOT NULL;'
+            cursor.execute(query)
+            row = cursor.fetchone()
+            if row != None: num = row[0]
+
+            query = 'SELECT count(*) FROM function_account WHERE function_name = "'+function+ ' ' + languagecode
+            if function == 'extend_articles_wikidata_topics': query+= ' gender"'
+            else: query+='"'
+
+            cursor.execute(query)
+            row = cursor.fetchone()
+            if row != None: num2 = row[0]
+
+#            if num2 != 0 and num != 0:
+#                print(function+' exists and the database is full. nothing to do, everything is fine.')
+            if num2 != 0 and num == 0:
+                print(function+' '+languagecode+' exists and the database is empty. we delete function account so the function runs again next time.')
+                query = 'DELETE FROM function_account WHERE function_name = "'+function+' '+languagecode
+                if function == 'extend_articles_wikidata_topics': query+= ' gender"'
+                else: query+='"'
+
+                cursor.execute(query)
+            if num != 0 and num2 == 0:
+                print(parameter+' '+languagecode+' is in the database but the function '+function+' '+languagecode+' has not been accounted.')
+        conn.commit()

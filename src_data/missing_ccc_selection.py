@@ -98,6 +98,8 @@ def main():
     #     (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
     #     extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_titles_qitems)
 
+    wikilanguages_utils.copy_db_for_production(missing_ccc_db, 'missing_ccc_selection.py', databases_path)
+
 
 ################################################################
 
@@ -106,7 +108,7 @@ def main():
 def create_wikipedia_missing_ccc_db():
 
     function_name = 'create_wikipedia_missing_ccc_db'
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + missing_ccc_db); cursor = conn.cursor()
 
@@ -192,7 +194,7 @@ def create_wikipedia_missing_ccc_db():
 
     print ('* create_wikipedia_missing_ccc_db Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -200,7 +202,7 @@ def create_wikipedia_missing_ccc_db():
 def label_missing_ccc_articles_keywords(languagecode,languagecodes_higher):
 
     function_name = 'label_missing_ccc_articles_keywords '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 #    print ('\n* Getting keywords related Articles for language: '+languages.loc[languagecode]['languagename']+' '+languagecode+'.')
@@ -290,7 +292,7 @@ def label_missing_ccc_articles_keywords(languagecode,languagecodes_higher):
     print ('articles with keywords on titles in Wikipedia language '+(languagecode)+' have been inserted.');
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -299,7 +301,7 @@ def label_missing_ccc_articles_keywords(languagecode,languagecodes_higher):
 def label_missing_ccc_articles_geolocation_wd(languagecode,languagecodes_higher):
 
     function_name = 'label_missing_ccc_articles_geolocation_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 #    print ('\n* Missing CCC - Getting Articles with Wikidata from items with "geolocation" property and reverse geocoding for language: '+languages.loc[languagecode_higher]['languagename']+' that should be in '+languagecode+'.')
@@ -452,7 +454,7 @@ def label_missing_ccc_articles_geolocation_wd(languagecode,languagecodes_higher)
     if len(ccc_geolocated_items0)==0 and len(ccc_geolocated_items2)==0: 
 #        print ('No geolocated Articles in Wikidata for this language edition.');
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)
+        wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
         return
 
     # Insert to the corresponding CCC database.
@@ -482,7 +484,7 @@ def label_missing_ccc_articles_geolocation_wd(languagecode,languagecodes_higher)
     print ('Geolocated Articles from Wikidata for language '+(languagecode_higher)+' have been inserted.');
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -490,7 +492,7 @@ def label_missing_ccc_articles_geolocation_wd(languagecode,languagecodes_higher)
 def label_missing_ccc_articles_country_wd(languagecode,languagecodes_higher):
 
     function_name = 'label_missing_ccc_articles_country_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + 'wikidata.db');cursor = conn.cursor()
@@ -507,7 +509,7 @@ def label_missing_ccc_articles_country_wd(languagecode,languagecodes_higher):
         except:
             print ('there are no entire countries where the '+languagecode+' is official')
             duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-            create_function_account_db(function_name, 'mark', duration)
+            wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
             return
     print ((countries))
 
@@ -577,7 +579,7 @@ def label_missing_ccc_articles_country_wd(languagecode,languagecodes_higher):
 
     print (str(len(ccc_country_items0)+len(ccc_country_items2))+' country related Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -585,7 +587,7 @@ def label_missing_ccc_articles_country_wd(languagecode,languagecodes_higher):
 def label_missing_ccc_articles_location_wd(languagecode,languagecodes_higher):
 
     function_name = 'label_missing_ccc_articles_location_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
@@ -645,7 +647,7 @@ def label_missing_ccc_articles_location_wd(languagecode,languagecodes_higher):
     if len(qitems) == 0:
         print ('No qitems. Then return.')
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)
+        wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
         return;
 
     query = 'SELECT location_properties.qitem, location_properties.property, location_properties.qitem2 FROM location_properties;'
@@ -776,7 +778,7 @@ def label_missing_ccc_articles_location_wd(languagecode,languagecodes_higher):
         # conn2.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -784,7 +786,7 @@ def label_missing_ccc_articles_location_wd(languagecode,languagecodes_higher):
 def label_missing_ccc_articles_language_strong_wd(languagecode,languagecodes_higher):
 
     function_name = 'label_missing_ccc_articles_language_strong_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -870,7 +872,7 @@ def label_missing_ccc_articles_language_strong_wd(languagecode,languagecodes_hig
     print (str(len(ccc_language_items0)+len(ccc_language_items2))+' language related Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -878,7 +880,7 @@ def label_missing_ccc_articles_language_strong_wd(languagecode,languagecodes_hig
 def label_missing_ccc_articles_created_by_properties_wd(languagecode,languagecodes_higher):
 
     function_name = 'label_missing_ccc_articles_created_by_properties_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -967,7 +969,7 @@ def label_missing_ccc_articles_created_by_properties_wd(languagecode,languagecod
 
     time.sleep(10)
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -975,7 +977,7 @@ def label_missing_ccc_articles_created_by_properties_wd(languagecode,languagecod
 def label_missing_ccc_articles_part_of_properties_wd(languagecode,languagecodes_higher):
 
     function_name = 'label_missing_ccc_articles_part_of_properties_wd '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
@@ -1073,7 +1075,7 @@ def label_missing_ccc_articles_part_of_properties_wd(languagecode,languagecodes_
     print (str(len(ccc_part_of_items0)+len(ccc_part_of_items2))+' items/articles created by CCC Articles from Wikidata for language '+(languagecode)+' have been inserted/updated.');
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -1082,7 +1084,7 @@ def label_missing_ccc_articles_part_of_properties_wd(languagecode,languagecodes_
 def copy_features_into_missing_ccc_from_original_lang(languagecode):
 
     function_name = 'copy_features_into_missing_ccc_from_original_lang '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
@@ -1121,14 +1123,14 @@ def copy_features_into_missing_ccc_from_original_lang(languagecode):
         conn2.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 # This function copies the features from the language pairs and enriches the articles in the missing ccc table.
 def copy_features_into_missing_ccc_from_language_pairs(languagecode,languagecodes_higher):
 
     function_name = 'copy_features_into_missing_ccc_from_language_pairs '+languagecode
-#    if create_function_account_db(function_name, 'check','')==1: return
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -1137,7 +1139,7 @@ def copy_features_into_missing_ccc_from_language_pairs(languagecode,languagecode
 
     if len(languagecodes_higher) == 0: 
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        # create_function_account_db(function_name, 'mark', duration)
+        # wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
         return
 
 #    print('\n* '+languages.loc[languagecode]['languagename']+' '+languagecode)
@@ -1242,14 +1244,14 @@ def copy_features_into_missing_ccc_from_language_pairs(languagecode,languagecode
 
         # this function gets all the features from the original ccc_xwiki tables and copies them into the articles in the missing_ccc tables.
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-#    create_function_account_db(function_name, 'mark', duration)
+#    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 # This function sets the feature "non-language pairs" which shows which articles are missing in the language CCC but are not available either in a language-pair but in another language.
 def copy_features_into_missing_ccc_from_non_language_pairs(languagecode, languagecodes_higher):
 
     function_name = 'copy_features_into_missing_ccc_from_non_language_pairs '+languagecode
-#    if create_function_account_db(function_name, 'check','')==1: return
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -1273,7 +1275,7 @@ def copy_features_into_missing_ccc_from_non_language_pairs(languagecode, languag
 
     if len(qitems) == 0:
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)       
+        wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)       
 
     lang_qitems_num = {}
     lang_qitems = {}
@@ -1481,14 +1483,14 @@ def copy_features_into_missing_ccc_from_non_language_pairs(languagecode, languag
 
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-#    create_function_account_db(function_name, 'mark', duration)
+#    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 # Introduce the label in the original language, the biggest with overlapping, otherwise in english.
 def copy_labels_into_missing_ccc(languagecode, languagecodes_higher):
 
     function_name = 'copy_labels_into_missing_ccc '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -1540,14 +1542,15 @@ def copy_labels_into_missing_ccc(languagecode, languagecodes_higher):
     conn2.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
 
 
 def extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_titles_qitems):
 
     functionstartTime = time.time()
     function_name = 'extend_links_from_to_original_ccc '+languagecode
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + missing_ccc_db); cursor2 = conn2.cursor()
@@ -1705,21 +1708,10 @@ def extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_tit
         conn2.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
-def backup_db():
-    function_name = 'backup_db missing_ccc_selection'
-    if create_function_account_db(function_name, 'check','')==1: return
-
-    try:
-        shutil.copyfile(databases_path + missing_ccc_db, databases_path + "missing_ccc_backup.db")
-        print ('File missing_wikipedia_diversity.db copied as missing_ccc_old.db')
-    except:
-        print ('Not possible to create the backup.')
-
-    create_function_account_db(function_name, 'mark')
 
 
 
@@ -1727,40 +1719,11 @@ def backup_db():
 
 ### SAFETY FUNCTIONS ###
 
-
-def create_function_account_db(function_name, action, duration):
-    function_name_string = function_name
-
-    conn = sqlite3.connect(databases_path + missing_ccc_db)
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS function_account (function_name text, year_month text, finish_time text, duration text, PRIMARY KEY (function_name, year_month));")
-
-    if action == 'check':
-        query = 'SELECT duration FROM function_account WHERE function_name = ? AND year_month = ?;'
-        cursor.execute(query,(function_name,cycle_year_month))
-        function_name = cursor.fetchone()
-        if function_name != None:
-            print ('= Process Accountant: The function "'+function_name_string+'" has already been run. It lasted: '+function_name[0])
-            return 1
-        else:
-            print ('- Process Accountant: The function "'+function_name_string+'" has not run yet. Do it!')
-            return 0
-
-    if action == 'mark':
-        finish_time = datetime.datetime.utcnow().strftime("%Y%m%d");
-        query = "INSERT INTO function_account (function_name, year_month, finish_time, duration) VALUES (?,?,?,?);"
-        cursor.execute(query,(function_name,cycle_year_month,finish_time,duration))
-        conn.commit()
-        print ('+ Process Accountant: '+function_name+' DONE! After '+duration+'.\n')
-
-
-
 def main_with_email():
     try:
         main()
     except:
     	wikilanguages_utils.send_email_toolaccount('MISSING CCC SELECTION: '+ cycle_year_month, 'ERROR.')
-
 
 def main_loop_retry():
     page = ''
@@ -1776,28 +1739,7 @@ def main_loop_retry():
             wikilanguages_utils.send_email_toolaccount('MISSING CCC SELECTION: '+ cycle_year_month, 'ERROR.' + lines); print("Now let's try it again...")
             continue
 
-def verify_time_for_iteration():
-    print ("Let's check it is the right time for a Missing CCC iteration...")
 
-    # CONDITION 1: CCC created this month.
-    conn = sqlite3.connect(databases_path + missing_ccc_db); cursor = conn.cursor()
-    query = 'SELECT function_name FROM function_account WHERE function_name = "set_production_ccc_db" AND year_month = ?;'
-    cursor.execute(query,current_year_month_period)
-    function_name1 = cursor.fetchone()
-
-    # CONDITION 2: TOP CCC created this month.
-    conn = sqlite3.connect(databases_path + top_ccc_db); cursor = conn.cursor()
-    query = 'SELECT function_name FROM function_account WHERE function_name = "update_top_ccc_articles_titles translations" AND year_month = ?;'
-    cursor.execute(query,current_year_month_period)
-    function_name2 = cursor.fetchone()
-
-    # CONDITION 3: STATS created this month.
-    conn = sqlite3.connect(databases_path + stats_db); cursor = conn.cursor()
-    query = 'SELECT function_name FROM function_account WHERE function_name = "generate_pageviews_intersections" AND year_month = ?;'
-    cursor.execute(query,current_year_month_period)
-    function_name3 = cursor.fetchone()
-
-    if function_name1 != None and function_name2 != None and function_name3 != None: return True
 
 
 
@@ -1825,35 +1767,17 @@ class Logger_err(object): # this prints both the output to a file and to the ter
 
 ### MAIN:
 if __name__ == '__main__':
+
+    script_name = 'missing_ccc_selection.py'
+
     sys.stdout = Logger_out()
     sys.stderr = Logger_err()
 
-
-    dumps_path = '/srv/wcdo/dumps/'
-    databases_path = '/srv/wcdo/databases/'
-
-    wikidata_db = 'wikidata.db'
-    wikipedia_diversity_db = 'wikipedia_diversity.db'
-    missing_ccc_db = 'missing_ccc.db'
-    stats_db = 'stats.db'
-    top_ccc_db = 'top_ccc_articles.db'
-
-
-    """
-    while True:
-        # DAILY
-        update_missing_ccc_interwiki()
-        time.sleep(84600) # every ninety days
-        print ("Good morning. It is: "+time.today()+". Let's see if today is the day to select the Missing CCC...")
-
-        # CHAINED TO CCC CREATION (ONCE A MONTH)
-        if verify_time_for_iteration():
-            wikilanguages_utils.send_email_toolaccount('WCDO - MISSING CCC', '# CALCULATE THE MISSING CCC')
-    """
-    
+    cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
+#    check_time_for_script_run(script_name, cycle_year_month)
     startTime = time.time()
 
-    cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
+   
     territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
     languages = wikilanguages_utils.load_wiki_projects_information();
     pairs = wikilanguages_utils.load_language_pairs_territory_status()
@@ -1879,11 +1803,12 @@ if __name__ == '__main__':
     wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=False)]
 
 
-    print ('\n* Starting the MISSING CCC SELECTION CYCLE '+cycle_year_month+' at this exact time: ' + str(datetime.datetime.now()))
-#    main_with_email()
+    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '')
     main()
+#    main_with_exception_email()
 #    main_loop_retry()
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
-    finishTime = time.time()
-    print ('* Done with the MISSING CCC SELECTION CYCLE. Completed successfuly after: ' + str(datetime.timedelta(seconds=finishTime - startTime)))
+
     wikilanguages_utils.finish_email(startTime,'missing_ccc_selection.out','Missing CCC Selection')

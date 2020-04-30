@@ -13,6 +13,7 @@ import sys
 import shutil
 import re
 import random
+import operator
 # databases
 import MySQLdb as mdb, MySQLdb.cursors as mdb_cursors
 import sqlite3
@@ -42,23 +43,35 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import gc
 
 
+
+
+
+
+
+
 # EXECUTION THE 7TH DAY OF EVERY MONTH!
 
 # MAIN
 def main():
 
-
     wd_dump_iterator()
+    input('')
+
 
     wd_geolocated_update_db()
     wd_instance_of_subclass_of_property_crawling()
-    # here we are in the current version of wikidata.db
 
     create_wikipedia_diversity_db()
+    switch_ccc_binary_to_ccc_last_cycle_binary()
+
     insert_page_ids_page_titles_qitems_wikipedia_diversity_db()
     insert_geolocation_wd()
-
     wd_check_and_introduce_wikipedia_missing_qitems('')
+
+    create_images_db_iterate_imagelinks()
+    create_qitems_images_stats()
+
+
 
 
 ################################################################
@@ -67,7 +80,7 @@ def main():
 def create_wikipedia_diversity_db():
 
     function_name = 'create_wikipedia_diversity_db'
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
@@ -82,7 +95,6 @@ def create_wikipedia_diversity_db():
     # Creates a table for each Wikipedia language edition.
     nonexistingwp = []
     for languagecode in wikilanguagecodes:
-
 
         # Checks whether the Wikipedia currently exists.
         try:
@@ -100,18 +112,45 @@ def create_wikipedia_diversity_db():
         'page_id integer, '+
         'page_title text, '+
         'date_created integer, '+
+
+        # GEOGRAPHY DIVERSITY
+        # set as geography diversity features:
         'geocoordinates text, '+ # coordinate1,coordinate2
         'iso3166 text, '+ # code
         'iso31662 text, '+ # code
         'region text, '+ # continent
 
+        # PEOPLE DIVERSITY
+        # set as people diversity features:
+        'gender text, '+
+        'sexual_orientation text, '+ # wikidata properties
+        'religious_group text, '+ # for people
+        'ethnic_group text, '+
+        'supra_ethnic_group text, '+
+
+        # people diversity features
+        'num_outlinks_to_female integer, '+
+        'num_outlinks_to_male integer, '+
+        'num_outlinks_to_lgbt integer, '+
+        'num_inlinks_from_female integer, '+
+        'num_inlinks_from_male integer, '+
+        'num_inlinks_from_lgbt integer, '+
+        'percent_inlinks_from_male real, '+
+        'percent_outlinks_to_male real, '+
+        'percent_inlinks_from_female real, '+
+        'percent_outlinks_to_female real, '+
+        'percent_inlinks_from_lgbt real, '+
+        'percent_outlinks_to_lgbt real, '+
+
+
+        # CULTURAL CONTEXT DIVERSITY TOPICS
         # calculations:
         'ccc_binary integer, '+
         'ccc_binary_last_cycle integer, '+
         'main_territory text, '+ # Q from the main territory with which is associated.
         'num_retrieval_strategies integer, '+ # this is a number
 
-        # set as CCC
+        # set as CCC features:
         'ccc_geolocated integer,'+ # 1, -1 o null.
         'country_wd text, '+ # 'P1:Q1;P2:Q2;P3:Q3'
         'location_wd text, '+ # 'P1:QX1:Q; P2:QX2:Q' Q is the main territory
@@ -120,9 +159,9 @@ def create_wikipedia_diversity_db():
         'part_of_wd text, '+ # 'P1:Q1;P2:Q2;P3:Q3'
         'keyword_title text, '+ # 'QX1;QX2'
 
-        # retrieved as potential CCC:
+        # retrieved as potential CCC features:
         'category_crawling_territories text, '+ # 'QX1;QX2'
-        'category_crawling_level integer, '+ # 'level'
+        'category_crawling_territories_level integer, '+ # 'level'
         'language_weak_wd text, '+ # 'P1:Q1;P2:Q2;P3:Q3'
         'affiliation_wd text, '+ # 'P1:Q1;P2:Q2;P3:Q3'
         'has_part_wd text, '+ # 'P1:Q1;P2:Q2;P3:Q3'
@@ -131,7 +170,7 @@ def create_wikipedia_diversity_db():
         'percent_inlinks_from_CCC real, '+
         'percent_outlinks_to_CCC real, '+
 
-        # retrieved as potential other CCC (part of other CCC)
+        # retrieved as potential other CCC (part of other CCC) features:
             # from wikidata properties
         'other_ccc_country_wd integer, '+
         'other_ccc_location_wd integer, '+
@@ -150,7 +189,36 @@ def create_wikipedia_diversity_db():
         'percent_inlinks_from_geolocated_abroad real, '+
         'percent_outlinks_to_geolocated_abroad real, '+
 
-        # characteristics of rellevance
+
+        # MINORITIZED TOPICS DIVERSITY
+        # everything related to LGTB, specific ethnic groups, etc.
+        # 'category_crawling_sexual_orientation text, '+ # 'QX1;QX2'
+        # 'category_crawling_sexual_orientation_level integer, '+ # 'level'
+        # 'category_crawling_supra_ethnic_groups text, '+ # 'QX1;QX2'
+        # 'category_crawling_supra_ethnic_groups_level integer, '+ # 'level'
+
+
+
+        # GENERAL TOPICS DIVERSITY
+        # topics: people, organizations, things and places
+        'folk text, '+
+        'earth text, '+
+        'monuments_and_buildings text, '+
+        'music_creations_and_organizations text, '+
+        'sport_and_teams text, '+
+        'food text, '+
+        'paintings text, '+
+        'glam text,'+
+        'books text,'+
+        'clothing_and_fashion text,'+
+        'industry text, '+
+        'religion text, '+ # as a topic
+
+        'start_time integer, '+
+        'end_time integer, '+
+        'time_interval text, '+
+
+        # characteristics of article relevance
         'num_inlinks integer, '+
         'num_outlinks integer, '+
         'num_bytes integer, '+
@@ -167,59 +235,34 @@ def create_wikipedia_diversity_db():
         'wikirank real, '+
         'first_timestamp_lang text,'+
 
-        # topics: people, organizations, things and places
-        'folk text, '+
-        'earth text, '+
-        'monuments_and_buildings text, '+
-        'music_creations_and_organizations text, '+
-        'sport_and_teams text, '+
-        'food text, '+
-        'paintings text, '+
-        'glam text,'+
-        'books text,'+
-        'clothing_and_fashion text,'+
-        'industry text, '+
-
-        # diversity types       
-        'gender text, '+
-        'sexual_orientation text, '+ # wikidata properties
-        'religion text, '+
-        'race_and_ethnia text, '+
-        'time integer, '+
-
-        # diversity features
-        'lgbt_binary integer, '
-        'category_crawling_lgbt text, '
-        'num_outlinks_to_female integer, '
-        'num_outlinks_to_male integer, '
-        'num_outlinks_to_lgbt integer, '
-        'num_inlinks_from_female integer, '
-        'num_inlinks_from_male integer, '
-        'num_inlinks_from_lgbt integer, '
-
 
         'PRIMARY KEY (qitem,page_id));')
 
         try:
             cursor.execute(query)
             conn.commit()
-            print ('Created the Wikipedia Diversity table for language: '+languagecode)
+            print ('Created the Wikipedia Diversity OBSERVATORY table for language: '+languagecode)
         except:
-            print (languagecode+' already has a Wikipedia Diversity table.')
+            print (languagecode+' already has a Wikipedia Diversity OBSERVATORY table.')
 
-        duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-        create_function_account_db(function_name, 'mark', duration)
-
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 def create_wikidata_db():
-    try: os.remove(databases_path + wikidata_db);
-    except: pass;
+
     conn = sqlite3.connect(databases_path + wikidata_db)
     cursor = conn.cursor()
+
     cursor.execute("CREATE TABLE IF NOT EXISTS sitelinks (qitem text, langcode text, page_title text, PRIMARY KEY (qitem, langcode));")
 
+    cursor.execute("CREATE TABLE IF NOT EXISTS metadata (qitem text, properties integer, sitelinks integer, PRIMARY KEY (qitem));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS labels (qitem text, langcode text, label text, PRIMARY KEY (qitem, langcode));")
+
+    # GEOGRAPHY
     cursor.execute("CREATE TABLE IF NOT EXISTS geolocated_property (qitem text, property text, coordinates text, admin1 text, iso3166 text, PRIMARY KEY (qitem));")
+
+    # CCC
     cursor.execute("CREATE TABLE IF NOT EXISTS language_strong_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS country_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS location_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
@@ -229,21 +272,23 @@ def create_wikidata_db():
     cursor.execute("CREATE TABLE IF NOT EXISTS has_part_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS affiliation_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
 
-    ###
-    cursor.execute("CREATE TABLE IF NOT EXISTS metadata (qitem text, properties integer, sitelinks integer, PRIMARY KEY (qitem));")
-    cursor.execute("CREATE TABLE IF NOT EXISTS labels (qitem text, langcode text, label text, PRIMARY KEY (qitem, langcode));")
-
+    # PEOPLE
     ###
     cursor.execute("CREATE TABLE IF NOT EXISTS people_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS sexual_orientation_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
-    cursor.execute("CREATE TABLE IF NOT EXISTS religion_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS religious_group_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS ethnic_group_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS race_and_ethnia_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
-    cursor.execute("CREATE TABLE IF NOT EXISTS time_properties (qitem text, property text, value text, PRIMARY KEY (qitem, value));")
+
     ###
 
+    cursor.execute("CREATE TABLE IF NOT EXISTS time_properties (qitem text, property text, value text, PRIMARY KEY (qitem, value));")
+
+    ###
     cursor.execute("CREATE TABLE IF NOT EXISTS instance_of_subclasses_of_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
 
+
+    # GENERAL TOPICS
     ###
     cursor.execute("CREATE TABLE IF NOT EXISTS industry_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS folk (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
@@ -256,16 +301,40 @@ def create_wikidata_db():
     cursor.execute("CREATE TABLE IF NOT EXISTS glam (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS books (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS clothing_and_fashion (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS religion (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+
 
     ###
     print ('Created the Wikidata sqlite3 file and tables.')
     return conn
 
 
+
+# Sets the ccc_binary to zero for another cycle.
+def switch_ccc_binary_to_ccc_last_cycle_binary():
+    function_name = 'switch_ccc_binary_to_ccc_last_cycle_binary'
+    if wikilanguages_utils.verify_function_run(script_name, function_name, 'check','')==1: return
+    functionstartTime = time.time()
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+    for languagecode in wikilanguagecodes:
+        query = 'UPDATE '+languagecode+'wiki SET ccc_binary_last_cycle = ccc_binary;'
+        cursor.execute(query)
+
+        query = 'UPDATE '+languagecode+'wiki SET ccc_binary = NULL;'
+        cursor.execute(query)
+    conn.commit()
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_function_run(script_name, function_name, 'mark', duration)
+
+
+
 def wd_properties():
 
     # Properties to be used in wp_dump_iterator
     allproperties={}
+
+    # GEOGRAPHY AND CCC
     # a) strong
     geolocated_property = {'P625':'geolocation'}; allproperties.update(geolocated_property);  # obtain places
     language_strong_properties = {'P37':'official language', 'P364':'original language of work', 'P103':'native language'}; allproperties.update(language_strong_properties); # obtain works, people and places 
@@ -279,36 +348,88 @@ def wd_properties():
     affiliation_properties = {'P463':'member of','P102':'member of political party','P54':'member of sport_and_teams team','P69':'educated at', 'P108':'employer','P39':'position held','P937':'work location','P1027':'conferred by','P166':'award received', 'P118':'league','P611':'religious order','P1416':'affiliation','P551':'residence'}; allproperties.update(affiliation_properties); # obtain people and groups
     industry_properties = {'P452':'industry'}; allproperties.update(industry_properties);
 
+    # PEOPLE
     # other types of diversity
     people_properties = {'P31':'instance of','P21':'sex or gender'}; allproperties.update(people_properties); # obtain people and groups
+
     sexual_orientation_properties = {'P26':'spouse', 'P91':'sexual orientation', 'P451': 'partner'}; allproperties.update(sexual_orientation_properties);
-    religion_properties = {'P140': 'religion', 'P708': 'diocese'}; allproperties.update(religion_properties);
-    race_and_ethnia_properties = {'P172': 'ethnic group'}; allproperties.update(race_and_ethnia_properties);
+    religious_group_properties = {'P140': 'religion', 'P708': 'diocese'}; allproperties.update(religious_group_properties);
+    ethnic_group_properties = {'P172': 'ethnic group'}; allproperties.update(ethnic_group_properties);
+
+
+    # OTHER
     time_properties = {'P569': 'date of birth', 'P570': 'date of death', 'P580':'start time', 'P582': 'end time', 'P577': 'publication date', 'P571': 'inception', 'P1619': 'date of official opening', 'P576':'dissolved, abolished or demolished', 'P1191': 'date of first performance', 'P813': 'retrieved', 'P1249': 'time of earliest written record', 'P575':'time of discovery or invention'}; allproperties.update(time_properties);
 
     # all instances of and subclasses of
     instance_of_subclasses_of_properties = {'P31':'instance of','P279':'subclass of'}; allproperties.update(instance_of_subclasses_of_properties); # obtain people and groups
 
-    return allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religion_properties,race_and_ethnia_properties,time_properties
+    return allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties,historical_period_properties
 
 
 def wd_dump_iterator():
     function_name = 'wd_dump_iterator'
-    if create_function_account_db(function_name, 'check','')==1: return
-
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
     functionstartTime = time.time()
 
-    # Locate the dump
-    read_dump = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
+    try: os.remove(databases_path + wikidata_db);
+    except: pass;
+
+    conn = create_wikidata_db(); cursor = conn.cursor()
+    conn.commit()
+
+    option = 'download'
+
+    if option == 'download':
+        print ('* Downloading the latest Wikidata dump.')
+        url = "https://dumps.wikimedia.org/wikidatawiki/entities/latest-all.json.gz" # download the dump: https://dumps.wikimedia.org/wikidatawiki/entities/20180212/
+        local_filename = url.split('/')[-1]
+        # NOTE the stream=True parameter
+        r = requests.get(url, stream=True)
+        with open(dumps_path + local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=10240): 
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+                    f.flush()
+        read_dump = databases_path + local_filename
+
+    if option == 'copy':
+        filename = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
+        local_filename = url.split('/')[-1]
+        shutil.copyfile(filename, dumps_path + local_filename)
+        read_dump = databases_path + local_filename
+        print ('Wikidata Dump copied.')
+
+
+    if option == 'read': # 8 hours to process the 2% when read from the other server. sembla que hi ha un problema i és que llegir el dump és més lent que descarregar-lo.
+        read_dump = '/public/dumps/public/wikidatawiki/entities/latest-all.json.gz'
+        local_filename = url.split('/')[-1]
+        try:
+            shutil.copyfile(filename, dumps_path + local_filename)
+            print ('Wikidata Dump copied.')
+        except:
+            print ('Not possible to copy the wikidata dump.')
+
+    print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+    return
+
     dump_in = gzip.open(read_dump, 'r')
     line = dump_in.readline()
     iter = 0
 
-    n_qitems = 60865657
-    conn = create_wikidata_db(); cursor = conn.cursor()
-    conn.commit()
-    number_qitems = wd_all_qitems(); #conn.commit() # getting all the qitems
-    n_qitems = len(number_qitems); nqi = n_qitems/500
+    n_qitems = 85696352
+ 
+    qitems = {}
+#    for row in cursor.execute('SELECT qitem FROM qitems;'): qitems[row[0]]=None;
+    qitems = wd_all_qitems(cursor); conn.commit() # getting all the qitems
+    n_qitems = len(qitems);
+
+    print (n_qitems)
+
+    sitelinks_query = "INSERT INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)"
+    labels_query = "INSERT INTO labels (qitem, langcode, label) VALUES (?,?,?)"
+
+    sitelinks_values = []
+    labels_values = []
 
     print ('Iterating the dump.')
     while line != '':
@@ -319,39 +440,82 @@ def wd_dump_iterator():
         try:
             entity = json.loads(line)
             qitem = entity['id']
-            try: p=number_qitems[qitem]
-            except: continue
-#            if not wd_check_qitem(cursor,qitem)=='1': continue
             if not qitem.startswith('Q'): continue
+
+            # try: p=qitems[qitem]
+            # except: continue
+
+            # if not wd_check_qitem(cursor,qitem)=='1': continue
+
         except:
             print ('JSON error.')
 
-        sitelinks = wd_sitelinks_insert_db(cursor, qitem, entity['sitelinks'])
-        wd_labels_insert_db(cursor, qitem, sitelinks, entity['labels'])
+        sitelinks = []
+        wd_sitelinks = entity['sitelinks']
+        for code, title in wd_sitelinks.items():
+            if code in wikilanguagecodeswiki:
+                sitelinks_values.append((qitem,code,title['title']))
+    #            print (values)
+                sitelinks.append(code)
+
+        if len(sitelinks) != 0:           
+            for code, title in entity['labels'].items(): # bucle de llengües
+                code = code + 'wiki'
+                if code not in wd_sitelinks and code in wikilanguagecodeswiki:
+                    labels_values.append((qitem,code,title['value']))
+
         wd_entity_claims_insert_db(cursor, entity)
 
-        if iter % 100000 == 0:
-#        if iter % nqi == 0:
+        if iter % 800000 == 0:
+            cursor.executemany(sitelinks_query,sitelinks_values)                   
+            cursor.executemany(labels_query,labels_values)
+
+            sitelinks_values = []
+            labels_values = []
+
+            duration = time.time() - functionstartTime
             print (iter)
             print (100*iter/n_qitems)
-            print ('current time: ' + str(time.time() - startTime))
+            print ('current time: ' + str(duration))
+            print ('number of line per second: '+str(iter/(time.time() - functionstartTime)))
             conn.commit()
 #            break
+
+    cursor.executemany(sitelinks_query,sitelinks_values)                   
+    cursor.executemany(labels_query,values)
 
     conn.commit()
     conn.close()
     print ('DONE with the JSON.')
     print ('It has this number of lines: '+str(iter))
+
+    drop_query = 'DROP TABLE qitems;'
+    cursor.execute(drop_query)
+
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+    store_lines_per_second((time.time() - functionstartTime), iter, function_name, read_dump, cycle_year_month)
 
 
-def wd_all_qitems():
-    # cursor.execute("CREATE TABLE qitems (qitem text PRIMARY KEY);")
+
+# # 2 hours to get all the qitems
+def wd_all_qitems(cursor):
+
+    function_name = 'wd_all_qitems'
+    print (function_name)
+
+    functionstartTime = time.time()
+
+    cursor.execute("CREATE TABLE qitems (qitem text PRIMARY KEY);")
     dumps_path = '/public/dumps/public/wikidatawiki/latest/wikidatawiki-latest-page.sql.gz'
     dump_in = gzip.open(dumps_path, 'r')
 
+    query = "INSERT INTO qitems (qitem) VALUES (?);"
+
+    qitems_list = list()
     qitems = {}
+    iter = 0
     while True:
         line = dump_in.readline()
         try: line = line.decode("utf-8")
@@ -362,9 +526,9 @@ def wd_all_qitems():
             if i==3: break
         else: i=0
 
+        iter+=1
+#        print (iter)
         if wikilanguages_utils.is_insert(line):
-            table_name = wikilanguages_utils.get_table_name(line)
-            columns = wikilanguages_utils.get_columns(line)
             values = wikilanguages_utils.get_values(line)
             if wikilanguages_utils.values_sanity_check(values): rows = wikilanguages_utils.parse_values(values)
 
@@ -372,12 +536,65 @@ def wd_all_qitems():
                 page_namespace = int(row[1])
                 if page_namespace != 0: continue
                 qitem = row[2]
-                # query = "INSERT INTO qitems (qitem) VALUES ('"+qitem+"');"
-                # cursor.execute(query)
                 qitems[qitem]=None
+                qitems_list.append((qitem,))
 
+        if iter % 100 == 0:
+            duration = time.time() - functionstartTime
+            items = len(qitems)
+
+            print ('line: '+str(iter))
+            print (items)
+            print ('current time: ' + str(duration))
+            print ('number of lines per second: '+str(iter/(time.time() - functionstartTime)))
+            print ('number of items per second: '+str(items/(time.time() - functionstartTime)))
+#            store_lines_per_second((time.time() - functionstartTime), iter, function_name, dumps_path, cycle_year_month)
+
+#            print (qitems_list)
+            cursor.executemany(query,qitems_list)
+            qitems_list = list()
+
+    cursor.executemany(query, qitems_list)
     print(len(qitems))
+    print ('wd_all_qitems DONE')
+
+    store_lines_per_second((time.time() - functionstartTime), iter, function_name, dumps_path, cycle_year_month)
+
     return qitems
+
+
+# # 4 thousand items per second, while with dump it is 10,000. so this would take 5 hours.
+# def wd_all_qitems(cursor):
+
+#     function_name = 'wd_all_qitems'
+#     print (function_name)
+
+#     functionstartTime = time.time()
+
+#     cursor.execute("CREATE TABLE qitems (qitem text PRIMARY KEY);")
+#     mysql_con_read = mdb.connect(host='wikidatawiki.analytics.db.svc.eqiad.wmflabs',db='wikidatawiki_p', read_default_file='./my.cnf', cursorclass=mdb_cursors.SSCursor); mysql_cur_read = mysql_con_read.cursor()
+#     query = 'SELECT page_title FROM page WHERE page_namespace=0;'
+#     mysql_cur_read.execute(query)
+
+#     i = 0; print (i)
+#     while True:
+#         row = mysql_cur_read.fetchone()
+#         i+=1
+#         if row == None: break
+#         qitem = row[0].decode('utf-8')
+#         query = "INSERT INTO qitems (qitem) VALUES ('"+qitem+"');"
+#         cursor.execute(query)
+
+#         if i % 1000 == 0:
+#             duration = time.time() - functionstartTime
+#             print (i, qitem)
+#             print ('current time: ' + str(duration))
+#             print ('number of line per second: '+str(i/(time.time() - functionstartTime)))
+#             print ('number of items per second: '+str(i/(time.time() - functionstartTime)))
+
+#     print ('All Qitems obtained and in wikidata.db.')
+#     return i
+
 
 
 def wd_check_qitem(cursor,qitem):
@@ -413,6 +630,10 @@ def wd_entity_claims_insert_db(cursor, entity):
                 values = [qitem,wdproperty,coordinates]
                 cursor.execute("INSERT OR IGNORE INTO geolocated_property (qitem, property, coordinates) VALUES (?,?,?)",values)
                 continue
+
+
+
+
 
             if wdproperty in time_properties:
                 try:
@@ -502,18 +723,18 @@ def wd_entity_claims_insert_db(cursor, entity):
                 cursor.execute("INSERT OR IGNORE INTO sexual_orientation_properties (qitem, property, qitem2) VALUES (?,?,?)",values)
                 continue
 
-            if wdproperty in religion_properties:
+            if wdproperty in religious_group_properties:
                 values = [qitem,wdproperty,qitem2]
-#                print ('religion_properties')
+#                print ('religious_group_properties')
 #                print (qitem,wdproperty,qitem2)
-                cursor.execute("INSERT OR IGNORE INTO religion_properties (qitem, property, qitem2) VALUES (?,?,?)",values)
+                cursor.execute("INSERT OR IGNORE INTO religious_group_properties (qitem, property, qitem2) VALUES (?,?,?)",values)
                 continue
 
-            if wdproperty in race_and_ethnia_properties:
+            if wdproperty in ethnic_group_properties:
                 values = [qitem,wdproperty,qitem2]
-#                print ('race_and_ethnia_properties')
+#                print ('ethnic_group_properties')
 #                print (qitem,wdproperty,qitem2)
-                cursor.execute("INSERT OR IGNORE INTO race_and_ethnia_properties (qitem, property, qitem2) VALUES (?,?,?)",values)
+                cursor.execute("INSERT OR IGNORE INTO ethnic_group_properties (qitem, property, qitem2) VALUES (?,?,?)",values)
                 continue
 
             if wdproperty in people_properties:
@@ -534,21 +755,22 @@ def wd_entity_claims_insert_db(cursor, entity):
 
 
 def wd_sitelinks_insert_db(cursor, qitem, wd_sitelinks):
-#    print (wd_sitelinks)
+    sitelinks = []
     for code, title in wd_sitelinks.items():
-
-        sitelinks = []
         # in case of extension to wikibooks or other sister projects (e.g. cawikitionary) it would be necessary to introduce another 'if code in wikilanguaagescodeswikitionary'.
         if code in wikilanguagecodeswiki:
             values=[qitem,code,title['title']]
 #            print (values)
+            sitelinks.append(code)
+
+
             try: 
                 cursor.execute("INSERT INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",values)
-                sitelinks.append(code)
+                
             except: 
                 print ('This Q is already in: '+qitem)
 
-        return sitelinks
+    return sitelinks
 
 
 def wd_labels_insert_db(cursor, qitem, wd_sitelinks, wd_labels):
@@ -579,7 +801,7 @@ def wd_labels_insert_db(cursor, qitem, wd_sitelinks, wd_labels):
 def wd_check_and_introduce_wikipedia_missing_qitems(languagecode):
 
     function_name = 'wd_check_and_introduce_wikipedia_missing_qitems'
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
     functionstartTime = time.time()
 
     langcodes = []
@@ -638,7 +860,7 @@ def wd_check_and_introduce_wikipedia_missing_qitems(languagecode):
         except:
             print ('this language replica reached timeout: '+languagecode+'\n')
         #            input('')
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
 
 
@@ -646,7 +868,7 @@ def wd_check_and_introduce_wikipedia_missing_qitems(languagecode):
 def wd_geolocated_update_db():
 
     function_name = 'wd_geolocated_update_db'
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()  
@@ -682,7 +904,7 @@ def wd_geolocated_update_db():
     conn.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -690,7 +912,7 @@ def wd_geolocated_update_db():
 def wd_instance_of_subclass_of_property_crawling():
 
     function_name = 'wd_instance_of_subclass_of_property_crawling'
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
@@ -722,8 +944,12 @@ def wd_instance_of_subclass_of_property_crawling():
     sport_and_teams = {'Q327245':'team','Q41323':'type of sport','Q349':'sport'}
     music_creations_and_organizations = {'Q188451': 'music genre', 'Q2088357': 'music organization', 'Q482994':'music term'}
 
+    # other
+    religion = {'Q9174':'religion'}
+    time_interval = {'Q186081': 'time interval'}
+
     # LOOP TOPICS
-    topics_dict = {'folk':folk,'monuments_and_buildings':monuments_and_buildings,'earth':earth,'music_creations_and_organizations':music_creations_and_organizations,'sport_and_teams':sport_and_teams,'food':food,'paintings':paintings,'glam':glam,'books':books,'clothing_and_fashion':clothing_and_fashion}
+    topics_dict = {'folk':folk,'monuments_and_buildings':monuments_and_buildings,'earth':earth,'music_creations_and_organizations':music_creations_and_organizations,'sport_and_teams':sport_and_teams,'food':food,'paintings':paintings,'glam':glam,'books':books,'clothing_and_fashion':clothing_and_fashion, 'religion':religion, 'time_interval': time_interval}
 
 
 #    (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(1,'en')
@@ -746,6 +972,7 @@ def wd_instance_of_subclass_of_property_crawling():
             # LOOP CRAWLING LEVELS
             num_levels = 10
             if topic == 'books': num_levels = 2
+            if topic == 'time_interval': num_levels = 2
             level = 0
 
             new_level_qitems = []
@@ -819,16 +1046,16 @@ def wd_instance_of_subclass_of_property_crawling():
         conn.commit()
         print ('Topic In.')
 
-    print ('all topics introduced into the wikidata database.')
+    print ('topics introduced into the wikidata database.')
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 # Checks all the databses and updates the database.
 def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
 
     function_name = 'insert_page_ids_page_titles_qitems_wikipedia_diversity_db'
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -927,14 +1154,13 @@ def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
         print ('articles for this language are in and updated: '+languagecode+'\n')
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 def insert_geolocation_wd():
 
     function_name = 'insert_geolocation_wd'
-    if create_function_account_db(function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()  
@@ -968,223 +1194,258 @@ def insert_geolocation_wd():
         print (languagecode,len(parameters))
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
-    
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
-def delete_latest_wikidata_dump():
-    function_name = 'delete_latest_wikidata_dump'
+
+
+# def delete_latest_wikidata_dump():
+#     function_name = 'delete_latest_wikidata_dump'
+#     functionstartTime = time.time()
+
+#     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+#     os.remove(dumps_path + "latest-all.json.gz")
+
+#     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+#     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+
+def create_images_db_iterate_imagelinks():
+
     functionstartTime = time.time()
+    function_name = 'create_images_db_iterate_imagelinks'
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
-    if create_function_account_db(function_name, 'check','')==1: return
-    os.remove(dumps_path + "latest-all.json.gz")
+    conn = sqlite3.connect(databases_path + imageslinks_db)
+    cursor = conn.cursor()
 
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    create_function_account_db(function_name, 'mark', duration)
+    # il_from, il_from_namespace, il_to. (ady)
+    # il_from, il_to, il_from_namespace. (ca)
 
-# OUTDATED
-def copy_ccc_temp_to_another():
+    for languagecode in wikilanguagecodes:
 
-    print ('coyping wikipedia_diversity to another .db')
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+
+        page_ids_qitems = {}
+        for page_title in page_titles_qitems.keys():
+            page_id = page_titles_page_ids[page_title]
+            qitem = page_titles_qitems[page_title]
+            page_ids_qitems[page_id]=qitem
+
+        print (len(page_ids_qitems))
+
+        cursor.execute("CREATE TABLE IF NOT EXISTS imagelinks (langcode text, qitem text, image_title text, PRIMARY KEY (langcode, qitem, image_title));")
+        conn.commit()
+
+        dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-imagelinks.sql.gz'
+        dump_in = gzip.open(dumps_path, 'r')
+        images_count = {}
+        images_from = {}
+
+        print ('Iterating the imagelinks dump: '+dumps_path)
+
+        start_dict_true = {}
+        k = 0
+        j = 0
+        parameters = []
+        while True:
+            line = dump_in.readline()
+            try: line = line.decode("utf-8")
+            except UnicodeDecodeError: line = str(line)
+
+            if len(start_dict_true)<3:
+                if '`il_from` ' in line: 
+                    start_dict_true['il_from']=k
+                    k+=1
+                if '`il_to` ' in line: 
+                    start_dict_true['il_to']=k
+                    k+=1
+                if '`il_from_namespace` ' in line: 
+                    start_dict_true['il_from_namespace']=k
+                    k+=1
+                if len(start_dict_true) == 3: 
+                    print (languagecode)
+                    print (start_dict_true)
+
+            if line == '':
+                i+=1
+                if i==3: break
+            else: i=0
+
+            if wikilanguages_utils.is_insert(line):
+                values = wikilanguages_utils.get_values(line)
+                if wikilanguages_utils.values_sanity_check(values): rows = wikilanguages_utils.parse_values(values)
+                for row in rows:
+                    # print (row)
+
+                    j+=1
+                    try:
+                        il_from_namespace = int(row[start_dict_true['il_from_namespace']])
+                    except:
+                        continue
+                    if il_from_namespace != 0: continue
+
+
+                    try:
+                        il_from = int(row[start_dict_true['il_from']])
+                        qitem = page_ids_qitems[il_from]
+                    except:
+                        continue
+
+                    il_to = row[start_dict_true['il_to']]
+
+                    parameters.append((languagecode, qitem, il_to))
+
+                    if j % 500000 == 0:
+                        print (languagecode+' imagelinks row: '+str(j))
+                        query = 'INSERT OR IGNORE INTO imagelinks (langcode, qitem, image_title) VALUES (?,?,?);'
+                        cursor.executemany(query,parameters)
+                        conn.commit()
+                        parameters = []
+
+        query = 'INSERT OR IGNORE INTO imagelinks (langcode, qitem, image_title) VALUES (?,?,?);'
+        cursor.executemany(query,parameters)
+        conn.commit()
+
+        wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+        print ('Done with the dump.')
+        print ('Lines: '+str(j))
+        print ('* number of parameters to introduce: '+str(len(parameters))+'\n')
+
+
+
+def create_qitems_images_stats():
 
     functionstartTime = time.time()
+    function_name = 'create_images_db_iterate_imagelinks'
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
-    conn = sqlite3.connect(databases_path + 'wikipedia_diversity_backup.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + images_db)
+    cursor = conn.cursor()
+
+    conn2 = sqlite3.connect(databases_path + imageslinks_db)
+    cursor2 = conn2.cursor()
+
+    print ('start counting.')
+    cursor.execute("CREATE TABLE IF NOT EXISTS all_images_count (image text, count integer, PRIMARY KEY (image));")
+    conn.commit()
+
+    params = []
+    query = 'SELECT image_title, count(qitem) FROM imagelinks GROUP BY image_title ORDER BY 2 DESC LIMIT 10000;'
+    for row in cursor2.execute(query):
+        image_title = row[0]
+        num = row[1]
+        params.append((image_title,num))
+
+    query = 'INSERT OR IGNORE INTO all_images_count (image, count) VALUES (?,?);'
+    cursor.executemany(query,params)
+    conn.commit()
+    print ('counts done.')
+
+    undesired = {}
+    query = 'SELECT image FROM all_images_count;'
+    for row in cursor.execute(query):
+        undesired[row[0]]=None
+
+
+    print ('start qitems - images')
+    cursor.execute("CREATE TABLE IF NOT EXISTS all_qitems_images (qitem text, images text, PRIMARY KEY (qitem));")
+    conn.commit()
+
+    query = 'SELECT qitem, image_title FROM imagelinks ORDER BY qitem;'
+
+    image_count = {}
+    params = []
+    i = 0
+    old_qitem = ''
+    for row in cursor2.execute(query):
+        qitem = row[0]
+
+        if qitem != old_qitem and i != 0:
+            listofTuples = sorted(image_count.items(), key=operator.itemgetter(1), reverse=True)
+            images = ''
+            for tup in listofTuples:
+                image_title = tup[0]
+
+                try:
+                    undesired[image_title]
+                except:
+                    if images != '': images+= ';'
+                    images += image_title+':'+str(tup[1])
+
+            params.append((old_qitem, images))
+            image_count = {}
+
+
+        image_title = row[1]
+        try:
+            image_count[image_title]=image_count[image_title]+1
+        except:
+            image_count[image_title]=1
+
+        old_qitem = qitem
+        if len(params) % 100000 == 0:
+            print (i)
+            query = 'INSERT OR IGNORE INTO all_qitems_images (qitem, images) VALUES (?,?);'
+            cursor.executemany(query,params)
+            conn.commit()
+            params = []
+
+        i+= 1
+
+    query = 'INSERT OR IGNORE INTO all_qitems_images (qitem, images) VALUES (?,?);'
+    cursor.executemany(query,params)
+    conn.commit()
+    print (i)
+    print ('qitems - images done.')
+
+    os.remove(databases+imageslinks_db)
+
+
+    print ('start individual tables.')
+
+    qitem_images = {}
+    query = 'SELECT qitem, images FROM all_qitems_images;'
+    for row in cursor.execute(query):
+        qitem_images[row[0]]=row[1]
 
     for languagecode in wikilanguagecodes:
         print (languagecode)
+        cursor.execute("CREATE TABLE IF NOT EXISTS "+languagecode+"wiki_images_count (qitem text, page_title text, page_id integer, images text, PRIMARY KEY (page_id, qitem));")
+        conn.commit()
 
-        # RETRIEVING
-        query = ('SELECT '+
-            # general
-        'qitem, '+
-        'page_id, '+
-        'page_title, '+
-        'date_created, '+
-        'geocoordinates, '+
-        'iso3166, '+
-        'iso31662, '+
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
 
-        # calculations:
-#        'ccc_binary, '+
-#        'main_territory, '+
-#        'num_retrieval_strategies, '+ # this is a number
+        params = []
+        for page_title, qitem in page_titles_qitems.items():
+            page_id = page_titles_page_ids[page_title]
+            try:
+                images = qitem_images[qitem]
+            except:
+                pass
+            params.append((qitem, page_title, page_id, images))
+            # print ((qitem, page_title, page_id, images))
 
-        # set as CCC
-        'ccc_geolocated,'+ # 1, -1 o null.
-#        'country_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-        'location_wd, '+ # 'P1:QX1:Q; P2:QX2:Q' Q is the main territory
-        'language_strong_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'created_by_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'part_of_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-        'keyword_title, '+ # 'QX1;QX2'
+        query = "INSERT OR IGNORE INTO "+languagecode+"wiki_images_count (qitem, page_title, page_id, images) VALUES (?,?,?,?);"
+        cursor.executemany(query,params)
+        conn.commit()
 
-        # retrieved as potential CCC:
-        'category_crawling_territories, '+ # 'QX1;QX2'
-        'category_crawling_level, '+ # 'level'
-#        'language_weak_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'affiliation_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'has_part_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-        'num_inlinks_from_CCC, '+
-        'num_outlinks_to_CCC, '+
-        'percent_inlinks_from_CCC, '+
-        'percent_outlinks_to_CCC, '+
+    print ('individual tables done.')
 
-        # retrieved as potential other CCC (part of other CCC)
-        # from wikidata properties
-#        'other_ccc_country_wd, '+
-#        'other_ccc_location_wd, '+
-#        'other_ccc_language_strong_wd, '+
-#        'other_ccc_created_by_wd, '+
-#        'other_ccc_part_of_wd, '+
-#        'other_ccc_language_weak_wd, '+
-#        'other_ccc_affiliation_wd, '+
-#        'other_ccc_has_part_wd, '+
-        # from other wikipedia ccc database.
-#        'other_ccc_keyword_title, '+
-#        'other_ccc_category_crawling_relative_level, '+
-        # from links to/from non-ccc geolocated Articles.
-#        'num_inlinks_from_geolocated_abroad, '+
-#        'num_outlinks_to_geolocated_abroad, '+
-#        'percent_inlinks_from_geolocated_abroad, '+
-#        'percent_outlinks_to_geolocated_abroad, '+
-
-        # characteristics of rellevance
-        'num_inlinks, '+
-        'num_outlinks, '+
-        'num_bytes, '+
-        'num_references, '+
-        'num_edits, '+
-        'num_editors, '+
-        'num_discussions, '+
-        'num_pageviews, '+
-        'num_wdproperty, '+
-        'num_interwiki, '+
-        'featured_article '+
-
-        'FROM '+languagecode+'wiki;')
-
-#        print (query)
-        parameters = []
-
-        for row in cursor.execute(query):
-            parameters.append(tuple(row))
-
-        # INSERTING
-        page_asstring = ','.join( ['?'] * (query.count(',')+1)) 
-        query = ('INSERT INTO '+languagecode+'wiki ('+
-            # general
-        'qitem, '+
-        'page_id, '+
-        'page_title, '+
-        'date_created, '+
-        'geocoordinates, '+
-        'iso3166, '+
-        'iso31662, '+
-
-        # calculations:
-#        'ccc_binary, '+
-#        'main_territory, '+
-#        'num_retrieval_strategies, '+ # this is a number
-
-        # set as CCC
-        'ccc_geolocated,'+ # 1, -1 o null.
-#        'country_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-        'location_wd, '+ # 'P1:QX1:Q; P2:QX2:Q' Q is the main territory
-        'language_strong_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'created_by_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'part_of_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-        'keyword_title, '+ # 'QX1;QX2'
-
-        # retrieved as potential CCC:
-        'category_crawling_territories, '+ # 'QX1;QX2'
-        'category_crawling_level, '+ # 'level'
-#        'language_weak_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'affiliation_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-#        'has_part_wd, '+ # 'P1:Q1;P2:Q2;P3:Q3'
-        'num_inlinks_from_CCC, '+
-        'num_outlinks_to_CCC, '+
-        'percent_inlinks_from_CCC, '+
-        'percent_outlinks_to_CCC, '+
-
-        # retrieved as potential other CCC (part of other CCC)
-        # from wikidata properties
-#        'other_ccc_country_wd, '+
-#        'other_ccc_location_wd, '+
-#        'other_ccc_language_strong_wd, '+
-#        'other_ccc_created_by_wd, '+
-#        'other_ccc_part_of_wd, '+
-#        'other_ccc_language_weak_wd, '+
-#        'other_ccc_affiliation_wd, '+
-#        'other_ccc_has_part_wd, '+
-        # from other wikipedia ccc database.
-#        'other_ccc_keyword_title, '+
-#        'other_ccc_category_crawling_relative_level, '+
-        # from links to/from non-ccc geolocated Articles.
-#        'num_inlinks_from_geolocated_abroad, '+
-#        'num_outlinks_to_geolocated_abroad, '+
-#        'percent_inlinks_from_geolocated_abroad, '+
-#        'percent_outlinks_to_geolocated_abroad, '+
-
-        # characteristics of rellevance
-        'num_inlinks, '+
-        'num_outlinks, '+
-        'num_bytes, '+
-        'num_references, '+
-        'num_edits, '+
-        'num_editors, '+
-        'num_discussions, '+
-        'num_pageviews, '+
-        'num_wdproperty, '+
-        'num_interwiki, '+
-        'featured_article '+
-        ') '+
-
-        'VALUES ('+
-        page_asstring+
-        ');')
-
-        cursor2.executemany(query,parameters)
-        conn2.commit()
+    query = 'DROP TABLE all_qitems_images;'
+    cursor.execute(query)
+    conn.commit()
 
 
 
 
 #######################################################################################
 
-### SYNCHRONISATION AND SAFETY FUNCTIONS ###
-def create_function_account_db(function_name, action, duration):
-    function_name_string = function_name
-
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db)
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS function_account (function_name text, year_month text, finish_time text, duration text, PRIMARY KEY (function_name, year_month));")
-
-    if action == 'check':
-        query = 'SELECT duration FROM function_account WHERE function_name = ? AND year_month = ?;'
-        cursor.execute(query,(function_name,cycle_year_month))
-        function_name = cursor.fetchone()
-        if function_name != None:
-            print ('= Process Accountant: The function "'+function_name_string+'" has already been run. It lasted: '+function_name[0])
-            return 1
-        else:
-            print ('- Process Accountant: The function "'+function_name_string+'" has not run yet. Do it! Now: '+str(datetime.datetime.utcnow().strftime("%Y/%m/%d-%H:%M:%S")))
-            return 0
-
-    if action == 'mark':
-        finish_time = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S");
-        query = "INSERT INTO function_account (function_name, year_month, finish_time, duration) VALUES (?,?,?,?);"
-        cursor.execute(query,(function_name,cycle_year_month,finish_time,duration))
-        conn.commit()
-        print ('+ Process Accountant: '+function_name+' DONE! After '+duration+'.\n')
-
-
-
 def main_with_exception_email():
     try:
         main()
     except:
-    	wikilanguages_utils.send_email_toolaccount('WCDO - WIKIPEDIA DIVERSITY ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.')
+    	wikilanguages_utils.send_email_toolaccount('WCDO - WIKIPEDIA DIVERSITY OBSERVATORY ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.')
 
 
 def main_loop_retry():
@@ -1195,21 +1456,19 @@ def main_loop_retry():
             page = 'done.'
         except:
             print('There was an error in the main. \n')
-            path = '/srv/wcdo/src_data/diversity_wikipedia.err'
+            path = '/srv/wcdo/src_data/diversity_observatory.err'
             file = open(path,'r')
             lines = file.read()
-            wikilanguages_utils.send_email_toolaccount('WCDO - WIKIPEDIA DIVERSITY ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.' + lines); print("Now let's try it again...")
+            wikilanguages_utils.send_email_toolaccount('WCDO - WIKIPEDIA DIVERSITY OBSERVATORY ERROR: '+ wikilanguages_utils.get_current_cycle_year_month(), 'ERROR.' + lines); print("Now let's try it again...")
             time.sleep(900)
             continue
 
 
-
 #######################################################################################
-
 class Logger_out(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("diversity_wikipedia"+".out", "w")
+        self.log = open("diversity_observatory"+".out", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -1218,7 +1477,7 @@ class Logger_out(object): # this prints both the output to a file and to the ter
 class Logger_err(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("diversity_wikipedia"+".err", "w")
+        self.log = open("diversity_observatory"+".err", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -1228,30 +1487,23 @@ class Logger_err(object): # this prints both the output to a file and to the ter
 
 ### MAIN:
 if __name__ == '__main__':
+    startTime = time.time()
+
     sys.stdout = Logger_out()
     sys.stderr = Logger_err()
 
-    dumps_path = '/srv/wcdo/dumps/'
-    databases_path = '/srv/wcdo/databases/'
-    wikipedia_diversity_db = 'wikipedia_diversity.db'
-    wikidata_db = 'wikidata.db'
+    script_name = 'wikipedia_diversity.py'
 
+    cycle_year_month = wikilanguages_utils.get_new_cycle_year_month() 
+#    check_time_for_script_run(script_name, cycle_year_month)
 
-    # WIKIDATA DIVERSITY PROPERTIES
-#    while True:
-#    time.sleep(84600)
-#    print ("Good morning. It is: "+time.today()+". Let's see if today is the day to download the Wikipedia Diversity data and start another entire cycle...")
-
-    startTime = time.time()
-
-    cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
     territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
     languages = wikilanguages_utils.load_wiki_projects_information();
 
     # Verify there is a new language
     wikilanguages_utils.extract_check_new_wiki_projects();
-
     wikilanguagecodes = sorted(languages.index.tolist())
+
     print ('checking languages Replicas databases and deleting those without one...')
     # Verify/Remove all languages without a replica database
     for a in wikilanguagecodes:
@@ -1267,17 +1519,18 @@ if __name__ == '__main__':
     wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')
 #    print (wikilanguagecodes)
     
-    wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=True)]
-    biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
+    # wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=True)]
+    # biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
 
-    allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religion_properties,race_and_ethnia_properties,time_properties = wd_properties()
+    allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties,historical_period_properties = wd_properties()
 
-    print ('* Starting the WIKIPEDIA DIVERSITY CYCLE '+cycle_year_month+' at this exact time: ' + str(datetime.datetime.now()))
-
+    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '')
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
+    
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
-    finishTime = time.time()
-    print ('* Done with the WIKIPEDIA DIVERSITY CYCLE completed successfuly after: ' + str(datetime.timedelta(seconds=finishTime - startTime)))
-    wikilanguages_utils.finish_email(startTime,'wikipedia_diversity.out', 'WIKIPEDIA DIVERSITY')
+    print ('* Done with the WIKIPEDIA DIVERSITY OBSERVATORY CYCLE completed successfuly after: ' + str(duration)
+    wikilanguages_utils.finish_email(startTime,'diversity_observatory.out', 'WIKIPEDIA DIVERSITY OBSERVATORY')
