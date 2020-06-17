@@ -6,7 +6,7 @@ from dash_apps import *
 
 
 ### DASH APP TEST IN LOCAL ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-home_app = Dash(__name__, server = app, url_base_pathname= webtype + '/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
+home_app = Dash(__name__, server = app, url_base_pathname= webtype + "/", external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 home_app.config['suppress_callback_exceptions']=True
 
 title = "Home"
@@ -24,7 +24,6 @@ home_app.layout = html.Div([
     html.Div(
     dcc.Markdown('''
     Providing data, visualizations and tools to work towards more cultural diversity within Wikipedia language editions.'''.replace('  ', '')), style={'textAlign':'center'},),
-    html.Br(),
     html.Br(),
     html.Br(),
     html.Br(),

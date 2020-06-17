@@ -144,13 +144,13 @@ dash_app13.layout = html.Div([
     navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
-        This page shows stastistics and graphs that explain the creation of different types of content over time; they depict both the the accumulated articles and the new articles created on a monthly basis. The different types of content used for the analysis are: geographical entities (countries, subregions and regions), languages CCC, Top CCC Lists, and gender.
+        This page shows statistics and graphs that explain the creation of different types of content over time; they depict both the accumulated articles and the new articles created on a monthly basis. The different types of content used for the analysis are: geographical entities (countries, subregions and regions), languages CCC, Top CCC Lists, and gender.
 
         The graphs answer the following questions:
         * What is the extent of the different types of content created and accumulated in Wikipedia language editions over time?
         * What Wikipedia language editions have created and accumulated more content of the different types over time?
-        * What is the extent of the different types of content created and accumulated in the Wikipedia language editions on a specific month?
-        * What Wikipedia language editions have created more content of the different types on a specific month?
+        * What is the extent of the different types of content created and accumulated in the Wikipedia language editions in a specific month?
+        * What Wikipedia language editions have created more content of the different types in a specific month?
        '''),
     html.Br(),
 
@@ -166,9 +166,9 @@ dash_app13.layout = html.Div([
             html.H5('Created and Accumulated Articles by Content Type Over Time in Wikipedia Language Editions Barchart'),
             dcc.Markdown('''* **What is the extent of the different types of content created and accumulated in Wikipedia language editions over time?**
 
-              The following barchart graphs shows for a single Wikipedia language editions and for a selected type of content, the amount of articles and the percentage of for each of its entities that is both accumulated and created over time. Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The stacked bars can take the whole y-axis or be proportional to the number of aggregated articles for that period of time. 
+              The following barchart graphs shows for a single Wikipedia language edition and for a selected type of content, the amount of articles and the percentage of for each of its entities that is both accumulated and created over time. Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The stacked bars can take the whole y-axis or be proportional to the number of aggregated articles for that period of time. 
 
-              The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggreation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
+              The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggregation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
              '''.replace('  ', '')),
 
 
@@ -232,7 +232,7 @@ dash_app13.layout = html.Div([
         ]),
 
 
-        dcc.Tab(label='Several Wikipedias Over Time (Time Series)', children=[
+        dcc.Tab(label='Multiple Wikipedias Over Time (Time Series)', children=[
 
             # 4 OVER TIME TIME SERIES
             html.H5('Wikipedia Language Editions By Monthly Created Articles On Any Content Type Over Time Time Series'),
@@ -242,7 +242,7 @@ dash_app13.layout = html.Div([
 
             The following time series / line chart graphs shows for a group of selected Wikipedia language editions and for specific entities of a type of content, the amount of articles and the percentage of each entity that has been both accumulated and created over time. The graphs allow selecting either one Wikipedia language edition and more than one entity from a content type or one single entity from a content type and more than one Wikipedia language edition in order to compare them over time.
 
-            Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The lines can be presented in the y-axis as a result of the number of aggregated articles for that period of time or the extent they take according to the total created or accumulated articles for that content type. The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggreation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
+            Time is presented in the x-axis and it is possible to select the periods in which articles are aggregated (Yearly, Quarterly and Monthly). The lines can be presented in the y-axis as a result of the number of aggregated articles for that period of time or the extent they take according to the total created or accumulated articles for that content type. The graph contains a range-slider on the bottom to select a specific period of time especially useful when the time aggregation is set to quarterly. It is possible to use predefined specific time selections by clicking on the labels 6M, 1Y, 5Y, 10Y and ALL (last six months, last year, last five years, last ten years and all the time). The graph provides additional information on each point by hovering as well as it allows selecting a specific language and exclude the rest by clicking on it on the legend.
              '''.replace('  ', '')),
 
 
@@ -347,7 +347,7 @@ dash_app13.layout = html.Div([
 
                 # 1 SPECIFIC MONTH TREEMAP
                 html.H5('Articles by Content Type in a Wikipedia Language Edition On Any Specific Month Treemap'),
-                dcc.Markdown('''* **What is the extent of the different types of content created and accumulated in the Wikipedia language editions on a specific month?**
+                dcc.Markdown('''* **What is the extent of the different types of content created and accumulated in the Wikipedia language editions in a specific month?**
 
                     The following treemap graphs shows for a selected Wikipedia language edition the extent of the different entities in a content type in both the articles created during a specific month and in the accumulated articles to that date. The size of the tiles is according to the number of articles and the extent (%) is calculated according to the total number of articles from that type of content. By selecting "show other content" you can see in the remaining proportion of articles of existing articles that are not from that type of content.
                  '''.replace('  ', '')),
@@ -409,11 +409,11 @@ dash_app13.layout = html.Div([
             ]),
 
 
-            dcc.Tab(label='Several Wikipedias At A Given Time (Scatterplot)', children=[
+            dcc.Tab(label='Multiple Wikipedias At A Given Time (Scatterplot)', children=[
 
                 # 2 SPECIFIC MONTH SCATTERPLOT
                 html.H5('Wikipedia Language Editions By Created and Accumulated Articles On Content Type And Any Specific Month Scatterplot'),
-                dcc.Markdown('''* **What Wikipedia language editions have created more content of the different types on a specific month?**
+                dcc.Markdown('''* **What Wikipedia language editions have created more content of the different types in a specific month?**
 
                     The following scatterplot graphs shows for a group of selected Wikipedia language editions and type of content, the amount of articles and the percentage of it that was both accumulated and created at a specific period of time. Wikipedia language editions' entities are represented on x-axis as the number of articles and y-axis as the extent each entity take in the total number of articles created for that content type in that month or accumulated to that point in time.
 
@@ -796,7 +796,7 @@ def update_specific_month_treemap(language, content_type, period, othercontent):
         extra = ""
     else:
         if period != None:
-            extra = " On A Specific Month ("+period+")"
+            extra = " in A Specific Month ("+period+")"
 
     fig.update_layout(
         autosize=True,
@@ -904,7 +904,7 @@ def update_specific_month_scatterplot(languages, content_type, entities, period)
             titlefont_size=12,
             tickfont_size=10,
         ),
-        title_text='Comparison of Wikipedias by Content Types Created On A Specific Month'+extra
+        title_text='Comparison of Wikipedias by Content Types Created in A Specific Month'+extra
     )
 
     fig.update_layout(
@@ -920,7 +920,7 @@ def update_specific_month_scatterplot(languages, content_type, entities, period)
             titlefont_size=12,
             tickfont_size=10,
         ),
-        title_text='Comparison of Wikipedias by Content Types Accumulated On A Specific Month'+extra
+        title_text='Comparison of Wikipedias by Content Types Accumulated in A Specific Month'+extra
     )
 
     return (fig, fig2)
@@ -1308,6 +1308,7 @@ def entities_group_options(selected_group):
     ])
 def set_entities_group_options_given_timeseries(selected_group, compare):
     entities_list, selected_entities = entities_group_options(selected_group)
+    if compare == '1Entity': selected_entities = []
     return entities_list, selected_entities
 
 

@@ -658,7 +658,7 @@ def dash_app28_build_layout(params):
             html.H5('Results'),
             dcc.Markdown(results_text.replace('  ', '')),
             html.Br(),
-            html.H3(main_title, style={'textAlign':'center'}),
+            html.H6(main_title, style={'textAlign':'center'}),
 
             html.Table(
             # Header

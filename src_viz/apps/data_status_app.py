@@ -15,7 +15,7 @@ n_lines_default = 100
 
 def check_current_cycle():
     return '2019-07'
-#    return wikilanguages_utils.get_current_cycle_year_month()
+#    return wikilanguages_utils.get_last_accumulated_period_year_month()
 
 def check_running_processes():
     cmd = "ps aux | grep py | grep root"

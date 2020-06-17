@@ -3,163 +3,103 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 
+
+#### FUNCTIONS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+def params_to_df(langs, content_type):
+
+    conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
+    # lang = language_names[lang]
+    functionstartTime = time.time()
+    if isinstance(langs,str): langs = [langs]
+    lass = ','.join( ['?'] * len(langs) )
+
+    if content_type == 'ccc':
+        query = "SELECT set2 as Covered_Language, rel_value as Extent_Pageviews, abs_value as Pageviews FROM wcdo_intersections_monthly WHERE set1 IN ("+lass+") AND content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND period = '"+last_period+"';"
+        df_ccc_pv = pd.read_sql_query(query, conn, params = langs).round(1)
+
+        query = "SELECT set2 as Covered_Language, rel_value Extent_Articles, abs_value as Articles FROM wcdo_intersections_accumulated WHERE content='articles' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1 IN ("+lass+") AND period = '"+last_period+"';"
+        df_ccc_articles = pd.read_sql_query(query, conn, params = langs).round(1)
+
+        df_ccc_final = df_ccc_articles.merge(df_ccc_pv, on='Covered_Language', how='outer')
+        df_ccc_final = df_ccc_final.fillna(0).round(1)
+        df_ccc_final = df_ccc_final.rename(columns={'Extent_Articles':'Extent Articles (%)','Extent_Pageviews':'Extent Pageviews (%)'})
+
+        df_ccc_final.Articles = df_ccc_final.Articles.astype(int)
+        df_ccc_final.Pageviews = df_ccc_final.Pageviews.astype(int)
+
+        df_ccc_final['Covered Language'] = df_ccc_final['Covered_Language'].map(language_names_full)
+        df_ccc_final = df_ccc_final.loc[df_ccc_final['Covered_Language'] != 'simple']
+        df = df_ccc_final
+
+
+    if content_type == 'gender':
+
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Gender, abs_value as Pageviews, rel_value as Extent_Pageviews, content FROM wcdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'gender' AND Gender IN ('male','female') AND period = '"+last_period+"' AND content = 'pageviews'"
+        df_gender_pageviews = pd.read_sql_query(query, conn, params = langs)
+
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Gender, abs_value as Articles, rel_value as Extent_Articles FROM wcdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND content = 'articles'  AND set1descriptor = 'wp' AND Gender IN ('male','female') AND set2 = 'wikidata_article_qitems' AND period = '"+last_period+"';"
+        df_gender_articles = pd.read_sql_query(query, conn, params = langs)
+
+
+        df_gender_final = df_gender_articles.merge(df_gender_pageviews, on='id', how='outer')
+        df_gender_final = df_gender_final.fillna(0).round(1)
+        df_gender_final.Articles = df_gender_final.Articles.astype(int)
+        df_gender_final.Pageviews = df_gender_final.Pageviews.astype(int)
+
+        df_gender_final = df_gender_final.rename(columns={'Extent_Articles':'Extent Articles (%)', 'Extent_Pageviews':'Extent Pageviews (%)'})
+        df_gender_final['Language'] = df_gender_final['Wiki_x'].map(language_names_full)
+        df_gender_final['Language (Wiki)'] = df_gender_final['Language']+' ('+df_gender_final['Wiki_x']+')'
+        df = df_gender_final
+
+
+    if content_type == 'country':
+
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor, abs_value as Pageviews, rel_value as Extent_Pageviews FROM wcdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'country' AND period = '"+last_period+"' AND content = 'pageviews';"
+        df_country_pageviews = pd.read_sql_query(query, conn, params = langs)
+        df_country_pageviews = df_country_pageviews.rename(columns={'set2descriptor':'ISO 3166','Extent_Pageviews':'Extent Pageviews (%)'})
+        df_country_pageviews['Country'] = df_country_pageviews['ISO 3166'].map(country_names)
+        df_country_pageviews['Subregion'] = df_country_pageviews['ISO 3166'].map(subregions)
+        df_country_pageviews['Region'] = df_country_pageviews['ISO 3166'].map(regions)
+        df_country_pageviews = df_country_pageviews
+
+        # articles geolocated
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor, abs_value as Articles, rel_value FROM wcdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND set2 = 'countries' AND set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
+        df_country_articles = pd.read_sql_query(query, conn, params = langs)
+        df_country_articles = df_country_articles.rename(columns={'rel_value':'Extent Articles (%)','set2descriptor':'ISO 3166'})
+
+        df_country_final = df_country_articles.merge(df_country_pageviews, on='id', how='outer').fillna(0).round(1).dropna()
+        df_country_final.Pageviews = df_country_final.Pageviews.astype(int)
+        df = df_country_final.rename(columns={'Wiki_x':'Wiki','Region_y':'Region','Subregion_y':'Subregion','Country_y':'Country','ISO 3166_x':'ISO 3166'})
+
+
+    if content_type == 'region':
+
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Region, abs_value as Pageviews, rel_value as Extent_Pageviews FROM wcdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'region' AND period = '"+last_period+"' AND content = 'pageviews';"
+        df_region_pageviews = pd.read_sql_query(query, conn, params = langs)
+        df_region_pageviews = df_region_pageviews.rename(columns={'Extent_Pageviews':'Extent Pageviews (%)'})
+
+
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Region, abs_value as Articles, rel_value FROM wcdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND set2 = 'regions' AND set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
+        df_region_articles = pd.read_sql_query(query, conn, params = langs)
+        df_region_articles = df_region_articles.rename(columns={'rel_value':'Extent Articles (%)'})
+
+        df_region_final = df_region_articles.merge(df_region_pageviews, on='id', how='outer').fillna(0).round(1)
+        df_region_final.Pageviews = df_region_final.Pageviews.astype(int)
+        df = df_region_final.rename(columns={'Region_y':'Region','Wiki_x':'Wiki'})
+
+
+    return df
+
+
+
+
+
 #### PAGEVIEWS DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-
 conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
-
-
-### PAGEVIEWS
-query = 'SELECT set1, set2, set2descriptor, abs_value as Pageviews, rel_value as Extent_Pageviews FROM wcdo_intersections_monthly WHERE set1descriptor = "wp" AND set2 IN ("country","region","gender") AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1, rel_value DESC;'
-df_pageviews = pd.read_sql_query(query, conn)
-
-
-# # # # GENDER
-# pageviews gender
-df_gender_pageviews = df_pageviews.loc[df_pageviews['set2'] == "gender"]
-df_gender_pageviews = df_gender_pageviews.rename(columns={'set1':'Wiki','set2descriptor':'Gender','Extent_Pageviews':'Extent Pageviews (%)'})
-# df_gender_pageviews = df_gender_pageviews.set_index('Wiki')
-
-
-# articles gender
-query = 'SELECT set1 as Wiki, set2descriptor as Gender, abs_value as Articles, rel_value as Extent_Articles FROM wcdo_intersections_accumulated WHERE set1descriptor = "wp" AND set2descriptor IN ("male","female") AND set2 = "wikidata_article_qitems" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1, rel_value DESC;'
-df_gender_articles = pd.read_sql_query(query, conn)
-df_gender_articles = df_gender_articles.rename(columns={'Extent_Articles':'Extent Articles (%)'})
-# df_gender_articles = df_gender_articles.set_index('Wiki')
-# df_gender_final = pd.concat([df_gender_articles,df_gender_pageviews], axis=1, sort=False)
-# print (len(df_gender_pageviews))
-# print (len(df_gender_articles))
-
-df_gender_pageviews['id'] = df_gender_pageviews['Wiki']+':'+df_gender_pageviews['Gender']
-df_gender_articles['id'] = df_gender_articles['Wiki']+':'+df_gender_articles['Gender']
-
-df_gender_final = df_gender_articles.merge(df_gender_pageviews, on='id', how='outer')
-df_gender_final = df_gender_final.fillna(0).round(1)
-df_gender_final.Articles = df_gender_final.Articles.astype(int)
-df_gender_final.Pageviews = df_gender_final.Pageviews.astype(int)
-df_gender_final = df_gender_final.rename(columns={'Wiki_x':'Wiki','Gender_x':'Gender'})
-df_gender_final['Language'] = df_gender_final['Wiki'].map(language_names_full)
-df_gender_final['Language (Wiki)'] = df_gender_final['Language']+' ('+df_gender_final['Wiki']+')'
-
-df_gender_final_male = df_gender_final.loc[df_gender_final['Gender'] == 'male']
-df_gender_final_male = df_gender_final_male.set_index('Wiki')
-df_gender_final_female = df_gender_final.loc[df_gender_final['Gender'] == 'female']
-df_gender_final_female = df_gender_final_female.set_index('Wiki')
-
-for x in df_gender_final_male.index.values.tolist():
-    try:
-        male = df_gender_final_male.loc[x]['Articles']
-    except:
-        male = 0    
-    try:
-        female = df_gender_final_female.loc[x]['Articles']
-    except:
-        female = 0
-    df_gender_final_male.at[x, 'Extent Articles (%)'] =  100*male/(male+female)
-    df_gender_final_female.at[x, 'Extent Articles (%)'] =  100*female/(male+female)
-
-    try:
-        male = df_gender_final_male.loc[x]['Pageviews']
-    except:
-        male = 0    
-    try:
-        female = df_gender_final_female.loc[x]['Pageviews']
-    except:
-        female = 0
-
-    pvsum = male+female
-    if pvsum == 0:
-        df_gender_final_male.at[x, 'Extent Pageviews (%)'] = 0
-    else:
-        df_gender_final_male.at[x, 'Extent Pageviews (%)'] = 100*male/pvsum
-
-    if pvsum == 0:
-        df_gender_final_male.at[x, 'Extent Pageviews (%)'] = 0
-    else:
-        df_gender_final_female.at[x, 'Extent Pageviews (%)'] =  100*female/pvsum
-
-df_gender_final_male = df_gender_final_male.reset_index().round(1)
-df_gender_final_female = df_gender_final_female.reset_index().round(1)
-
-
-# print (len(df_gender_final))
-# print (df_gender_articles.loc[df_gender_articles['Wiki'] == "ca"].head(10))
-# print (df_gender_pageviews.loc[df_gender_pageviews['Wiki'] == "ca"].head(10))
-# print (df_gender_final.loc[df_gender_final['Wiki_x'] == "ca"].head(10))
-
-
-# GEOLOCATED
-# pageviews geolocated
-df_country_pageviews = df_pageviews.loc[df_pageviews['set2'] == "country"]
-df_country_pageviews = df_country_pageviews.rename(columns={'set2descriptor':'ISO 3166','Extent_Pageviews':'Extent Pageviews (%)'})
-df_country_pageviews['Country'] = df_country_pageviews['ISO 3166'].map(country_names)
-df_country_pageviews['Subregion'] = df_country_pageviews['ISO 3166'].map(subregions)
-df_country_pageviews['Region'] = df_country_pageviews['ISO 3166'].map(regions)
-df_country_pageviews = df_country_pageviews.dropna()
-df_country_pageviews = df_country_pageviews.rename(columns={'set1':'Wiki','set2descriptor':'Country','Extent_Pageviews':'Extent Pageviews (%)'})
-
-df_region_pageviews = df_pageviews.loc[df_pageviews['set2'] == "region"]
-df_region_pageviews = df_region_pageviews.rename(columns={'set1':'Wiki','set2descriptor':'Region','Extent_Pageviews':'Extent Pageviews (%)'})
-df_region_pageviews['id'] = df_region_pageviews['Wiki']+':'+df_region_pageviews['Region']
-df_country_pageviews['id'] = df_country_pageviews['Wiki']+':'+df_country_pageviews['Country']
-
-# articles geolocated
-query = 'SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set2 IN ("countries","regions") AND set1descriptor = "geolocated" AND content = "articles" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY abs_value DESC;'
-df_geolocated_articles = pd.read_sql_query(query, conn)
-
-df_country_articles = df_geolocated_articles.loc[df_geolocated_articles['set2'] == "countries"]
-df_country_articles = df_country_articles.rename(columns={'set1descriptor':'Geolocated','abs_value':'Articles','rel_value':'Extent Articles (%)','set1':'Wiki','set2descriptor':'ISO 3166'})
-df_country_articles['Country'] = df_country_articles['ISO 3166'].map(country_names)
-df_country_articles['Subregion'] = df_country_articles['ISO 3166'].map(subregions)
-df_country_articles['Region'] = df_country_articles['ISO 3166'].map(regions)
-
-df_region_articles = df_geolocated_articles.loc[df_geolocated_articles['set2'] == "regions"]
-df_region_articles = df_region_articles.rename(columns={'set1descriptor':'Geolocated','abs_value':'Articles','rel_value':'Extent Articles (%)','set1':'Wiki','set2descriptor':'Region'})
-
-df_region_articles['id'] = df_region_articles['Wiki']+':'+df_region_articles['Region']
-df_country_articles['id'] = df_country_articles['Wiki']+':'+df_country_articles['Country']
-
-df_region_final = df_region_articles.merge(df_region_pageviews, on='id', how='outer').fillna(0).round(1)
-df_country_final = df_country_articles.merge(df_country_pageviews, on='id', how='outer').fillna(0).round(1)
-
-df_region_final.Pageviews = df_region_final.Pageviews.astype(int)
-df_country_final.Pageviews = df_country_final.Pageviews.astype(int)
-
-df_region_final = df_region_final.rename(columns={'Region_y':'Region','Wiki_x':'Wiki'})
-df_country_final = df_country_final.rename(columns={'Wiki_x':'Wiki','Region_y':'Region','Subregion_y':'Subregion','Country_y':'Country','ISO 3166_x':'ISO 3166'})
-
-# print (df_country_final.loc[df_country_final['Wiki_x'] == "ca"].head(10))
-# print (df_region_final.loc[df_region_final['Wiki_x'] == "ca"].head(10))
-# input('')
-
-
-### CCC PAGEVIEWS
-query = "SELECT set1 as Wiki, set2 as Covered_Language_PV, rel_value as Extent_Pageviews, abs_value as Pageviews FROM wcdo_intersections_monthly WHERE content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND period IN (SELECT MAX(period) FROM wcdo_intersections_monthly) ORDER BY set1, rel_value DESC;"
-df_ccc_pv = pd.read_sql_query(query, conn)
-df_ccc_pv['id'] = df_ccc_pv['Wiki']+':'+df_ccc_pv['Covered_Language_PV']
-df_ccc_pv = df_ccc_pv.set_index('id')
-
-query = "SELECT set1 as Wiki, set2 as Covered_Language_Art, rel_value Extent_Articles, abs_value as Articles FROM wcdo_intersections_accumulated WHERE content='articles' AND set1descriptor='wp' AND set2descriptor='ccc' AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1, rel_value DESC;"
-df_ccc_articles = pd.read_sql_query(query, conn)
-df_ccc_articles['id'] = df_ccc_articles['Wiki']+':'+df_ccc_articles['Covered_Language_Art']
-df_ccc_articles = df_ccc_articles.set_index('id')
-
-df_ccc_final = df_ccc_articles.merge(df_ccc_pv, on='id', how='outer')
-df_ccc_final = df_ccc_final.fillna(0).round(1)
-
-df_ccc_final.Articles = df_ccc_final.Articles.astype(int)
-df_ccc_final.Pageviews = df_ccc_final.Pageviews.astype(int)
-df_ccc_final = df_ccc_final.rename(columns={'Covered_Language_Art':'Wiki','Extent_Articles':'Extent Articles (%)','Extent_Pageviews':'Extent Pageviews (%)'})
-df_ccc_final['Covered Language'] = df_ccc_final['Wiki'].map(language_names_full)
-df_ccc_final = df_ccc_final.loc[df_ccc_final['Covered_Language_PV'] != 'simple']
-
-# print (df_ccc_pv.loc[df_ccc_pv['Wiki'] == "ca"].head(10))
-# print (df_ccc_articles.loc[df_ccc_articles['Wiki'] == "ca"].head(10))
-# print (df_ccc_final.loc[df_ccc_final['Wiki'] == "ca"].head(10))
-
 
 #### CCC PAGEVIEWS TABLE
 ccc_percent_wp = {}
-query = 'SELECT set1, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) AND set1 = set2 AND set1descriptor="wp" AND set2descriptor = "ccc";'
+query = 'SELECT set1, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND period = "'+last_period+'" AND set1 = set2 AND set1descriptor="wp" AND set2descriptor = "ccc";'
 for row in cursor.execute(query):
     value = row[1]
     if value == None: value = 0
@@ -179,7 +119,7 @@ for row in cursor.execute(query):
 
 own_ccc_top_pageviews = {}
 own_ccc_top_pageviews_abs = {}
-query = "SELECT set1, rel_value, abs_value, period FROM wcdo_intersections_monthly WHERE period IN (SELECT MAX(period) FROM wcdo_intersections_monthly) AND content='pageviews' AND set1descriptor='ccc' AND set2='top_articles_lists' AND set2descriptor='pageviews' ORDER BY set1, rel_value DESC;"
+query = "SELECT set1, rel_value, abs_value, period FROM wcdo_intersections_monthly WHERE period = '"+last_period+"' AND content='pageviews' AND set1descriptor='ccc' AND set2='top_articles_lists' AND set2descriptor='pageviews' ORDER BY set1, rel_value DESC;"
 for row in cursor.execute(query):
     own_ccc_top_pageviews[row[0]]=round(row[1],1)
     own_ccc_top_pageviews_abs[row[0]]=row[2]
@@ -197,14 +137,6 @@ df_own_top_ccc['Language (Wiki)'] = df_own_top_ccc['Language']+' ('+df_own_top_c
 df_own_top_ccc = df_own_top_ccc.loc[(df_own_top_ccc['Region']!='')]
 # print (df_own_top_ccc.head(10))
 
-
-"""
-all_lang_top_pageviews = {}
-query = "SELECT set1, rel_value, abs_value FROM wcdo_intersections_accumulated WHERE content='pageviews' AND set1descriptor='wp' AND set2descriptor='all_top_articles' AND set2='ccc' ORDER BY set1, rel_value DESC;"
-# quant pesen els pageviews del top articles propi en el ccc propi en lang1?
-for row in cursor.execute(query):
-    all_lang_top_pageviews[row[0]]=round(row[1],1)
-"""
 
 language_dict={}
 query = "SELECT set1, set2, rel_value, abs_value FROM wcdo_intersections_monthly WHERE content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1!=set2 AND set2 != 'simple' ORDER BY set1, abs_value DESC;"
@@ -301,7 +233,7 @@ dash_app6.layout = html.Div([
     navbar,
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
-        This page shows stastistics and graphs that explain the distribution of pageviews in each Wikipedia language edition and for each types of articles. Different kinds of gaps also appear in the pageviews. 
+        This page shows statistics and graphs that explain the distribution of pageviews in each Wikipedia language edition and for each type of articles. Different kinds of gaps also appear in the pageviews. 
         The graphs answer the following questions:
         * What is the extent of pageviews dedicated to each country and world region in each Wikipedia language edition?
         * What is the extent of pageviews dedicated to each language CCC in each Wikipedia language edition?
@@ -492,8 +424,6 @@ dash_app6.layout = html.Div([
     Output('geolocated_treemap', 'figure'),
     [Input('sourcelangdropdown_geolocated', 'value'),Input('geolocateddropdown', 'value')])
 def update_treemap_geolocated(language,geographicalentity):
-# ['Wiki', 'Geolocated', 'set2_x', 'Region_x', 'Articles', 'Extent Articles (%)', 'id', 'Wiki_y', 'set2_y', 'Region', 'Pageviews', 'Extent Pageviews (%)']
-# ['Wiki', 'Geolocated', 'set2_x', 'ISO 3166_x', 'Articles', 'Extent Articles (%)', 'Country_x', 'Subregion_x', 'Region_x', 'id', 'Wiki_y', 'set2_y', 'ISO 3166_y', 'Pageviews', 'Extent Pageviews (%)', 'Country', 'Subregion', 'Region']
     
     languageproject = language; language = language_names[language]
 
@@ -506,22 +436,17 @@ def update_treemap_geolocated(language,geographicalentity):
 
     if geographicalentity == 'Countries':
         labels = "Country"
-        df = df_country_final.loc[df_country_final['Wiki'] == language]
+        df = params_to_df(language, 'country')
 
     if geographicalentity == 'Regions':
         labels = "Region"
-        df = df_region_final.loc[df_region_final['Wiki'] == language]
+        df = params_to_df(language, 'region')
 
-    # print (df.head(10))
-    # input('')
 
     Total = df['Pageviews'].sum()
     df['Extent GL Pageviews (%)'] = 100*df['Pageviews']/Total
     df = df.round(1)
 
-    # print (Total)
-    # print (df.head(10))
-    # input('')
 
     parents = list()
     for x in df.index: parents.append('')
@@ -579,8 +504,7 @@ def update_treemap_geolocated(language,geographicalentity):
 def update_treemap_ccc(language):
 
     languageproject = language; language = language_names[language]
-    df = df_ccc_final.loc[df_ccc_final['Wiki_x'] == language]
-#    df = df.rename({'Covered Language':''})
+    df = params_to_df(language, 'ccc')
 
     parents = list()
     for x in df.index:
@@ -672,92 +596,102 @@ def update_barchart(langs):
 
     languagecodes = []
     for l in langs:
+        languagecodes.append(language_names[l])
+
+    df_gender_final = params_to_df(languagecodes, 'gender')
+
+    df_gender_final_male = df_gender_final.loc[df_gender_final['Gender_x'] == 'male']
+    df_gender_final_male = df_gender_final_male.set_index('Wiki_x')
+    df_gender_final_female = df_gender_final.loc[df_gender_final['Gender_x'] == 'female']
+    df_gender_final_female = df_gender_final_female.set_index('Wiki_x')
+
+    for x in df_gender_final_male.index.values.tolist():
         try:
-            languagecodes.append(language_names[l])
+            male = df_gender_final_male.loc[x]['Articles']
         except:
-            pass
+            male = 0    
+        try:
+            female = df_gender_final_female.loc[x]['Articles']
+        except:
+            female = 0
+        df_gender_final_male.at[x, 'Extent Articles (%)'] =  100*male/(male+female)
+        df_gender_final_female.at[x, 'Extent Articles (%)'] =  100*female/(male+female)
 
-    df = df_gender_final_male.loc[df_gender_final_male['Wiki'].isin(languagecodes)]
-    df2 = df_gender_final_female.loc[df_gender_final_female['Wiki'].isin(languagecodes)]
+        try:
+            male = df_gender_final_male.loc[x]['Pageviews']
+        except:
+            male = 0    
+        try:
+            female = df_gender_final_female.loc[x]['Pageviews']
+        except:
+            female = 0
 
-    df3 = df
-    df4 = df2
+        pvsum = male+female
+        if pvsum == 0:
+            df_gender_final_male.at[x, 'Extent Pageviews (%)'] = 0
+        else:
+            df_gender_final_male.at[x, 'Extent Pageviews (%)'] = 100*male/pvsum
 
-    df['Language (Art.)'] = df['Language'] + ' Art.'
-    df2['Language (Art.)'] = df2['Language'] + ' Art.'
+        if pvsum == 0:
+            df_gender_final_male.at[x, 'Extent Pageviews (%)'] = 0
+        else:
+            df_gender_final_female.at[x, 'Extent Pageviews (%)'] =  100*female/pvsum
 
-    df3['Language (Pv.)'] = df['Language'] + ' Pv.'
-    df4['Language (Pv.)'] = df2['Language'] + ' Pv.'
+    df_gender_final_male = df_gender_final_male.reset_index().round(1)
+    df_gender_final_female = df_gender_final_female.reset_index().round(1)
 
+    df_gender_final_male['Language (Art.)'] = df_gender_final_male['Language'] + ' Art.'
+    df_gender_final_female['Language (Art.)'] = df_gender_final_female['Language'] + ' Art.'
 
-    # animals=['giraffes', 'orangutans', 'monkeys']
-    # fig = go.Figure(data=[
-    #     go.Bar(name='SF Zoo', x=animals, y=[20, 14, 23]),
-    #     go.Bar(name='LA Zoo', x=animals, y=[12, 18, 29])
-    # ])
-    # fig.update_layout(barmode='stack')
+    df_gender_final_male['Language (Pv.)'] = df_gender_final_male['Language'] + ' Pv.'
+    df_gender_final_female['Language (Pv.)'] = df_gender_final_female['Language'] + ' Pv.'
+
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
-        x=df['Language (Art.)'],
-        y=df['Extent Articles (%)'],
+        x=df_gender_final_male['Language (Art.)'],
+        y=df_gender_final_male['Extent Articles (%)'],
         name='Men Articles',
         marker_color='blue',
 #        values = df2['Extent Articles (%)'],
-        customdata = df['Articles'],
+        customdata = df_gender_final_male['Articles'],
         texttemplate='%{y}',
         hovertemplate='<br>Articles: %{customdata}<br>Extent Articles: %{y}%<br><extra></extra>',
 
     ))
     fig.add_trace(go.Bar(
-        x=df2['Language (Art.)'],
-        y=df2['Extent Articles (%)'],
+        x=df_gender_final_female['Language (Art.)'],
+        y=df_gender_final_female['Extent Articles (%)'],
         name='Women Articles',
         marker_color='red',
 #        values = df2['Extent Articles (%)'],
-        customdata = df2['Articles'],
+        customdata = df_gender_final_female['Articles'],
         texttemplate='%{y}',
         hovertemplate='<br>Articles: %{customdata}<br>Extent Articles: %{y}%<br><extra></extra>',
     ))
     fig.add_trace(go.Bar(
-        x=df3['Language (Pv.)'],
-        y=df3['Extent Pageviews (%)'],
+        x=df_gender_final_male['Language (Pv.)'],
+        y=df_gender_final_male['Extent Pageviews (%)'],
         name='Men Pageviews',
         marker_color='violet',
-        customdata = df3['Pageviews'],
+        customdata = df_gender_final_male['Pageviews'],
         texttemplate='<b>%{y}</b>',
         hovertemplate='<br>Pageviews: %{customdata}<br>Extent Pageviews: %{y}%<br><extra></extra>',
 
     ))
     fig.add_trace(go.Bar(
-        x=df4['Language (Pv.)'],
-        y=df4['Extent Pageviews (%)'],
+        x=df_gender_final_female['Language (Pv.)'],
+        y=df_gender_final_female['Extent Pageviews (%)'],
         name='Women Pageviews',
         marker_color='orange',
-        customdata = df4['Pageviews'],
+        customdata = df_gender_final_female['Pageviews'],
         texttemplate='<b>%{y}</b>',
         hovertemplate='<br>Pageviews: %{customdata}<br>Extent Pageviews: %{y}%<br><extra></extra>',
     ))    
     fig.update_layout(barmode='stack')
 
-    # fig.add_trace(go.Bar(
-    #     x=df['Language (Wiki)'],
-    #     y=df['Extent Pageviews (%)'],
-    #     name='Men Pageviews',
-    #     marker_color='violet',
-    #     customdata = df['Pageviews'],
-    #     hovertemplate='<b>%{label} </b><br>Extent: %{customdata}%<br>Pv.: %{value}<br><extra></extra>',
-
-    # ))
-    # fig.add_trace(go.Bar(
-    #     x=df2['Language (Wiki)'],
-    #     y=df2['Extent Pageviews (%)'],
-    #     name='Women Pageviews',
-    #     marker_color='orange',
-    #     customdata = df2['Pageviews'],
-    #     hovertemplate='<b>%{label} </b><br>Extent: %{customdata}%<br>Pv.: %{value}<br><extra></extra>',
-    # ))
     return fig
+
 
 
 # DATATABLE
@@ -778,18 +712,8 @@ def update_styles(selected_columns):
     [Input('datatable-cccpageviews', 'derived_virtual_data'),
      Input('datatable-cccpageviews', 'derived_virtual_selected_rows')])
 def update_graphs(rows, derived_virtual_selected_rows):
-    # When the table is first rendered, `derived_virtual_data` and
-    # `derived_virtual_selected_rows` will be `None`. This is due to an
-    # idiosyncracy in Dash (unsupplied properties are always None and Dash
-    # calls the dependent callbacks when the component is first rendered).
-    # So, if `rows` is `None`, then the component was just rendered
-    # and its value will be the same as the component's dataframe.
-    # Instead of setting `None` in here, you could also set
-    # `derived_virtual_data=df.to_rows('dict')` when you initialize
-    # the component.
     if derived_virtual_selected_rows is None:
         derived_virtual_selected_rows = []
-
 
     dff = df if rows is None else pd.DataFrame(rows)
 
@@ -822,8 +746,5 @@ def update_graphs(rows, derived_virtual_selected_rows):
                 },
             },
         )
-        # check if column exists - user may have deleted it
-        # If `column.deletable=False`, then you don't
-        # need to do this check.
         for column in ['CCC %','Top CCC pageviews', 'Pageviews'] if column in dff
     ]

@@ -3,19 +3,13 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 
-#### TOPIC ANALYSIS DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+#### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
 conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
 
-query = 'SELECT set1, set1descriptor, set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content = "articles" AND set2="topic" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1;'
+
+query = 'SELECT set1, set1descriptor, set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content = "articles" AND set2="topic" AND period = "'+last_period+'" ORDER BY set1;'
 df_topics = pd.read_sql_query(query, conn)
-
-
-# the transposition is not necessary.
-# df_topics1 = pd.pivot_table(df_topics,values=['rel_value','abs_value'], index=['set1'],columns=['set2descriptor'])
-# df_topics1.columns = ['{}_{}'.format(x[1], x[0]) for x in df_topics1.columns]
-# df_topics1 = df_topics1.rename(columns = {})
-# prova = {'books_abs_value', 'clothing_and_fashion_abs_value', 'earth_abs_value', 'folk_abs_value', 'food_abs_value', 'glam_abs_value', 'industry_abs_value', 'monuments_and_buildings_abs_value', 'music_creations_and_organizations_abs_value', 'paintings_abs_value', 'sport_and_teams_abs_value', 'books_rel_value', 'clothing_and_fashion_rel_value', 'earth_rel_value', 'folk_rel_value', 'food_rel_value', 'glam_rel_value', 'industry_rel_value', 'monuments_and_buildings_rel_value', 'music_creations_and_organizations_rel_value', 'paintings_rel_value', 'sport_and_teams_rel_value'}
 
 df_topics = df_topics.rename(columns={'Extent':'Extent (%)','rel_value':'Extent (%)','abs_value':'Articles','set1descriptor':'Content', 'set2descriptor':'Topic2','set1':'Wiki'})
 df_topics['Language'] = df_topics['Wiki'].map(language_names_full)
@@ -23,9 +17,6 @@ df_topics = df_topics.round(1)
 
 topic_names = {'books':'Books','clothing_and_fashion':'Clothing and Fashion','earth':'Earth','folk':'Folk','food':'Food','glam':'GLAM','industry':'Industry','monuments_and_buildings':'Monuments and Buildings','music_creations_and_organizations':'Music','paintings':'Paintings','sport_and_teams':'Sports and Teams', 'people':'People','no_topic':'No Topic Info.'}
 df_topics['Topic'] = df_topics['Topic2'].map(topic_names)
-
-#print (df_topics.head(10))
-#print (df_topics.columns.tolist())
 
 df_topics_books = df_topics.loc[df_topics['Topic2'] == 'books']
 df_topics_clothing = df_topics.loc[df_topics['Topic2'] == 'clothing_and_fashion']
@@ -40,17 +31,11 @@ df_topics_paintings = df_topics.loc[df_topics['Topic2'] == 'paintings']
 df_topics_sport_and_teams = df_topics.loc[df_topics['Topic2'] == 'sport_and_teams']
 df_topics_people = df_topics.loc[df_topics['Topic2'] == 'people']
 
-# print (df_topics_clothing.head(10))
-# print (df_topics_music_creations_and_organizations.head(10))
-# print (df_topics_paintings.head(10))
-# input('')
-
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
 dash_app14 = Dash(__name__, server = app, url_base_pathname= webtype + '/topical_coverage/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 
-#dash_app14 = Dash()
 dash_app14.config['suppress_callback_exceptions']=True
 
 title = "Topical Coverage"
@@ -72,7 +57,6 @@ dash_app14.layout = html.Div([
         * What is the topical distribution in various Wikipedia Language Edition and their CCC?
        '''),
     html.Br(),
-#    html.Hr(),
 
 ###
 
@@ -149,8 +133,7 @@ dash_app14.layout = html.Div([
 ], className="container")
 
 
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 
 #### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
@@ -163,7 +146,6 @@ def update_treemap_ccc(language):
 
     languageproject = language; language = language_names[language]
     df_topics_lang = df_topics.loc[df_topics['Wiki'] == language]
-#    print (df_topics_lang.head(10))
 
     df_topics_lang_wp = df_topics_lang.loc[df_topics_lang['Content'] == 'wp']
     df_topics_lang_ccc = df_topics_lang.loc[df_topics_lang['Content'] == 'ccc']
@@ -174,19 +156,11 @@ def update_treemap_ccc(language):
     df_topics_lang_wp = df_topics_lang_wp[df_topics_lang_wp.Topic != 'No Topic Info.']
     df_topics_lang_ccc = df_topics_lang_ccc[df_topics_lang_ccc.Topic != 'No Topic Info.']
 
-    # print (df_topics_lang_wp.head(12))
-    # print (df_topics_lang_ccc.head(12))
-    # print (df_topics_lang_wp.Articles.sum())
-    # print (df_topics_lang_ccc.Articles.sum())
-#    df = df.rename({'Covered Language':''})
     parents = ['','','','','','','','','','','']
 
-#    print (df.head(10))
-#    fig = make_subplots(1, 2, subplot_titles=['Size Coverage', 'Size Extent'])
     fig = make_subplots(
         cols = 2, rows = 1,
         column_widths = [0.45, 0.45],
-#        subplot_titles = ('No Topic Info. '+str(wp_notopic)+'  <br />&nbsp;<br />', 'No Topic Info. '+str(ccc_notopic)+'  <br />&nbsp;<br />'),
         specs = [[{'type': 'treemap', 'rowspan': 1}, {'type': 'treemap'}]]
     )
 
@@ -234,19 +208,21 @@ def update_treemap_ccc(language):
     dash.dependencies.Output('sourcelangdropdown_topicalcoverage', 'value'),
     [dash.dependencies.Input('grouplangdropdown', 'value')])
 def set_langs_options_spread(selected_group):
-    # langolist, langlistnames = wikilanguages_utils.get_langs_group(selected_group, None, None, None, wikipedialanguage_numberarticles, territories, languages)
-    # available_options = [{'label': i, 'value': i} for i in langlistnames.keys()]
-    # list_options = []
-    # for item in available_options:
-    #     list_options.append(item['label'])
-    # re = sorted(list_options,reverse=False)
+    langolist, langlistnames = wikilanguages_utils.get_langs_group(selected_group, None, None, None, wikipedialanguage_numberarticles, territories, languages)
+    available_options = [{'label': i, 'value': i} for i in langlistnames.keys()]
+    list_options = []
+    for item in available_options:
+        list_options.append(item['label'])
 
-    return ['Cebuano (ceb)', 'Dutch (nl)', 'English (en)', 'French (fr)', 'German (de)', 'Italian (it)', 'Polish (pl)', 'Russian (ru)', 'Spanish (es)', 'Swedish (sv)']
+    re = sorted(list_options,reverse=False)
+    return re
+    # return ['Cebuano (ceb)', 'Dutch (nl)', 'English (en)', 'French (fr)', 'German (de)', 'Italian (it)', 'Polish (pl)', 'Russian (ru)', 'Spanish (es)', 'Swedish (sv)']
 
 
 # TOPICS WP BARCHART
 @dash_app14.callback(
     Output('language_topics_barchart', 'figure'),
+
     [Input('sourcelangdropdown_topicalcoverage', 'value')])
 def update_barchart_wp(langs):
 
@@ -281,10 +257,6 @@ def update_barchart_wp(langs):
     df_sport_and_teams_wp = df_sports_and_teams.loc[df_sports_and_teams['Content'] == 'wp']
     df_people_wp = df_people.loc[df_people['Content'] == 'wp']
 
-    # print (df_clothing.head(10))
-    # print (df_music_creations_and_organizations.head(10))
-    # print (df_paintings.head(10))
-
 
     df_books_ccc = df_books.loc[df_books['Content'] == 'ccc']
     df_clothing_ccc = df_clothing.loc[df_clothing['Content'] == 'ccc']
@@ -300,9 +272,7 @@ def update_barchart_wp(langs):
     df_people_ccc = df_people.loc[df_people['Content'] == 'ccc']
 
 
-
     fig = go.Figure()
-
 
     fig.add_trace(go.Bar(
         x=df_people_wp['Language'],
@@ -438,7 +408,6 @@ def update_barchart_wp(langs):
         title_x=0.5,
     )
 
-#    fig.update_layout(barmode='stack')
     return fig
 
 
@@ -466,9 +435,6 @@ def update_barchart_ccc(langs):
     df_sports_and_teams = df_topics_sport_and_teams.loc[df_topics_sport_and_teams['Wiki'].isin(languagecodes)]
     df_people = df_topics_people.loc[df_topics_people['Wiki'].isin(languagecodes)]
 
-    # print (df_clothing.head(10))
-    # print (df_music_creations_and_organizations.head(10))
-    # print (df_paintings.head(10))
 
     df_books_ccc = df_books.loc[df_books['Content'] == 'ccc']
     df_clothing_ccc = df_clothing.loc[df_clothing['Content'] == 'ccc']

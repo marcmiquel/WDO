@@ -21,26 +21,36 @@ import colour
 
 
 databases_path = '/srv/wcdo/databases/'
+datasets_path = '/srv/wcdo/datasets/'
 dumps_path = '/srv/wcdo/dumps/'
 
 wikidata_db = 'wikidata.db'
 
+diversity_groups_db = 'diversity_groups.db'
 diversity_observatory_log = 'diversity_observatory_log.db'
 wikipedia_diversity_db = 'wikipedia_diversity.db'
+
 stats_db = 'stats.db'
+stats_production_db = 'stats_production.db'
+
 top_diversity_db = 'top_diversity_articles.db'
+top_diversity_production_db = 'top_ccc_articles_production.db'
+
 missing_ccc_db = 'missing_ccc.db'
+group_identities_db = 'group_identities.db'
 
 editor_diversity_db = 'editor_diversity.db'
 revision_db = 'revision.db'
 imageslinks_db = 'imagelinks.db'
+
 images_db = 'images.db'
+images_production_db = 'images_production.db'
 
 
 # Loads language_territories_mapping.csv file
 def load_wikipedia_languages_territories_mapping():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();  
 
     query = 'SELECT WikimediaLanguagecode, languagenameEnglishethnologue, territoryname, territorynameNative, QitemTerritory, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, officialnationalorregional, region, subregion, intermediateregion FROM wikipedia_languages_territories_mapping;'
 
@@ -64,7 +74,7 @@ def load_wikipedia_languages_territories_mapping():
 def load_wiki_projects_information():
     # in case of extending the project to other WMF sister projects, it would be necessary to revise these columns and create a new file where a column would specify whether it is a language edition, a wikictionary, etc.
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
 
     query = 'SELECT languagename, Qitem, WikimediaLanguagecode, Wikipedia, WikipedialanguagearticleEnglish, languageISO, languageISO3, languageISO5, nativeLabel, region, subregion, intermediateregion FROM wiki_projects;'
 
@@ -77,7 +87,7 @@ def load_wiki_projects_information():
 
 def load_language_pairs_territory_status():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
 
     query = 'SELECT qitem,territoryname_english, territoryname_higher, ISO3166, ISO3166_2, language_lower_name, language_higher_name, wikimedia_lower, wikimedia_higher, type_overlap, status_lower, status_higher, equal_status, indigenous_lower, indigenous_higher FROM wikipedia_language_pairs_territory_status WHERE equal_status=0;'
 
@@ -101,10 +111,10 @@ def load_all_territories_information():
 def load_wikipedia_language_editions_numberofarticles(wikilanguagecode, db):
     wikipedialanguage_numberarticles = {}
 
-    if db=='temp': 
-        database = 'wikipedia_diversity_temp.db';
+    if db=='production': 
+        database = wikipedia_diversity_db.split('.')[0]+'_production.db';
     else:
-        database = 'wikipedia_diversity.db'
+        database = wikipedia_diversity_db
 
     print ('database in use in load_wikipedia_language_editions_numberofarticles: '+database)
 
@@ -132,8 +142,7 @@ def load_dicts_page_ids_qitems(printme, languagecode):
     page_titles_qitems = {}
     page_titles_page_ids = {}
 
-    conn = sqlite3.connect(databases_path + 'wikipedia_diversity.db'); cursor = conn.cursor()
-#    conn = sqlite3.connect(databases_path + 'ccc.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
     
     a='1'
     try:
@@ -198,7 +207,7 @@ def load_territories_names_from_language_country(ISO3166, languagecode, territor
 
 def load_iso_3166_to_geographical_regions():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
 
     query = 'SELECT alpha_2, name, region, sub_region FROM country_regions;'
 
@@ -228,7 +237,7 @@ def load_countries_subdivisions_from_language(languagecode,territories):
 
 def load_iso_31662_to_subdivisions():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
     query = 'SELECT territoryname, ISO31662 FROM wikipedia_languages_territories_mapping;'
     subdivisions = pd.read_sql_query(query, conn)
 
@@ -251,7 +260,7 @@ def load_iso_31662_to_subdivisions():
 
 def load_world_subdivisions():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
     query = 'SELECT name, subdivision_code FROM world_subdivisions;'
 
     world_subdivisions = {}
@@ -263,7 +272,7 @@ def load_world_subdivisions():
 
 def load_world_subdivisions_ip2location():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
     query = 'SELECT subdivision_name, subdivision_code FROM ISO3166_2_ip2location;'
 
     world_subdivisions = {}
@@ -276,7 +285,7 @@ def load_world_subdivisions_ip2location():
 
 def load_world_subdivisions_multilingual():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
     query = 'SELECT subdivision_name, subdivision_code FROM multilingual_ISO3166_2;'
 
     world_subdivisions = {}
@@ -295,7 +304,7 @@ def load_language_pairs_apertium(wikilanguagecodes):
 #    r = requests.get("https://cxserver.wikimedia.org/v1/list/languagepairs", timeout=0.5)
 #    print (r.text)
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
 
     languagecode_translated_from={}
 
@@ -504,7 +513,7 @@ def load_all_countries_qitems():
 def get_old_current_countries_pairs(languagecode,regional):
 
     territories = load_wikipedia_languages_territories_mapping()
-    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
     (iso_qitem, label_qitem) = load_all_countries_qitems()
 
     if languagecode == '':
@@ -601,7 +610,7 @@ def obtain_proximity_wikipedia_languages_lists(languagecode, wikipedialanguage_n
     # COVERING BEST CCC    # recommended 19
     closest = []
     if closest_val!=None:
-        conn = sqlite3.connect(databases_path+'wcdo_stats.db'); cursor = conn.cursor()
+        conn = sqlite3.connect(databases_path+stats_db); cursor = conn.cursor()
         query = 'SELECT set2, rel_value FROM wcdo_intersections WHERE set1 = "'+languagecode+'" AND set1descriptor = "ccc" AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY 2 DESC LIMIT '+str(closest_val)
         for row in cursor.execute(query):
             closest.append(row[0])
@@ -638,7 +647,7 @@ obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagec
 
 def obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, num):
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
 
     query = ('CREATE TABLE IF NOT EXISTS obtain_closest_for_all_languages ('+
     'langcode text,'+
@@ -907,7 +916,7 @@ def extract_check_new_wiki_projects():
         print (message)
         df = df.loc[~df.index.duplicated(keep='first')]
         df=df.reindex(newlanguages)
-        send_email_toolaccount('WCDO: New languages to introduce into the file.', message)
+        send_email_toolaccount('WDO: New languages to introduce into the file.', message)
         print ('The new languages are in a file named: ')
         print (databases_path + filename+'.csv')
         df.to_csv(databases_path + filename+'.csv',sep='\t')
@@ -915,6 +924,144 @@ def extract_check_new_wiki_projects():
         print ('There are no new Wikipedia language editions.')
 
     return newlanguages
+
+
+
+
+# Creates a dataset from the Wikipedia Diversity database for a list of languages.
+# COMMAND LINE: sqlite3 -header -csv ccc_temp.db "SELECT * FROM ccc_cawiki;" > ccc_cawiki.csv
+def extract_wikipedia_diversity_tables_to_files():
+
+    for languagecode in wikilanguagecodes:
+        conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+        # These are the folders.
+        superfolder = datasets_path+cycle_year_month
+        languagefolder = superfolder+'/'+languagecode+'wiki/'
+        latestfolder = datasets_path+'latest/'
+        if not os.path.exists(languagefolder): os.makedirs(languagefolder)
+        if not os.path.exists(latestfolder): os.makedirs(latestfolder)
+
+        # These are the files.
+        ccc_filename_archived = languagecode + 'wiki_' + str(cycle_year_month.replace('-',''))+'_diversity.csv' # (e.g. 'cawiki_20180215_ccc.csv')
+        ccc_filename_latest = languagecode + 'wiki_latest_diversity.csv.bz2' # (e.g. cawiki_latest_diversity.csv)
+
+        # These are the final paths and files.
+        path_latest = latestfolder + ccc_filename_latest
+        path_language = languagefolder + ccc_filename_archived
+        print ('Extracting the Diversity Tables from language '+languagecode+' into the file: '+path_language)
+        print ('This is the path for the latest files altogether: '+path_latest)
+
+        # Here we prepare the streams.
+        path_language_file = codecs.open(path_language, 'w', 'UTF-8')
+        c = csv.writer(open(path_language,'w'), lineterminator = '\n', delimiter='\t')
+
+        cursor.execute("SELECT * FROM "+languagecode+"wiki;") # ->>>>>>> canviar * per les columnes. les de rellevància potser no cal.
+
+        i = 0
+        c.writerow([d[0] for d in cursor.description])
+        for result in cursor:
+            i+=1
+            c.writerow(result)
+
+        compressionLevel = 9
+        source_file = path_language
+        destination_file = source_file+'.bz2'
+
+        tarbz2contents = bz2.compress(open(source_file, 'rb').read(), compressionLevel)
+        fh = open(destination_file, "wb")
+        fh.write(tarbz2contents)
+        fh.close()
+
+        print (languagecode+' language has this number of rows: '+str(i))
+        # Delete the old 'latest' file and copy the new language file as a latest file.
+
+        try:
+            os.remove(path_language);
+            os.remove(path_latest); 
+        except: pass
+        cursor.close()
+
+        shutil.copyfile(destination_file,path_latest)
+        print ('Creating the latest_file for: '+languagecode+' with name: '+path_latest)
+
+        # Count the number of files in the language folders and in case they are more than X, we delete them.
+#        filenamelist = sorted(os.listdir(languagefolder), key = os.path.getctime)
+
+        # Reference Datasets:
+        # http://whgi.wmflabs.org/snapshot_data/
+        # https://dumps.wikimedia.org/wikidatawiki/entities/
+        # http://ftp.acc.umu.se/mirror/wikimedia.org/dumps/cawiki/20180201/
+    
+
+    data = {
+      "@context":"http://schema.org/",
+      "@type":"Dataset",
+      "name":"Wikipedia Cultural Context Content Dataset",
+      "description":"Cultural Context Content is the group of Articles in a Wikipedia language edition that relates to the editors' geographical and cultural context (places, traditions, language, politics, agriculture, biographies, events, etcetera.). Cultural Context Content is collected as a dataset, which is available in a monthly basis, and allows the Wikipedia Diversity Observatory project to show and depict several statistics on the state of knowledge equality and cross-cultural coverage. These datasets are computed for all Wikipedia language editions. They allow answering questions such as: \n* How self-centered any Wikipedia is (the extent of ccc as percentage and number of Articles)? Are the CCC Articles responding to readers demand for information?\n* How well any Wikipedia covers the existing world cultural diversity (gaps)?\n* Are the Articles created each month dedicated to fill these gaps?\n* Which are the most relevant Articles from each Wikipedia’s related cultural context and particular topics?",
+      "url":"https://wcdo.wmflabs.org/datasets/",
+      "sameAs":"https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content#Datasets",
+      "license": "Creative Commons CC0 dedication",
+      "keywords":[
+         "Content Imbalances > Language Gap > Culture gap",
+         "Online Communities > Wikipedia > Wiki Studies",
+         "Cultural Diversity > Cross-cultural data",
+         "Big Data > Data mining > Public repositories"
+      ],
+      "creator":{
+         "@type":"Organization",
+         "url": "https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory",
+         "name":"Wikipedia Cultural Diversity Observatory",
+         "contactPoint":{
+            "@type":"ContactPoint",
+            "contactType": "customer service",
+            "email":"tools.wcdo@tools.wmflabs.org"
+         }
+      },
+      "includedInDataCatalog":{
+         "@type":"Wikimedia datasets",
+         "name":"https://meta.wikimedia.org/wiki/Datasets"
+      },
+      "distribution":[
+         {
+            "@type":"DataDownload",
+            "encodingFormat":"CSV",
+         },
+      ],
+      "temporalCoverage":"2001-01-01/2018-"+cycle_year_month
+    }
+
+    with open(datasets_path+'/latest/'+'Wikipedia_Diversity_datasets.json', 'w') as f:
+      json.dump(data, f, ensure_ascii=False)
+      
+    """
+    https://developers.google.com/search/docs/data-types/dataset
+    https://www.blog.google/products/search/making-it-easier-discover-datasets/amp/ 
+    https://search.google.com/structured-data/testing-tool
+    https://toolbox.google.com/datasetsearch
+    """
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+
+def extract_ccc_count(languagecode, filename, message):
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+    query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE ccc_binary=1;'
+    cursor.execute(query)
+    row = cursor.fetchone()
+    if row: row1 = str(row[0]);
+
+    query = 'SELECT count(*) FROM '+languagecode+'wiki;'
+    cursor.execute(query)
+    row = cursor.fetchone()
+    if row: row2 = str(row[0]);
+
+    languagename = languages.loc[languagecode]['languagename']
+
+    with open(filename, 'a') as f:
+        f.write(languagename+'\t'+message+'\t'+row1+'\t'+row2+'\n')
+
 
 
 def get_months_queries():
@@ -979,6 +1126,17 @@ def get_current_cycle_year_month():
     print ('current cycle for the data: '+current_cycle)
     return current_cycle
 
+
+def get_last_accumulated_period_year_month():
+
+    query = 'SELECT MAX(period) FROM wcdo_intersections_accumulated;'
+    conn = sqlite3.connect(databases_path + stats_production_db); cursor = conn.cursor()
+
+    cursor.execute(query)
+    current_cycle = cursor.fetchone()[0]
+
+    print ('last accumulated period: '+current_cycle)
+    return current_cycle
 
 
 def is_insert(line):
@@ -1060,6 +1218,11 @@ def copy_db_for_production(dbname, scriptname, databases_path):
     # verify_function_run_db(function_name, 'mark', duration)
 
 
+
+def delete_wikidata_db():
+    os.remove(databases_path + wikidata_db)
+
+
 ############################################################################
 
 # Sends an e-mail
@@ -1076,15 +1239,29 @@ def finish_email(startTime, filename, title):
         sys.stdout=None; send_email_toolaccount(title + ' aborted because of an error', open(filename, 'r').read()+'err')
 
 
+def check_dump(dumps_path, script_name):
+    try:
+        os.path.isfile(dumps_path)
+        return True
+    except:
+        print ('dump error at script '+script_name)
+        send_email_toolaccount('dump error at script '+script_name, dumps_path)
+        quit()
+
+
+
 ############################################################################
 
 
 def backup_db():
     try:
-        shutil.copyfile(databases_path + 'wikipedia_diversity.db', databases_path + "wikipedia_diversity_backup.db")
+        shutil.copyfile(databases_path + wikipedia_diversity_db, databases_path + "wikipedia_diversity_backup.db")
         print ('File wikipedia_diversity.db copied as wikipedia_diversity_backup.db at the end of the content_retrieval.py script.')
     except:
         print ('Not possible to create the backup.')
+
+
+
 
 
 
@@ -1176,6 +1353,9 @@ def check_time_for_script_run(script_name, cycle_year_month):
         if script_name == 'missing_ccc_selection.py':
             if 'content_selection.py' in scripts_run and 'article_features.py' in scripts_run: not_ready = False
 
+        if script_name == 'group_identities_selection.py':
+            if 'content_selection.py' in scripts_run and 'article_features.py' in scripts_run: not_ready = False
+
         if not_ready == True:
             print ('Not ready yet: waiting one more day before asking again.')
             time.sleep(86400)
@@ -1184,9 +1364,9 @@ def check_time_for_script_run(script_name, cycle_year_month):
 
 
 
-def store_lines_per_second(db_name, duration, lines, function_name, file, period):
+def store_lines_per_second(duration, lines, function_name, file, period):
 
-    conn = sqlite3.connect(databases_path + 'diversity_observatory_log.db')
+    conn = sqlite3.connect(databases_path + diversity_observatory_log)
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS lines_per_second (linespersecond real, lines integer, duration integer, function_name text, file text, year_month text, PRIMARY KEY (function_name, year_month));")
 
@@ -1218,6 +1398,81 @@ def check_run_failed_functions():
                 if num == 0:                
                     (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
                     exec(function,parameters)
+
+
+
+
+
+def check_language_article_features():
+
+    features = ['num_inlinks','num_outlinks','num_bytes','num_references','num_edits','num_editors','num_discussions','num_pageviews','num_wdproperty','num_interwiki','num_images','num_edits_last_month','featured_article','wikirank']
+
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+
+    for languagecode in wikilanguagecodes:
+        print(languagecode)
+
+        for feature in features:
+            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
+            cursor2.execute(query)
+            value = cursor2.fetchone()
+            if value != None: 
+                count = value[0]
+            if count != 0: 
+                print(languagecode+' '+feature+' '+str(count))
+            if count == 0 or count== None:
+                print(languagecode+' '+feature+' MISSING!')
+
+        print ('\n')
+
+
+def copy_language_article_features():
+
+    features = ['num_inlinks','num_outlinks','num_bytes','num_references','num_edits','num_editors','num_discussions','num_pageviews','num_wdproperty','num_interwiki','num_images','num_edits_last_month','featured_article','wikirank']
+
+    conn = sqlite3.connect(databases_path + 'ccc.db'); cursor = conn.cursor()
+
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+
+    for languagecode in wikilanguagecodes:
+        print(languagecode)
+
+        for feature in features:
+            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
+            cursor2.execute(query)
+            value = cursor2.fetchone()
+            if value != None: 
+                count = value[0]
+            if count != 0: 
+                print(languagecode+' '+feature+' '+str(count))
+            if count == 0 or count== None:
+                print(languagecode+' '+feature+' MISSING!')
+
+                params = []
+                query = 'SELECT '+feature+', qitem, page_id FROM ccc_'+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
+    #            query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
+                try:
+                    for row in cursor.execute(query):
+                        params.append((row[0],row[1],row[2]))
+                except:
+                    continue
+
+                if len(params)!=0:
+                    print ('In the old table we found: '+str(len(params)))
+                    query = 'UPDATE '+languagecode+'wiki SET '+feature+' = ? WHERE qitem=? AND page_id=?'
+                    cursor2.executemany(query,params);
+                    conn2.commit()
+
+                    query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
+                    cursor2.execute(query)
+                    value = cursor2.fetchone()
+                    if value != None: 
+                        count = value[0]
+                    if count != 0: 
+                        print(languagecode+' '+feature+' '+str(count))
+                        print ('FILLED WITH OTHER DATA.')
+
+        print ('\n')
 
 
 

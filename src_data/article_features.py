@@ -2,6 +2,7 @@
 
 # script
 import wikilanguages_utils
+from wikilanguages_utils import *
 # time
 import time
 import datetime
@@ -14,6 +15,7 @@ import sys
 import shutil
 import re
 import random
+import operator
 # databases
 import MySQLdb as mdb, MySQLdb.cursors as mdb_cursors
 import sqlite3
@@ -41,41 +43,28 @@ import gc
 import xml.etree.ElementTree as etree
 
 
-# EXECUTION THE 7TH DAY OF EVERY MONTH!
 # MAIN
 def main():
 
-    check_language_article_features()
-    copy_language_article_features()
+
+    for languagecode in ['ca']: 
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+        extend_articles_history_features(languagecode, page_titles_qitems, page_titles_page_ids)
+
+    return
+
+    extend_articles_pageviews()
+    extend_articles_images()
+    extend_articles_wikirank()
     
     for languagecode in wikilanguagecodes: 
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        extend_articles_pageviews()
         extend_articles_references(languagecode, page_titles_qitems, page_titles_page_ids)
-        extend_articles_interwiki(languagecode, page_titles_page_ids)
-        extend_articles_qitems_properties(languagecode, page_titles_page_ids)
+        extend_articles_interwiki_qitem_properties(languagecode, page_titles_page_ids)
         extend_articles_featured(languagecode, page_titles_page_ids)
-        extend_articles_images(languagecode,page_titles_qitems,page_titles_page_ids)
-        extend_articles_wikirank()
+        extend_articles_history_features(languagecode, page_titles_qitems, page_titles_page_ids)
 
-
-    # UPDATING THE ARTICLES
-    # i = 0
-    # with ThreadPoolExecutor(max_workers=2) as executor:
-    #     for languagecode in wikilanguagecodes: 
-    #         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-
-    #         executor.submit(extend_articles_references, languagecode, page_titles_qitems, page_titles_page_ids)
-    #         executor.submit(extend_articles_bytes, languagecode, page_titles_qitems)
-    #         executor.submit(extend_articles_qitems_properties, languagecode, page_titles_page_ids)
-    #         executor.submit(extend_articles_featured, languagecode, page_titles_page_ids)
-    #         executor.submit(extend_articles_interwiki, languagecode, page_titles_page_ids)
-    #         executor.submit(extend_articles_images, languagecode, page_titles_qitems, page_titles_page_ids)
-
-    #     del (page_titles_qitems, page_titles_page_ids); gc.collect()
-#    backup_db()
- 
-    wikilanguages_utils.copy_db_for_production(wikipedia_diversity_db, 'article_features.py', databases_path)
+    extend_articles_first_timestamp_lang()
 
 
 ################################################################
@@ -88,7 +77,7 @@ def extend_articles_pageviews():
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
-    increment = 30
+    increment = 31
     lastMonth = datetime.date.today() - datetime.timedelta(days=increment)
     month_day = lastMonth.strftime("%Y-%m")
     filename = 'pagecounts-'+month_day+'-views-ge-5-totals.bz2'
@@ -110,6 +99,7 @@ def extend_articles_pageviews():
         line = line.rstrip().decode('utf-8')[:-1]
         values=line.split(' ')
 
+
         if len(values)<3: continue
         language = values[0].split('.')[0]
         page_title = values[1]
@@ -118,8 +108,8 @@ def extend_articles_pageviews():
         if language!=last_language:
             if last_language in wikilanguagecodes:
                 (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,last_language)
-                print (last_language)
-                print (len(pageviews_dict))
+                # print (last_language)
+                # print (len(pageviews_dict))
                 pageviews = []
                 for key,value in pageviews_dict.items():
                     try:
@@ -133,7 +123,7 @@ def extend_articles_pageviews():
                 query = 'UPDATE '+last_language+'wiki SET num_pageviews=? WHERE page_id = ? AND qitem = ?;'
                 cursor.executemany(query,pageviews)
                 conn.commit()
-                print (len(pageviews))
+                # print (len(pageviews))
             pageviews_dict={}
 #            input('')
 
@@ -152,25 +142,25 @@ def extend_articles_pageviews():
 
         last_language=language
 
-        # last iteration
-        if last_language in wikilanguagecodes:
-            (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,last_language)
-            print (last_language)
-            print (len(pageviews_dict))
-            pageviews = []
-            for key,value in pageviews_dict.items():
-                try:
+    # last iteration
+    if last_language in wikilanguagecodes:
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,last_language)
+        # print (last_language)
+        # print (len(pageviews_dict))
+        pageviews = []
+        for key,value in pageviews_dict.items():
+            try:
 #                    if last_language=='ca':
 #                        print ((key[0], key[1], pageviews_dict[(key[0],key[1])]))
 #                        print((value, page_titles_page_ids[key[1]],page_titles_qitems[key[1]]),key[1],last_language)
-                    pageviews.append((value, page_titles_page_ids[key[1]],page_titles_qitems[key[1]]))
-                except:
-                    pass
+                pageviews.append((value, page_titles_page_ids[key[1]],page_titles_qitems[key[1]]))
+            except:
+                pass
 #            query = "INSERT INTO pageviews (languagecode, page_title, num_pageviews) VALUES (?,?,?);"                    
-            query = 'UPDATE '+last_language+'wiki SET num_pageviews=? WHERE page_id = ? AND qitem = ?;'
-            cursor.executemany(query,pageviews)
-            conn.commit()
-            print (len(pageviews))
+        query = 'UPDATE '+last_language+'wiki SET num_pageviews=? WHERE page_id = ? AND qitem = ?;'
+        cursor.executemany(query,pageviews)
+        conn.commit()
+        # print (len(pageviews))
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -183,6 +173,7 @@ def extend_articles_references(languagecode, page_titles_qitems, page_titles_pag
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-externallinks.sql.gz'
+    wikilanguages_utils.check_dump(dumps_path, script_name)
 
     dump_in = gzip.open(dumps_path, 'r')
 
@@ -231,62 +222,32 @@ def extend_articles_references(languagecode, page_titles_qitems, page_titles_pag
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
+
 # Extends the Articles table with the number of interwiki links.
-def extend_articles_interwiki(languagecode, page_titles_page_ids):
+def extend_articles_interwiki_qitem_properties(languagecode, page_titles_page_ids):
 
     functionstartTime = time.time()
-    function_name = 'extend_articles_interwiki '+languagecode
+    function_name = 'extend_articles_interwiki_qitem_properties '+languagecode
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
-    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
+    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
 
     updated = []
-    query = "SELECT metadata.qitem, metadata.sitelinks, sitelinks.page_title FROM metadata INNER JOIN sitelinks ON sitelinks.qitem = metadata.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki'"
+    query = "SELECT metadata.qitem, metadata.sitelinks, metadata.properties, sitelinks.page_title FROM metadata INNER JOIN sitelinks ON sitelinks.qitem = metadata.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki'"
     for row in cursor.execute(query):
         try:
-            page_id=page_titles_page_ids[row[2].replace(' ','_')]
+            page_id=page_titles_page_ids[row[3].replace(' ','_')]
             qitem=row[0]
             iw_count=row[1]
-            updated.append((iw_count,page_id,qitem))
+            num_wdproperties=row[2]
+            updated.append((iw_count,num_wdproperties,page_id,qitem))
         except:
             pass
-    query = 'UPDATE '+languagecode+'wiki SET num_interwiki = ? WHERE page_id = ? AND qitem = ?;'
+    query = 'UPDATE '+languagecode+'wiki SET num_interwiki = ?, num_wdproperty = ? WHERE page_id = ? AND qitem = ?;'
     cursor2.executemany(query,updated)
     conn2.commit()
 
-    print ('CCC interwiki updated.')
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-
-
-# Extends the Articles table with the number of qitem properties.
-def extend_articles_qitems_properties(languagecode, page_titles_page_ids):
-
-    functionstartTime = time.time()
-
-    function_name = 'extend_articles_qitems_properties '+languagecode
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
-
-    conn = sqlite3.connect(databases_path + 'wikidata.db'); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-
-    updated = []
-    query = "SELECT metadata.qitem, metadata.properties, sitelinks.page_title FROM metadata INNER JOIN sitelinks ON sitelinks.qitem = metadata.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki'"
-    for row in cursor.execute(query):
-        try:
-            page_id=page_titles_page_ids[row[2].replace(' ','_')]
-            qitem=row[0]
-            num_wdproperty=row[1]
-            updated.append((num_wdproperty,page_id,qitem))
-#            print (page_id,qitem,iw_count)
-        except:
-            pass
-    query = 'UPDATE '+languagecode+'wiki SET num_wdproperty=? WHERE page_id = ? AND qitem = ?;'
-    cursor2.executemany(query,updated)
-    conn2.commit()
-
-    print ('CCC qitems properties updated.')
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
@@ -294,8 +255,6 @@ def extend_articles_qitems_properties(languagecode, page_titles_page_ids):
 
 # Extends the Articles table with the featured Articles.
 def extend_articles_featured(languagecode, page_titles_qitems):
-
-#    print('\n* '+languagecode)
 
     functionstartTime = time.time()
     function_name = 'extend_articles_featured '+languagecode
@@ -316,12 +275,13 @@ def extend_articles_featured(languagecode, page_titles_qitems):
         title = title.replace(' ', '_')
         hyphen = title.index(':')
         title = title[(hyphen+1):len(title)]
-#        print (title,language)
+        # print (title,language)
         featuredarticleslanguages[language] = title
         if language == 'itwiki': featuredarticleslanguages[language] = 'Voci_in_vetrina_su_it.wiki'
         if language == 'ruwiki': featuredarticleslanguages[language] = 'Википедия:Избранные_статьи_по_алфавиту'
-#    print ('These are the featured Articles categories in the different languages.')
-#    print (featuredarticleslanguages)
+    # print ('These are the featured Articles categories in the different languages.')
+    # print (featuredarticleslanguages)
+    # input('')
 
     if languagecode+'wiki' in featuredarticleslanguages: featuredtitle=featuredarticleslanguages[languagecode+'wiki']
     else: 
@@ -341,7 +301,7 @@ def extend_articles_featured(languagecode, page_titles_qitems):
         #print (page_title)
         try:
             featuredarticles.append((page_id,page_titles_qitems[page_title]))
-#            print ((page_id,page_title,page_titles_qitems[page_title]))
+            # print ((page_id,page_title,page_titles_qitems[page_title]))
         except:
             pass
 #            print ('This Article does not exist: '+page_title)
@@ -353,68 +313,228 @@ def extend_articles_featured(languagecode, page_titles_qitems):
     print ('We obtained '+str(len(featuredarticles))+' featured Articles')
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-
 #    print (featuredtitle,languagecode)
 
 
+
 # Extends the Articles table with the number of images.
-def extend_articles_images(languagecode,page_titles_qitems,page_titles_page_ids):
+def extend_articles_images():
 
     functionstartTime = time.time()
-    # function_name = 'extend_articles_images '+languagecode
-    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    function_name = 'extend_articles_images'
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
-    dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-imagelinks.sql.gz'
-    dump_in = gzip.open(dumps_path, 'r')
+    ####
+    # create imagelinks.db
+    conn = sqlite3.connect(databases_path + imageslinks_db); cursor = conn.cursor()
+    for languagecode in wikilanguagecodes:
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
 
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    page_ids_page_titles = {v: k for k, v in page_titles_page_ids.items()}
+        page_ids_qitems = {}
+        for page_title in page_titles_qitems.keys():
+            page_id = page_titles_page_ids[page_title]
+            qitem = page_titles_qitems[page_title]
+            page_ids_qitems[page_id]=qitem
 
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    page_ids_page_titles = {v: k for k, v in page_titles_page_ids.items()}
+        cursor.execute("CREATE TABLE IF NOT EXISTS imagelinks (langcode text, qitem text, image_title text, PRIMARY KEY (langcode, qitem, image_title));")
+        conn.commit()
 
-    num_images = {}
-    for page_id,page_title in page_ids_page_titles.items():
-        num_images[page_id]=0
+        dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-imagelinks.sql.gz'
+        wikilanguages_utils.check_dump(dumps_path, script_name)
 
-    print ('Iterating the dump.')
-    while True:
-        line = dump_in.readline()
-        try: line = line.decode("utf-8")
-        except UnicodeDecodeError: line = str(line)
+        dump_in = gzip.open(dumps_path, 'r')
+        images_count = {}
+        images_from = {}
 
-        if line == '':
-            i+=1
-            if i==3: break
-        else: i=0
+        print ('Iterating the imagelinks dump: '+dumps_path)
 
-        if wikilanguages_utils.is_insert(line):
-            table_name = wikilanguages_utils.get_table_name(line)
-            columns = wikilanguages_utils.get_columns(line)
-            values = wikilanguages_utils.get_values(line)
-            if wikilanguages_utils.values_sanity_check(values): rows = wikilanguages_utils.parse_values(values)
+        start_dict_true = {}
+        k = 0
+        j = 0
+        parameters = []
+        while True:
+            line = dump_in.readline()
+            try: line = line.decode("utf-8")
+            except UnicodeDecodeError: line = str(line)
 
-            for row in rows:
-                el_from = int(row[0])
-                try:
-                    num_images[el_from]=num_images[el_from]+1
-                except:
-                    pass
-    print ('Done with the dump.')
+            if len(start_dict_true)<3:
+                if '`il_from` ' in line: 
+                    start_dict_true['il_from']=k
+                    k+=1
+                if '`il_to` ' in line: 
+                    start_dict_true['il_to']=k
+                    k+=1
+                if '`il_from_namespace` ' in line: 
+                    start_dict_true['il_from_namespace']=k
+                    k+=1
 
-    parameters = []
-    for page_title, page_id in page_titles_page_ids.items():
-        # print((num_images[page_id],page_id,page_title,page_titles_qitems[page_title]))
-        parameters.append((num_images[page_id],page_id,page_titles_qitems[page_title]))
+            if line == '':
+                i+=1
+                if i==3: break
+            else: i=0
 
-    print (len(parameters))
+            if wikilanguages_utils.is_insert(line):
+                values = wikilanguages_utils.get_values(line)
+                if wikilanguages_utils.values_sanity_check(values): rows = wikilanguages_utils.parse_values(values)
+                for row in rows:
 
-    query = 'UPDATE '+languagecode+'wiki SET num_images = ? WHERE page_id = ? AND qitem = ?;'
-    cursor.executemany(query,parameters)
+                    j+=1
+                    try:
+                        il_from_namespace = int(row[start_dict_true['il_from_namespace']])
+                    except:
+                        continue
+                    if il_from_namespace != 0: continue
+
+
+                    try:
+                        il_from = int(row[start_dict_true['il_from']])
+                        qitem = page_ids_qitems[il_from]
+                    except:
+                        continue
+
+                    il_to = row[start_dict_true['il_to']]
+
+                    parameters.append((languagecode, qitem, il_to))
+
+                    if j % 500000 == 0:
+                        print (languagecode+' imagelinks row: '+str(j))
+                        query = 'INSERT OR IGNORE INTO imagelinks (langcode, qitem, image_title) VALUES (?,?,?);'
+                        cursor.executemany(query,parameters)
+                        conn.commit()
+                        parameters = []
+
+        query = 'INSERT OR IGNORE INTO imagelinks (langcode, qitem, image_title) VALUES (?,?,?);'
+        cursor.executemany(query,parameters)
+        conn.commit()
+
+        print ('Done with the dump imagelinks for language: '+languagecode)
+        print ('Lines: '+str(j))
+        print ('* number of parameters to introduce: '+str(len(parameters))+'\n')
+
+
+    ####
+    # create images.db
+    print ('creating images.db')
+    try:
+        os.remove(databases_path+images_db)
+    except:
+        pass
+
+    conn = sqlite3.connect(databases_path + images_db); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + imageslinks_db); cursor2 = conn2.cursor()
+
+    print ('start counting.')
+    cursor.execute("CREATE TABLE IF NOT EXISTS all_images_count (image text, count integer, PRIMARY KEY (image));")
     conn.commit()
 
-    # duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    # wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+    params = []
+    query = 'SELECT image_title, count(qitem) FROM imagelinks GROUP BY image_title ORDER BY 2 DESC LIMIT 10000;'
+    for row in cursor2.execute(query):
+        image_title = row[0]
+        num = row[1]
+        params.append((image_title,num))
+
+    query = 'INSERT OR IGNORE INTO all_images_count (image, count) VALUES (?,?);'
+    cursor.executemany(query,params)
+    conn.commit()
+    print ('counts done.')
+
+    undesired = {}
+    query = 'SELECT image FROM all_images_count;'
+    for row in cursor.execute(query):
+        undesired[row[0]]=None
+
+
+    print ('start qitems - images')
+    cursor.execute("CREATE TABLE IF NOT EXISTS all_qitems_images (qitem text, images text, PRIMARY KEY (qitem));")
+    conn.commit()
+
+    query = 'SELECT qitem, image_title FROM imagelinks ORDER BY qitem;'
+
+    image_count = {}
+    params = []
+    i = 0
+    old_qitem = ''
+    for row in cursor2.execute(query):
+        qitem = row[0]
+
+        if qitem != old_qitem and i != 0:
+            listofTuples = sorted(image_count.items(), key=operator.itemgetter(1), reverse=True)
+
+            j = 0
+            images = ''
+            for tup in listofTuples:
+                # if j>100: break
+                image_title = tup[0]
+
+                try:
+                    undesired[image_title]
+                except:
+                    if images != '': images+= ';'
+                    images += image_title+':'+str(tup[1])
+
+                j+=1
+
+            params.append((old_qitem, images))
+            image_count = {}
+
+
+        image_title = row[1]
+        try:
+            image_count[image_title]=image_count[image_title]+1
+        except:
+            image_count[image_title]=1
+
+        old_qitem = qitem
+        if i % 2400000 == 0:
+            print (i)
+            query = 'INSERT OR IGNORE INTO all_qitems_images (qitem, images) VALUES (?,?);'
+            cursor.executemany(query,params)
+            conn.commit()
+            params = []
+
+        i+= 1
+
+    query = 'INSERT OR IGNORE INTO all_qitems_images (qitem, images) VALUES (?,?);'
+    cursor.executemany(query,params)
+    conn.commit()
+    print (i)
+    print ('qitems - images done.')
+
+    query = 'DROP TABLE all_images_count;'
+    cursor.execute(query)
+    conn.commit()
+
+
+    ####
+    # extend num_images in wikipedia_diversity.db
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + imageslinks_db); cursor2 = conn2.cursor()
+
+    for languagecode in wikilanguagecodes:
+
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+
+        qitems_page_ids = {v: page_titles_page_ids[k] for k, v in page_titles_qitems.items()}
+
+        query = "SELECT qitem, count(image_title) FROM imagelinks WHERE langcode = ? GROUP BY image_title;"
+
+        params = []
+        for row in cursor2.execute(query, (languagecode,)):
+            qitem = row[0]
+            params.append((row[1],qitems_page_ids[qitem],qitem))
+
+        query = 'UPDATE '+languagecode+'wiki SET num_images = ? WHERE page_id = ? AND qitem = ?;'
+        cursor.executemany(query,params)
+        conn.commit()
+
+    os.remove(databases_path+imageslinks_db)
+    wikilanguages_utils.copy_db_for_production(images_db, 'article_features.py', databases_path)
+    os.remove(databases_path+images_db)
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
 
 
 
@@ -499,191 +619,222 @@ def extend_articles_wikirank():
 
 
 
-
-
-def extend_articles_revision_features(languagecode, page_titles_qitems, page_titles_page_ids):
+def extend_articles_history_features(languagecode,page_titles_qitems, page_titles_page_ids):
 
     functionstartTime = time.time()
-    function_name = 'extend_articles_revision_features '+languagecode
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    function_name = 'extend_articles_history_features '+languagecode
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
-    num_editors = {}
-    num_edits = {}
-    num_edits_last_month = {}
-    first_edit_timestamp = {}
-    num_discussions = {}
-
-
-    page_ids_qitems = {}
-    for page_title,page_id in page_titles_page_ids.items():
-        page_ids_qitems[page_id]=page_titles_qitems[page_title]
-
-    for page_id in page_titles_page_ids.values():
-        num_discussions[page_id]=0
-        num_editors[page_id]=set()
-        num_edits[page_id]=0
-        num_edits_last_month[page_id]=0
-        first_edit_timestamp[page_id]=''
+    page_ids_qitems = {page_titles_page_ids[k]: v for k, v in page_titles_qitems.items()}
 
     last_month_date = datetime.date.today() - relativedelta.relativedelta(months=1)
     first_day = int(last_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S'))
     last_day = int(last_month_date.replace(day = calendar.monthrange(last_month_date.year, last_month_date.month)[1]).strftime('%Y%m%d%H%M%S'))
 
+    conn2 = sqlite3.connect(databases_path + 'editors_pages.db'); cursor2 = conn2.cursor()
+    try:
+        os.remove(databases_path+'editors_pages.db')
+    except:
+        pass
+
+    try:
+        query = 'CREATE TABLE editors (page_id integer, editor integer, PRIMARY KEY (page_id, editor));'
+        cursor2.execute(query)
+        conn2.commit()
+    except:
+        pass
+
+    article_completed = {}
+
+    first_edit_timestamp = {}
+    last_edit_timestamp = {}
+    last_discussion_timestamp = {}
+
+    num_edits = {}
+    num_edits_last_month = {}
+
+    num_discussions = {}
+    for page_title in page_titles_qitems.keys():
+        num_edits[page_title]=0
+        num_edits_last_month[page_title]=0
+        num_discussions[page_title]=0
+
+        first_edit_timestamp[page_title]=0
+        last_edit_timestamp[page_title]=0
+        last_discussion_timestamp[page_title]=0
+
     d_paths = []
-    i = 0
-    loop = True
-    while (loop):
-        i+=1
-        dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-stub-meta-history'+str(i)+'.xml.gz'
-        loop = os.path.isfile(dumps_path)
-        dumps_path = '/srv/wcdo/dumps/enwiki-latest-stub-meta-history'+str(i)+'.xml'#.gz'
-        if loop == True: 
-            d_paths.append(dumps_path)
-        if i==1 and loop == False:#True:
-            d_paths.append('/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-stub-meta-history.xml.gz')
+
+    cym = cycle_year_month
+    print ('/public/dumps/public/other/mediawiki_history/'+cym)
+    if os.path.isdir('/public/dumps/public/other/mediawiki_history/'+cym)==False:
+        cym = datetime.datetime.strptime(cym,'%Y-%m')-dateutil.relativedelta.relativedelta(months=1)
+        cym = cym.strftime('%Y-%m')
+        print ('/public/dumps/public/other/mediawiki_history/'+cym)
+
+    dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.all-time.tsv.bz2'
+    if os.path.isfile(dumps_path):
+        print ('one all-time file.')
+        d_paths.append(dumps_path)
+
+    else:
+        print ('multiple files.')
+        for year in range (2025, 1999, -1):
+            dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'.tsv.bz2'
+            if os.path.isfile(dumps_path): 
+                d_paths.append(dumps_path)
+
+        if len(d_paths) == 0:
+            for year in range(2025, 1999, -1): # months
+                for month in range(13, 0, -1):
+                    if month > 9:
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-'+str(month)+'.tsv.bz2'
+                    else:
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-0'+str(month)+'.tsv.bz2'
+
+                    if os.path.isfile(dumps_path) == True:
+                        d_paths.append(dumps_path)
 
     print(len(d_paths))
+    print (d_paths)
+    print ('Total number of articles: '+str(len(num_edits)))
 
-    page_title_page_id = {}
+    if (len(d_paths)==0):
+        print ('dump error at script '+script_name)
+        send_email_toolaccount('dump error at script '+script_name, dumps_path)
+        quit()
+
     for dump_path in d_paths:
 
         print(dump_path)
+        iterTime = time.time()
 
-        page_title = None
-        cur_page_title = None
-        ns = None
-        page_id = None
+        dump_in = bz2.open(dump_path, 'r')
+        line = dump_in.readline()
+        line = line.rstrip().decode('utf-8')[:-1]
+        values=line.split(' ')
 
-        cur_time = time.time()
-        i=0
+        parameters = []
+        editors_params = []
+        iter = 0
+        while line != '':
+            # iter += 1
+            # if iter % 1000000 == 0: print (str(iter/1000000)+' million lines.')
+            line = dump_in.readline()
+            line = line.rstrip().decode('utf-8')[:-1]
+            values=line.split('\t')
 
-        n_discussions = 0
-        n_edits = 0
-        n_editors = set()
+            if len(values)==1: continue
+
+            # page_title_historical = values[24]
+            page_id = values[23]
+            page_title = values[25]
+            if page_title not in first_edit_timestamp: continue
+
+            try:
+                page_namespace = int(values[28])
+            except:
+                continue
+
+            edit_count = values[34]
+            # seconds_last_edit = values[35]
+
+            last_timestamp = values[3]
+            if last_timestamp != 'null': last_timestamp = int(datetime.datetime.strptime(last_timestamp[:len(last_timestamp)-2],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S'))
+            else: last_timestamp = 0
+
+            if page_namespace == 0:
+                if last_edit_timestamp[page_title] < last_timestamp:
+                    last_edit_timestamp[page_title] = last_timestamp
+                    num_edits[page_title]=edit_count
+
+                first_timestamp = values[33]
+                if first_timestamp != 'null': first_timestamp = int(datetime.datetime.strptime(first_timestamp[:len(first_timestamp)-2],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S'))
+                else: first_timestamp = 0
+
+                if last_timestamp == first_timestamp:
+                    article_completed[page_title] = None
+                    first_edit_timestamp[page_title]=first_timestamp
+
+                user_anon = values[5]
+                # user_text = values[38]
+                if user_anon != "null":
+                    try:
+                        editors_params.append((user_anon,page_id))
+                        # num_editors[page_title].add(int(user_anon))
+                    except:
+                        pass
+
+                if last_timestamp > first_day and last_timestamp < last_day:
+                    # print (page_title, first_day, last_day, last_edit_timestamp)
+                    try:
+                        num_edits_last_month[page_title]+=1
+                    except:
+                        pass
+
+            if page_namespace == 1:
+                if last_discussion_timestamp[page_title] < last_timestamp:
+                    last_discussion_timestamp[page_title] = last_timestamp
+                    num_discussions[page_title] = edit_count
 
 
-#        with gzip.open(dump_path, 'rb') as xml_file:
-        pages = etree.iterparse(dump_path, events=("start", "end"))
-        for event, elem in pages:
+        query = 'INSERT OR IGNORE INTO editors (editor, page_id) VALUES (?,?);'
+        cursor2.executemany(query,editors_params)
+        conn2.commit()
+        editors_params = []
 
-            if event == 'start':
+        for page_title in article_completed.keys():
 
-                if elem.tag == '{http://www.mediawiki.org/xml/export-0.10/}mediawiki':
-                    root = elem
+            try:
+                parameters.append((num_edits[page_title], num_discussions[page_title], num_edits_last_month[page_title], first_edit_timestamp[page_title], last_edit_timestamp[page_title], last_discussion_timestamp[page_title], page_titles_page_ids[page_title], page_titles_qitems[page_title], page_title))
 
-            elif event == 'end':
-                # SECTION PAGETITLE, PAGEID, NS
+                # del num_editors[page_title]
+                del num_edits[page_title]
+                del num_discussions[page_title]
+                del num_edits_last_month[page_title]
+                del first_edit_timestamp[page_title]
+                del last_edit_timestamp[page_title]
+                del last_discussion_timestamp[page_title]
 
-                taggy = elem.tag.replace('{http://www.mediawiki.org/xml/export-0.10/}','')
-                text =  elem.text
-#                print (taggy)
-#                print (text)
+            except:
+                pass
+        article_completed = {}
 
-                if taggy == 'title': 
-                    page_title = text.replace(' ','_')
+        conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+        query = 'UPDATE '+languagecode+'wiki SET (num_edits, num_discussions, num_edits_last_month, date_created, date_last_edit, date_last_discussion)=(?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title = ?;'
+        cursor.executemany(query,parameters)
+        conn.commit()
+        print ('Articles introduced: '+str(len(parameters))+'. Articles left for next files or not in the database: '+str(len(num_edits))+'.')
+        print ('This file took: '+str(datetime.timedelta(seconds=time.time() - iterTime)))
+        parameters = []
 
-                # if elem.attrib != None:
-                #     try:
-                #         page_title = elem.attrib['title'].replace(' ','_')
-                #     except:
-                #         pass
-
-                if page_title != cur_page_title and cur_page_title != None:
-                    num_edits[page_id] = n_edits
-                    n_edits = 0
-                    num_editors[page_id]=len(n_editors)
-                    n_editors=set()
-                    num_discussions[page_id]=n_discussions
-                    page_id = None
-
-                    i+=1
-                    if i%100==0: 
-                        last_time=cur_time
-                        cur_time=time.time()
-                        print('\t'+str(i)+' '+str(datetime.timedelta(seconds=cur_time - last_time)))
-                        print(str(round(100/(cur_time - last_time),3))+' '+'pages per second.')
-
-                cur_page_title = page_title
-
-                if taggy == 'id' and page_id == None:
-                    page_id = int(text)
-
-                    if ns == 0:
-                        try:
-                          qitem = page_ids_qitems[page_id] # only to create a page_id None in case it is not there
-                          page_title_page_id[cur_page_title]=page_id
-                        except:
-                            page_id = None
-
-                    if ns == 1:
-                        title = cur_page_title.split(':')[1]
-                        try:
-                            page_id = page_title_page_id[title]
-                            qitem = page_ids_qitems[page_id] # only to create a page_id None in case it is not there
-                        except:
-                            page_id = None
-
-                if taggy == 'ns':
-                    ns = int(text)
-
-                if (taggy == 'username' or taggy == 'ip') and page_id != None:
-                    username = text
-
-                    if ns == 0:
-                        n_editors.add(username)
-                        n_edits+=1
-
-                    if ns == 1 and page_id!= None:
-                        n_discussions+=1
-#                        print(page_id,ns,cur_page_title)
-
-                if taggy == 'timestamp' and ns == 0 and page_id != None: 
-
-                    timestamp = datetime.datetime.strptime(text,'%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d%H%M%S')
-                    if first_edit_timestamp[page_id]=='': first_edit_timestamp[page_id] = timestamp
-                    timestamp = int(timestamp)
-                    if timestamp > first_day and timestamp < last_day:
-                        num_edits_last_month[page_id]+=1
-
-                elem.clear()
-
-    print('parsed')
-
-    page_ids_page_titles = {v: k for k, v in page_title_page_id.items()}
     parameters = []
-    for page_id in num_editors:
-        # print((len(num_editors[page_id]), 
-        #     num_edits[page_id], 
-        #     num_edits_last_month[page_id], 
-        #     first_edit_timestamp[page_id], 
-        #     num_discussions[page_id], 
-        #     page_id, 
-        #     page_ids_qitems[page_id], 
-        #     page_ids_page_titles[page_id]))
-
+    
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'editors_pages.db'); cursor2 = conn2.cursor()
+    query = 'SELECT count(*), page_id FROM editors GROUP BY page_id ORDER BY page_id;'
+    for row in cursor2.execute(query):
+        page_id = row[1]
         try:
-            parameters.append((num_editors[page_id], num_edits[page_id], num_edits_last_month[page_id], first_edit_timestamp[page_id], num_discussions[page_id], page_id, page_ids_qitems[page_id], page_ids_page_titles[page_id]))
+            parameters.append((row[0],page_id,page_ids_qitems[page_id]))
         except:
             pass
-#    print (len(parameters),len(page_titles_qitems))
 
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-
-    query = 'UPDATE '+languagecode+'wiki SET (num_editors, num_edits, num_edits_last_month, date_created,num_discussions)=(?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
-    cursor.executemany(query,parameters)
+    query = 'UPDATE '+languagecode+'wiki SET num_editors = ? WHERE page_id = ? AND qitem = ?;'
+    cursor.executemany(query, parameters)
     conn.commit()
+    os.remove(databases_path+'editors_pages.db')
 
+    print(languagecode+' history parsed and stored')
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-
-
+#    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
 def extend_articles_first_timestamp_lang():
     function_name = 'extend_articles_first_timestamp_lang'
-    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
-    # functionstartTime = time.time()
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    functionstartTime = time.time()
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
     
@@ -729,89 +880,6 @@ def extend_articles_first_timestamp_lang():
 
 
 
-
-
-def check_language_article_features():
-
-    features = ['num_inlinks','num_outlinks','num_bytes','num_references','num_edits','num_editors','num_discussions','num_pageviews','num_wdproperty','num_interwiki','num_images','num_edits_last_month','featured_article','wikirank']
-
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-
-    for languagecode in wikilanguagecodes:
-        print(languagecode)
-
-        for feature in features:
-            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
-            cursor2.execute(query)
-            value = cursor2.fetchone()
-            if value != None: 
-                count = value[0]
-            if count != 0: 
-                print(languagecode+' '+feature+' '+str(count))
-            if count == 0 or count== None:
-                print(languagecode+' '+feature+' MISSING!')
-
-        print ('\n')
-
-
-def copy_language_article_features():
-
-    features = ['num_inlinks','num_outlinks','num_bytes','num_references','num_edits','num_editors','num_discussions','num_pageviews','num_wdproperty','num_interwiki','num_images','num_edits_last_month','featured_article','wikirank']
-
-    conn = sqlite3.connect(databases_path + 'ccc.db'); cursor = conn.cursor()
-
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-
-    for languagecode in wikilanguagecodes:
-        print(languagecode)
-
-        for feature in features:
-            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
-            cursor2.execute(query)
-            value = cursor2.fetchone()
-            if value != None: 
-                count = value[0]
-            if count != 0: 
-                print(languagecode+' '+feature+' '+str(count))
-            if count == 0 or count== None:
-                print(languagecode+' '+feature+' MISSING!')
-
-                params = []
-                query = 'SELECT '+feature+', qitem, page_id FROM ccc_'+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
-    #            query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
-                try:
-                    for row in cursor.execute(query):
-                        params.append((row[0],row[1],row[2]))
-                except:
-                    continue
-
-                if len(params)!=0:
-                    print ('In the old table we found: '+str(len(params)))
-                    query = 'UPDATE '+languagecode+'wiki SET '+feature+' = ? WHERE qitem=? AND page_id=?'
-                    cursor2.executemany(query,params);
-                    conn2.commit()
-
-                    query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+feature+' IS NOT NULL;'
-                    cursor2.execute(query)
-                    value = cursor2.fetchone()
-                    if value != None: 
-                        count = value[0]
-                    if count != 0: 
-                        print(languagecode+' '+feature+' '+str(count))
-                        print ('FILLED WITH OTHER DATA.')
-
-        print ('\n')
-
-
-def delete_wikidata_db():
-    function_name = 'delete_wikidata_db'
-    functionstartTime = time.time()
-
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
-    os.remove(databases_path + "wikidata.db")
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 #######################################################################################
@@ -895,11 +963,11 @@ if __name__ == '__main__':
     biggest = wikilanguagecodes_by_size[20:]; smallest = wikilanguagecodes_by_size[:50]
 
 
-    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '')
+#    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
+    duration = str(datetime.timedelta(seconds=time.time() - startTime))
+#    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
     wikilanguages_utils.finish_email(startTime,'article_features.out', 'WIKIPEDIA DIVERSITY ARTICLE features')

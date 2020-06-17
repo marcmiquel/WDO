@@ -2,6 +2,7 @@
 # This is the ROSETTA STONE of the project.
 
 import wikilanguages_utils
+from wikilanguages_utils import *
 import eth_utils
 
 from string import ascii_lowercase

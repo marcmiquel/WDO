@@ -2,17 +2,15 @@ import sys
 sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
-### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
+
+#### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app1 = Dash(__name__, server = app, url_base_pathname= webtype + '/language_territories_mapping/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 
 conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();  
-
 query = 'SELECT WikimediaLanguagecode, languagenameEnglishethnologue, territoryname, territorynameNative, QitemTerritory, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, officialnationalorregional, region, subregion, intermediateregion FROM wikipedia_languages_territories_mapping;'
 
 df = pd.read_sql_query(query, conn)
-
-
 #df = df[['territoryname','territorynameNative','QitemTerritory','WikimediaLanguagecode','demonym','demonymNative','ISO3166','ISO31662']]
 
 df.WikimediaLanguagecode = df['WikimediaLanguagecode'].str.replace('-','_')
@@ -24,6 +22,11 @@ df = df.reset_index()
 
 columns_dict = {'Language Name':'Language','WikimediaLanguagecode':'Wiki','QitemTerritory':'WD Qitem','territoryname':'Territory','territorynameNative':'Territory (Local)','demonymNative':'Demonyms (Local)','ISO3166':'ISO 3166', 'ISO31662':'ISO 3166-2','country':'Country','region':'Region','subregion':'Subregion'}
 df=df.rename(columns=columns_dict)
+
+
+
+
+### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
 title = 'Language Territories Mapping'
 dash_app1.title = title+title_addenda
@@ -59,4 +62,10 @@ dash_app1.layout = html.Div([
 
 ], className="container")
 
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+#### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
+
+# none by now.

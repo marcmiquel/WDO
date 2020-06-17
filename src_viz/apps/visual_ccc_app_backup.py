@@ -26,8 +26,8 @@ It is especially interesting to query excluding existing images or query article
 
 language_names_2 = language_names.copy()
 
-showonly_dict = {'All images':'all', 'Missing images':'gaps'} # 'Existing images':'covered',
-showonlyart_dict = {'Articles with zero images':'zero','Articles with one image':'one','Articles with less than five imagess':'less_five','All articles':'all'}
+showonly_dict = {'All images':'all', 'Existing images':'covered', 'Non existing images':'gaps'}
+showonlyart_dict = {'Articles with zero images':'zero','Articles with one image':'one','Articles with less than five':'less_five','All articles':'all'}
 
 features_dict = {'Number of Editors':'num_editors','Number of Edits':'num_edits','Number of images':'num_images','Wikirank':'wikirank','Number of Pageviews':'num_pageviews','Number of Inlinks':'num_inlinks','Number of References':'num_references','Number of Bytes':'num_bytes','Number of Outlinks':'num_outlinks','Number of Interwiki':'num_interwiki','Number of WDProperties':'num_wdproperty','Number of Discussions':'num_discussions','Creation Date':'date_created','Number of Inlinks from CCC':'num_inlinks_from_CCC'}
 
@@ -135,9 +135,7 @@ def dash_app32_build_layout(params):
             if order_by != 'none':
                 query += 'ORDER BY f.'+order_by+' DESC;'
             else:
-                query += 'ORDER BY r.position ASC '
-
-            # query+= 'LIMIT 100;'
+                query += 'ORDER BY r.position ASC;'
 
 
             for x in range (1,number_images+1):
@@ -149,12 +147,11 @@ def dash_app32_build_layout(params):
             df = df.fillna(0)
 
         else:
-            print ('here. no list.')
 
             conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cursor = conn.cursor()
 
             # COLUMNS
-            query = 'SELECT qitem, page_title as page_title_original, num_images, num_interwiki '
+            query = 'SELECT qitem, page_title, num_images, num_interwiki '
             columns = ['Qitem','Article Title','Images']
 
             if order_by != 'none':
@@ -194,10 +191,6 @@ def dash_app32_build_layout(params):
             page_titles = tuple(page_titles)
             df = pd.read_sql_query(query, conn, params = page_titles)#, parameters)
             df = df.fillna(0)
-
-            print (df.head(10))
-            print (page_titles)
-            print ('there.')
 
         
 
@@ -309,7 +302,7 @@ def dash_app32_build_layout(params):
                     placeholder='You can paste a list of articles titles or URL here to obtain the results.',
                     value='',
                     style={'width': '100%', 'height':'100'}
-                 ), style={'display': 'inline-block','width': '590px'}),
+                 ), style={'display': 'inline-block','width': '590'}),
 
                 html.Br(),
 
@@ -320,7 +313,7 @@ def dash_app32_build_layout(params):
                 style={'display': 'inline-block','width': '200px'}),
 
                 html.Div(
-                html.P('Limit results to'),
+                html.P('Show articles'),
                 style={'display': 'inline-block','width': '200px'}),
 
                 html.Br(),
@@ -339,7 +332,7 @@ def dash_app32_build_layout(params):
                     id='show_only_art',
                     options=[{'label': i, 'value': showonlyart_dict[i]} for i in sorted(showonlyart_dict)],
                     value='all',
-                    placeholder="Show (optional)",           
+                    placeholder="Show only (optional)",           
                     style={'width': '190px'}
                  ), style={'display': 'inline-block','width': '200px'}),
 
@@ -361,7 +354,7 @@ def dash_app32_build_layout(params):
                     id='show_only',
                     options=[{'label': i, 'value': showonly_dict[i]} for i in sorted(showonly_dict)],
                     value='all',
-                    placeholder="Show (optional)",           
+                    placeholder="Show only (optional)",           
                     style={'width': '190px'}
                  ), style={'display': 'inline-block','width': '200px'}),
 
@@ -404,21 +397,14 @@ def dash_app32_build_layout(params):
         for x in range (1,number_images+1):
             df['Image '+str(x)] = None
 
+        page_id_images = page_titles_to_current_images(page_title_original, source_lang)
 
-        page_titles_qitem = df.set_index('page_title_original')['qitem'].to_dict()
-
-        qitems_images = page_titles_to_current_images(page_title_original, page_titles_qitem, source_lang)
-
-        df = page_titles_to_rank_images(df, qitems_images, qitems_num_interwiki, source_lang, number_images, exclude_images)
-
-        # df.to_csv('quepassa.csv')
-        # print (df.head(10))
+        df = page_titles_to_rank_images(df, page_id_images, qitems_num_interwiki, source_lang, number_images, exclude_images)
 
 #        print ('page_titles_to_rank_images')
 
         k = 0
         df=df.rename(columns=columns_dict)
-        df['Article Title'] = df['Article Title'].astype(str)
 
 #        print(df.columns.tolist())
 
@@ -495,11 +481,6 @@ def dash_app32_build_layout(params):
         df1 = pd.DataFrame(df_list)
 
         df1.columns = columns
-        # df1.to_csv('quepassa2.csv')
-
-#        df1 = df1.head(5)
-
-
         df_list = df1.values.tolist()
 
         ## LAYOUT
@@ -590,7 +571,7 @@ def dash_app32_build_layout(params):
                 placeholder='You can paste a list of articles titles or URL here to obtain the results.',
                 value='',
                 style={'width': '100%', 'height':'100'}
-             ), style={'display': 'inline-block','width': '590px'}),
+             ), style={'display': 'inline-block','width': '590'}),
 
             html.Br(),
 
@@ -601,7 +582,7 @@ def dash_app32_build_layout(params):
             style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
-            html.P('Limit results to'),
+            html.P('Show articles'),
             style={'display': 'inline-block','width': '200px'}),
 
             html.Br(),
@@ -620,7 +601,7 @@ def dash_app32_build_layout(params):
                 id='show_only_art',
                 options=[{'label': i, 'value': showonlyart_dict[i]} for i in sorted(showonlyart_dict)],
                 value='all',
-                placeholder="Show (optional)",           
+                placeholder="Show only (optional)",           
                 style={'width': '190px'}
              ), style={'display': 'inline-block','width': '200px'}),
 
@@ -642,7 +623,7 @@ def dash_app32_build_layout(params):
                 id='show_only',
                 options=[{'label': i, 'value': showonly_dict[i]} for i in sorted(showonly_dict)],
                 value='all',
-                placeholder="Show (optional)",           
+                placeholder="Show only (optional)",           
                 style={'width': '190px'}
              ), style={'display': 'inline-block','width': '200px'}),
 
@@ -779,7 +760,7 @@ def dash_app32_build_layout(params):
             style={'display': 'inline-block','width': '200px'}),
 
             html.Div(
-            html.P('Limit results to'),
+            html.P('Show articles'),
             style={'display': 'inline-block','width': '200px'}),
 
             html.Br(),
@@ -798,7 +779,7 @@ def dash_app32_build_layout(params):
                 id='show_only_art',
                 options=[{'label': i, 'value': showonlyart_dict[i]} for i in sorted(showonlyart_dict)],
                 value='all',
-                placeholder="Show (optional)",           
+                placeholder="Show only (optional)",           
                 style={'width': '190px'}
              ), style={'display': 'inline-block','width': '200px'}),
 
@@ -820,7 +801,7 @@ def dash_app32_build_layout(params):
                 id='show_only',
                 options=[{'label': i, 'value': showonly_dict[i]} for i in sorted(showonly_dict)],
                 value='all',
-                placeholder="Show (optional)",           
+                placeholder="Show only (optional)",           
                 style={'width': '190px'}
              ), style={'display': 'inline-block','width': '200px'}),
 
@@ -845,95 +826,80 @@ def dash_app32_build_layout(params):
 
 
 
-def page_titles_to_current_images(page_titles, page_titles_qitem, languagecode):
+
+def page_titles_to_current_images(page_titles, languagecode):
+
+    mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
+
+    # query = 'SELECT il_to FROM imagelinks where il_from = %s;'
+    page_id_images = {}
+
+    try:
+        page_asstring = ','.join( ['%s'] * len(page_titles) )
+        query = 'SELECT page_id, il_to FROM imagelinks INNER JOIN page on il_from = page_id WHERE il_from_namespace = 0 AND page_title IN (%s) ORDER BY page_title;' % page_asstring
+
+        # print (page_titles)
+
+        mysql_cur_read.execute(query, (page_titles))
+        result = mysql_cur_read.fetchall()
+
+        list_images = set()
+        old_page_id = ''
+        i = 0
+        for row in result:
+            imagename = row[1].decode('utf-8')
+            if '.ogg' in imagename: continue
+            page_id = row[0]
+
+            if page_id != old_page_id:
+                page_id_images[old_page_id]=list_images
+                list_images = set()
+                i = 0
+
+            old_page_id = page_id
+            
+
+            i += 1
+            # if i<=20:
+            list_images.add(imagename)
+
+        page_id_images[page_id]=list_images
+    except:
+        print ('timeout.')
+    
+#    print ('page ids with images: '+str(len(page_id_images)))
+    return page_id_images
 
 
-    qitems_images = {}
+def page_titles_to_rank_images(df, page_id_images, qitems_num_interwiki, languagecode, number_images, exclude_images):
 
-    # print ('*page_titles_to_current_images*')
-    # print (len(page_titles))
-
-
-    i = 0
-    while (len(qitems_images)==0 and i <= 3):
-        i = i + 1
-
-        print (i)
-        try:
-            mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(languagecode); mysql_cur_read = mysql_con_read.cursor()
-
-            page_asstring = ','.join( ['%s'] * len(page_titles) )
-            query = 'SELECT page_id, il_to, page_title FROM imagelinks INNER JOIN page on il_from = page_id WHERE il_from_namespace = 0 AND page_title IN (%s) ORDER BY page_title;' % page_asstring
-
-
-            mysql_cur_read.execute(query, (page_titles))
-            result = mysql_cur_read.fetchall()
-
-            list_images = set()
-            old_qitem = ''
-            i = 0
-            for row in result:
-                imagename = str(row[1].decode('utf-8'))
-                if '.ogg' in imagename or '.oga' in imagename: continue
-                page_id = row[0]
-                qitem = page_titles_qitem[row[2].decode('utf-8')]
-
-                if qitem != old_qitem and old_qitem != '':
-
-                    qitems_images[old_qitem]=list_images
-                    list_images = set()
-                    i = 0
-
-                old_qitem = qitem           
-
-                i += 1
-                # if i<=20:
-                list_images.add(imagename)
-
-            qitems_images[qitem]=list_images
-        except:
-            # print ('ha fallat.')
-            pass
-
-
-
-    # except:
-    #     print ('timeout.')
-    # print ('qitems_images: '+str(len(qitems_images))+' in '+languagecode)
-
-    return qitems_images
-
-
-
-def page_titles_to_rank_images(df, qitems_images, qitems_num_interwiki, languagecode, number_images, exclude_images):
-
-    conn = sqlite3.connect(databases_path + 'images_production.db'); cursor = conn.cursor()
-
-    # print ('* page_titles_to_rank_images *')
+    conn = sqlite3.connect(databases_path + 'images.db'); cursor = conn.cursor()
 
     qitems = df.qitem.tolist()
+
     df = df.set_index('qitem')
 
-    # print (df.head(10))
-    # print ('cap a la query')
-
     page_asstring = ','.join( ['?'] * len(qitems) )
-    query = 'SELECT images, qitem FROM all_qitems_images WHERE qitem IN (%s)' % page_asstring
+    query = 'SELECT page_id, images, qitem FROM '+languagecode+'wiki_images_count WHERE qitem IN (%s)' % page_asstring
     for row in cursor.execute(query, qitems):
-        images = row[0]
+        page_id = row[0]
+        images = row[1]
         if images == '' or images == None: continue
-        qitem = row[1]
+        qitem = row[2]
 
         imageranks = images.split(';')
+
         try:
-            images_set = qitems_images[qitem]
+            images_set = page_id_images[page_id]
         except:
             images_set = set()
+
+        # print (page_id, qitem, images_set)
 
         j = 1
         for imagerank in imageranks:
             imagerank = imagerank.split(':')
-            image = str(imagerank[0])
+            image = imagerank[0]
             if '.ogg' in image: continue
             try:
                 rank = imagerank[1]
@@ -991,17 +957,12 @@ def page_titles_to_rank_images(df, qitems_images, qitems_num_interwiki, language
 
                 j+=1
 
-# exclude = {'Existing images':'gaps', 'Missing images':'covered'}
+# exclude = {'Existing images':'gaps', 'Non existing images':'covered'}
 
             if j > number_images:
                 break
 
-    # print ('ehhh')  
-          
     df = df.reset_index()
-    # print ('df done.')
-    # print (len(df))
-
     return df
 
 
@@ -1044,17 +1005,12 @@ def text_to_pageids_page_titles(languagecode, textbox):
     page_dict = {}
     for row in rows:
         page_id = row[0]
-        page_dict[page_id] = str(row[1].decode('utf-8'))
+        page_title = row[1].decode('utf-8')
+        page_dict[page_id] = page_title
 
 #    print (page_dict)
 
     return page_dict
-
-
-
-### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-
-#### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
 
 @dash_app32.callback(

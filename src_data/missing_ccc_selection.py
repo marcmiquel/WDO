@@ -2,6 +2,7 @@
 
 # script
 import wikilanguages_utils
+from wikilanguages_utils import *
 # time
 import time
 import datetime
@@ -192,7 +193,6 @@ def create_wikipedia_missing_ccc_db():
 
     conn.commit()
 
-    print ('* create_wikipedia_missing_ccc_db Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
@@ -1608,6 +1608,7 @@ def extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_tit
     dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-pagelinks.sql.gz'
     #    dumps_path = 'gnwiki-20190720-pagelinks.sql.gz' # read_dump = '/public/dumps/public/wikidatawiki/latest-all.json.gz'
     dump_in = gzip.open(dumps_path, 'r')
+    wikilanguages_utils.check_dump(dumps_path, script_name)
 
     print ('Iterating the dump.')
     while True:
@@ -1803,7 +1804,7 @@ if __name__ == '__main__':
     wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=False)]
 
 
-    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '')
+    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()

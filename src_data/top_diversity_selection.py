@@ -2,6 +2,8 @@
 
 # common resources
 import wikilanguages_utils
+from wikilanguages_utils import *
+
 # time
 import time
 import datetime
@@ -37,28 +39,34 @@ class Logger(object): # this prints both the output to a file and to the termina
 # MAIN
 def main():
     
-    generate_all_top_diversity_articles_lists()
-    create_top_diversity_articles_lists_db()
-    wikilanguages_utils.copy_db_for_production(missing_ccc_db, 'missing_ccc_selection.py', databases_path)
 
+    create_top_diversity_lists_db()
+    generate_all_top_ccc_diversity_articles_lists()
+    update_top_ccc_diversity_articles_features()
+    update_top_ccc_diversity_articles_titles('sitelinks')
+    update_top_ccc_diversity_articles_titles('labels')
+    update_top_ccc_diversity_articles_titles('translations')
 
-
-
-
-
-
-
+    # update_top_diversity_articles_interwiki()
+    update_top_diversity_articles_intersections() # the data for Top CCC Coverage / Spread
+    wikilanguages_utils.copy_db_for_production(missing_ccc_db, 'top_diversity_selection.py', databases_path)
 
 
 
 ##### TOP DIVERSITY ARTICLES SELECTION FUNCTIONS ####
 
-def create_top_diversity_articles_lists_db():
-    function_name = 'create_top_diversity_articles_lists_db'
+def create_top_diversity_lists_db():
+    function_name = 'create_top_diversity_lists_db'
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
-    functionstartTime = time.time()
+    # Removes database (just for code debugging)
+    try:
+        os.remove(databases_path + top_diversity_db); 
+        print (top_diversity_db+' deleted.');
+    except:
+        pass
 
+    functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + top_diversity_db); cursor = conn.cursor()
 
     for languagecode in wikilanguagecodes:
@@ -70,7 +78,7 @@ def create_top_diversity_articles_lists_db():
         'list_name text,'+
         'measurement_date text,'+
 
-        'PRIMARY KEY (qitem, list_name, country, measurement_date))')
+        'PRIMARY KEY (qitem, list_name, country))')
         cursor.execute(query)
 
         query = ('CREATE table if not exists '+languagecode+'wiki_top_articles_features ('+
@@ -94,7 +102,7 @@ def create_top_diversity_articles_lists_db():
         'date_created integer, '+
         'measurement_date text,'+
 
-        'PRIMARY KEY (qitem, measurement_date))')
+        'PRIMARY KEY (qitem))')
         cursor.execute(query)
 
         query = ('CREATE table if not exists '+languagecode+'wiki_top_articles_page_titles ('+
@@ -117,7 +125,7 @@ def create_top_diversity_articles_lists_db():
         'rel_value float,'+
 
         'measurement_date text,'
-        'PRIMARY KEY (set1,set1descriptor,set2,set2descriptor,measurement_date))')
+        'PRIMARY KEY (set1,set1descriptor,set2,set2descriptor))')
 
         cursor.execute(query)
         conn.commit()
@@ -127,7 +135,7 @@ def create_top_diversity_articles_lists_db():
 
 
 
-def generate_all_top_diversity_articles_lists():
+def generate_all_top_ccc_diversity_articles_lists():
 
     print ('Generating all the Top articles lists.')
 
@@ -176,7 +184,7 @@ def generate_all_top_diversity_articles_lists():
             else: print ('Lists for entire language: '+languages.loc[languagecode]['languagename'])
 
 
-            function_name = 'generate_all_top_diversity_articles_lists '+languagecode+' '+country
+            function_name = 'generate_all_top_ccc_diversity_articles_lists '+languagecode+' '+country
             if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: continue
             functionstartTime = time.time()
 
@@ -185,100 +193,114 @@ def generate_all_top_diversity_articles_lists():
             ### GENERAL CCC ###
 
             # EDITORS
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_editors': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'editors')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_editors': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'editors')
 
             # EDITS
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'edits')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'edits')
 
             # MOST EDITED DURING THE LAST MONTH
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_edits_last_month': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'edited_last_month')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_edits_last_month': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'edited_last_month')
 
             # CREATED DURING FIRST THREE YEARS AND MOST EDITED
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, 'first_three_years', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'created_first_three_years')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, 'first_three_years', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'created_first_three_years')
 
             # CREATED DURING LAST YEAR AND MOST EDITED
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, 'last_year', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'created_last_year')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, 'last_year', {'num_edits': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_edits','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'created_last_year')
 
             # MOST SEEN (PAGEVIEWS) DURING LAST MONTH
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_pageviews':1}, 'positive', length, 'none', ['num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'pageviews')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_pageviews':1}, 'positive', length, 'none', ['num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'pageviews')
 
             # MOST DISCUSSED (EDITS DISCUSSIONS)
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_discussions': 1}, 'positive', length, 'none', ['num_discussions','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'discussions')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_discussions': 1}, 'positive', length, 'none', ['num_discussions','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'discussions')
 
             # FEATURED, LONG AND CITED
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'featured_article': 0.8, 'num_references':0.1, 'num_bytes':0.1}, 'positive', length, 'none', ['featured_article','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'featured')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'featured_article': 0.8, 'num_references':0.1, 'num_bytes':0.1}, 'positive', length, 'none', ['featured_article','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'featured')
 
             # IMAGES, LONG AND CITED
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_images': 0.8, 'num_bytes':0.1, 'num_references':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'images')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_images': 0.8, 'num_bytes':0.1, 'num_references':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'images')
 
             # MOST WD STATEMENTS
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_wdproperty': 0.9, 'num_editors':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'wdproperty_many')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_wdproperty': 0.9, 'num_editors':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'wdproperty_many')
 
             # MOST INTERWIKI
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_interwiki': 0.9, 'num_editors':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'interwiki_many')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_interwiki': 0.9, 'num_editors':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'interwiki_many')
 
             # LEAST INTERWIKI (EDITOR PEARLS)
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'interwiki_relationship': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'interwiki_editors')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'interwiki_relationship': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'interwiki_editors')
 
             # LEAST INTERWIKI (WD STATEMENTS PEARLS)
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'interwiki_relationship': 0.9, 'num_pageviews': 0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'interwiki_wdproperty')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'interwiki_relationship': 0.9, 'num_pageviews': 0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'interwiki_wdproperty')
 
             # HIGHEST WIKIRANK AND POPULAR
-            make_top_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'wikirank': 0.9, 'num_pageviews':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'wikirank')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'wikirank': 0.9, 'num_pageviews':0.1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'wikirank')
 
 
 
             ### SPECIFIC CCC ###
 
             # GL MOST INLINKED FROM CCC
-            make_top_diversity_articles_list(languagecode, ['gl'], category, 80, '', {'num_inlinks_from_CCC': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'geolocated')
+            make_top_ccc_diversity_articles_list(languagecode, ['gl'], category, 80, '', {'num_inlinks_from_CCC': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'geolocated')
 
             # KEYWORDS ON TITLE WITH MOST BYTES
-            make_top_diversity_articles_list(languagecode, ['kw'], category, 80, '', {'num_bytes': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','featured_article','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'keywords')
+            make_top_ccc_diversity_articles_list(languagecode, ['kw'], category, 80, '', {'num_bytes': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','featured_article','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'keywords')
 
 
             ### OTHER DIVERSITY SEGMENTS ###
             # WOMEN BIOGRAPHY MOST EDITED
-            make_top_diversity_articles_list(languagecode, ['ccc','female'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'women')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','female'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'women')
 
             # MEN BIOGRAPHY MOST EDITED
-            make_top_diversity_articles_list(languagecode, ['ccc','male'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'men')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','male'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'men')
+
+
+            # LGTB BIOGRAPHY MOST EDITED
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','lgtb'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'sexual_orientation')
+
+            # ETHNIC GROUPS BIOGRAPHY MOST EDITED
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','ethnic_groups'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_wdproperty','num_interwiki','supra_ethnic_groups'], page_titles_qitems, country, 'ethnic_groups')
+
+            # RELIGIOUS GROUPS BIOGRAPHY MOST EDITED
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','religious_groups'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'religious_groups')
+
 
 
             ### TOPICS (people, places and things) ###
 
             # FOLK MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','folk'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'folk')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','folk'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'folk')
 
             # EARTH MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','earth'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'earth')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','earth'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'earth')
 
             # MONUMENTS AND BUILDINGS MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','monuments_and_buildings'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'monuments_and_buildings')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','monuments_and_buildings'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'monuments_and_buildings')
 
-            # MUSIC CREATIONS AND ORGaNIZATIONS MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','music_creations_and_organizations'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'music_creations_and_organizations')
+            # MUSIC CREATIONS AND ORGANIZATIONS MOST PAGEVIEWS
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','music_creations_and_organizations'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'music_creations_and_organizations')
 
             # SPORTS MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','sport_and_teams'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'sport_and_teams')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','sport_and_teams'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'sport_and_teams')
 
             # FOOD MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','food'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'food')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','food'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'food')
 
             # PAINTINGS MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','paintings'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'paintings')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','paintings'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'paintings')
 
             # GLAM MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','glam'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'glam')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','glam'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'glam')
 
             # BOOKS MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','books'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'books')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','books'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'books')
 
             # CLOTHING AND FASHION MOST PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','clothing_and_fashion'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'clothing_and_fashion')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','clothing_and_fashion'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'clothing_and_fashion')
 
             # INDUSTRY PAGEVIEWS
-            make_top_diversity_articles_list(languagecode, ['ccc','industry'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'industry')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','industry'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'industry')
+
+            # INDUSTRY PAGEVIEWS
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','religion'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'industry')
 
 
             with open('top_diversity_selection.txt', 'a') as f: f.write(languagecode+'\t'+languages.loc[languagecode]['languagename']+'\t'+country+'\t'+str(datetime.timedelta(seconds=time.time() - country_Time))+'\t'+'done'+'\t'+str(datetime.datetime.now())+'\n')
@@ -289,7 +311,7 @@ def generate_all_top_diversity_articles_lists():
 
 
 
-def make_top_diversity_articles_list(languagecode, content_type, category, percentage_filtered, time_frame, relevance_rank, relevance_sense, window, representativity, columns, page_titles_qitems, country, list_name):
+def make_top_ccc_diversity_articles_list(languagecode, content_type, category, percentage_filtered, time_frame, relevance_rank, relevance_sense, window, representativity, columns, page_titles_qitems, country, list_name):
 
     functionstartTime = time.time()
     last_period_time = functionstartTime
@@ -401,12 +423,20 @@ def make_top_diversity_articles_list(languagecode, content_type, category, perce
 
         if content_type[1] == 'people': 
             query = 'SELECT qitem FROM '+languagecode+'wiki WHERE gender IS NOT NULL'
+
         elif content_type[1] == 'male':
             query = 'SELECT qitem FROM '+languagecode+'wiki WHERE gender = "Q6581097"'
+
         elif content_type[1] == 'female':
             query = 'SELECT qitem FROM '+languagecode+'wiki WHERE gender = "Q6581072"'
+
+        elif content_type[1] == 'lgtb':
+            query = 'SELECT qitem FROM '+languagecode+'wiki WHERE sexual_orientation != "Q1035954"'
+
         else:
             query = 'SELECT qitem FROM '+languagecode+'wiki WHERE '+content_type[1]+' IS NOT NULL'
+
+
 
         topic_selected=set()
         print (query)
@@ -728,6 +758,10 @@ def make_top_diversity_articles_list(languagecode, content_type, category, perce
 
     query = 'INSERT OR IGNORE INTO '+languagecode+'wiki_top_articles_features (qitem, page_title_original, measurement_date) VALUES (?,?,?)'
     cursor4.executemany(query,tuples)
+
+    query = 'UPDATE '+languagecode+'wiki_top_articles_features SET qitem = ?, page_title_original = ?, measurement_date = ?;'
+    cursor4.executemany(query,tuples)
+
     conn4.commit()
 
     # INSERT RANKING
@@ -760,11 +794,12 @@ def make_top_diversity_articles_list(languagecode, content_type, category, perce
     cursor4.executemany(query,tuples)
     conn4.commit()
 
-    print ('* make_top_diversity_articles_list '+list_name+', for '+list_origin+'. Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+    print ('* make_top_ccc_diversity_articles_list '+list_name+', for '+list_origin+'. Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
 
-def update_top_diversity_articles_features():
-    function_name = 'update_top_diversity_articles_features'
+
+def update_top_ccc_diversity_articles_features():
+    function_name = 'update_top_ccc_diversity_articles_features'
 #    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
@@ -772,7 +807,7 @@ def update_top_diversity_articles_features():
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + top_diversity_db); cursor2 = conn2.cursor()
 
-    print ('* update_top_diversity_articles_features')
+    print ('* update_top_ccc_diversity_articles_features')
 
     for languagecode in wikilanguagecodes:
         print (languagecode)
@@ -801,14 +836,15 @@ def update_top_diversity_articles_features():
         conn2.commit()
 
     print ('Measurement date is: '+str(measurement_date))
-    print ('* update_top_diversity_articles_features Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+    print ('* update_top_ccc_diversity_articles_features Function completed after: ' + str(datetime.timedelta(seconds=time.time() - functionstartTime)))
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
-def update_top_diversity_articles_titles(type):
-    function_name = 'update_top_diversity_articles_titles '+type
+
+def update_top_ccc_diversity_articles_titles(type):
+    function_name = 'update_top_ccc_diversity_articles_titles '+type
 #    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
@@ -1144,75 +1180,9 @@ def update_top_diversity_articles_titles(type):
 
 
 
-def delete_last_iteration_top_diversity_articles_lists():
-    conn = sqlite3.connect(databases_path + top_diversity_db); cursor = conn.cursor()
-
-    print ('Deleting all the rest from the last iteration.')
-    for languagecode in wikilanguagecodes:
-        print (languagecode)
-
-        query = 'SELECT count(DISTINCT measurement_date) FROM '+languagecode+'wiki_top_articles_features'
-        cursor.execute(query)
-        if cursor.fetchone()[0] > 1:
-            query = 'DELETE FROM '+languagecode+'wiki_top_articles_features WHERE measurement_date IN (SELECT MIN(measurement_date) FROM '+languagecode+'wiki_top_articles_features)'
-            cursor.execute(query); conn.commit()
-        else: print ('only one measurement_date in wiki_top_articles_features')
-
-        query = 'SELECT count(DISTINCT measurement_date) FROM '+languagecode+'wiki_top_articles_lists'
-        cursor.execute(query)
-        if cursor.fetchone()[0] > 1:
-            query = 'DELETE FROM '+languagecode+'wiki_top_articles_lists WHERE measurement_date IN (SELECT MIN(measurement_date) FROM '+languagecode+'wiki_top_articles_lists)'
-            cursor.execute(query); conn.commit()
-        else: print ('only one measurement_date in wiki_top_articles_lists')
-
-
-    query = 'SELECT count(DISTINCT measurement_date) FROM wcdo_intersections'
-    cursor.execute(query)
-    if cursor.fetchone()[0] > 1:
-        query = 'DELETE FROM wcdo_intersections WHERE measurement_date IN (SELECT MIN(measurement_date) FROM wcdo_intersections)'
-        cursor.execute(query); conn.commit()
-    else: print ('only one measurement_date in wcdo_intersections')
-
-
-
-# Drop the CCC database.
-def change_top_diversity_to_top_diversity_temp():
-    try:
-        shutil.copyfile(databases_path + top_diversity_db, databases_path + "top_diversity_articles_temp.db")
-        print ('temp copied.')
-    except:
-        print ('No older file to backup.')
-
-def change_top_diversity_temp_to_top_diversity():
-    try:
-        shutil.copyfile(databases_path + "top_diversity_articles_temp.db", databases_path + top_diversity_db)
-    except:
-        print ('The new one could not be copied.')    
-
-
-def set_production_top_diversity_db():
-    function_name = 'set_production_top_diversity_articles'
-
-    try:
-        shutil.copyfile(databases_path + 'top_diversity_articles.db', databases_path + "top_diversity_articles_old.db")
-        print ('File top_diversity_articles.db copied as top_diversity_articles_old.db')
-
-        shutil.copyfile(databases_path + top_diversity_db, databases_path + "top_diversity_articles.db")
-        print ('File top_diversity_articles_temp.db copied as top_diversity_articles.db')
-    except:
-        print ('No temp file to put on production.')
-
-
-
 def update_top_diversity_articles_interwiki():
-    functionstartTime = time.time()
 
-    # function_name = 'update_top_diversity_articles_interwiki'
-    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
-
-#    top_diversity_db = 'top_diversity_articles.db'
-    conn = sqlite3.connect(databases_path + top_diversity_db); cursor = conn.cursor()
-
+    conn = sqlite3.connect(databases_path + top_diversity_production_db); cursor = conn.cursor()
     print ('* update_top_diversity_articles_interwiki')
 
     for languagecode in wikilanguagecodes:       
@@ -1225,7 +1195,6 @@ def update_top_diversity_articles_interwiki():
         list_page_ids = set()
         page_ids_qitems = {}        
         query = 'SELECT DISTINCT page_title_original, qitem FROM '+languagecode+'wiki_top_articles_features'
-#        query = 'SELECT DISTINCT page_title_original, qitem FROM ccc_'+languagecode+'wiki_top_articles_features'
 
         try:
             for row in cursor.execute(query):
@@ -1267,7 +1236,6 @@ def update_top_diversity_articles_interwiki():
             if old_page_id != page_id and old_page_id != 0:
                 # TAULA de features (num_interwiki)
                 query = 'UPDATE '+languagecode+'wiki_top_articles_features SET num_interwiki = ?, measurement_date = ? WHERE qitem=?'
-#                query = 'UPDATE ccc_'+languagecode+'wiki_top_articles_features SET num_interwiki = ?, measurement_date = ? WHERE qitem=?'
                 cursor.execute(query,(i,measurement_date,old_qitem));
                 i=0
 
@@ -1288,87 +1256,104 @@ def update_top_diversity_articles_interwiki():
 
     for languagecode in wikilanguagecodes:
         print (languagecode)
-        query = 'UPDATE '+languagecode+'wiki_top_articles_page_titles SET measurement_date = "'+measurement_date+'"'
-        cursor.execute(query)
-        query = 'UPDATE '+languagecode+'wiki_top_articles_features SET measurement_date = "'+measurement_date+'"'
-        cursor.execute(query)
-        conn.commit()
+        try:
+            query = 'UPDATE '+languagecode+'wiki_top_articles_page_titles SET measurement_date = "'+measurement_date+'"'
+            cursor.execute(query)
+            query = 'UPDATE '+languagecode+'wiki_top_articles_features SET measurement_date = "'+measurement_date+'"'
+            cursor.execute(query)
+            conn.commit()
+        except:
+            pass
 
-    # duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    # wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
-# QUINA IMPORTÀNCIA TÉ measurement_date? SE'N PODRIA PRESCINDIR TOTALMENT.
+
 def update_top_diversity_articles_intersections():
 
-    # function_name = 'update_top_diversity_articles_intersections'
-    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    conn4 = sqlite3.connect(databases_path + top_diversity_production_db); cursor4 = conn4.cursor()
 
+    for x in ['mnw', 'nqo', 'ban', 'gcr', 'szy']: wikilanguagecodes.remove(x)
 
-    functionstartTime = time.time()
-    conn4 = sqlite3.connect(databases_path + top_diversity_db); cursor4 = conn4.cursor()
-
-    intersections = list()
     for languagecode_1 in wikilanguagecodes:
         print ('\n* '+languagecode_1)
         langTime = time.time()
-
-        # (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode_1)
-        # qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+        intersections = list()
 
         qitems_page_titles = {}
         query = 'SELECT qitem, page_title_target FROM '+languagecode_1+'wiki_top_articles_page_titles WHERE generation_method ="sitelinks";'
         for row in cursor4.execute(query):
             qitem = row[0]
             page_title_target = row[1]
-
             qitems_page_titles[qitem]=page_title_target
-
         print ('This language has '+str(len(qitems_page_titles))+' articles.')
+
+        lang_art = set(qitems_page_titles.keys())
+
 
         titles = list()
         count_intersections = 0
         for languagecode_2 in wikilanguagecodes:
             languagecode_2_qitems = {}
-            query = 'SELECT qitem, country, list_name, position FROM '+languagecode_2+'wiki_top_articles_lists ORDER BY country, list_name, position ASC'
+            query = 'SELECT qitem, country, list_name, position FROM '+languagecode_2+'wiki_top_articles_lists WHERE position <= 100 ORDER BY country, list_name, position ASC'
+
             count = 0
             list_name = 'initial'
             country = ''
             position = 0
+
+            country_language_qitems = set()
+
             for row in cursor4.execute(query): 
                 qitem = row[0]
                 cur_country = row[1]
                 cur_list_name = row[2]
-                position = row[3]
+                cur_position = row[3]
 
-                # intersections
+
+                # INTERSECTIONS
+                # list level
                 if cur_list_name != list_name and list_name!='initial':
 
                     if country != 'all': list_origin = country+'_('+languagecode_2+')'
                     else: list_origin = languagecode_2
 
-                    if old_position < 100: base = old_position
+                    if position < 100: base = position
                     else: base = 100
 
-                    intersections.append((list_origin,list_name,languagecode_1,'wp',count,100*count/base, measurement_date)) # second field: ca_(ca)
+                    intersections.append((count,100*count/base, measurement_date,list_origin,list_name,languagecode_1,'wp')) # second field: ca_(ca)
 #                    print ((list_origin,list_name,languagecode_1,'wp',count,100*count/base, measurement_date))
                     count = 0
 
-                old_position = position
+                # country level
+                if cur_country != country and country != '':
+                    coincident_qitems_all_qitems = len(country_language_qitems.intersection(lang_art))
+                    list_origin = ''
+                    if country != 'all': 
+                        list_origin = country+'_('+languagecode_2+')'
+                    else: 
+                        list_origin = languagecode_2
+
+                    if len(country_language_qitems) == 0: rel_value = 0
+                    else: rel_value = 100*coincident_qitems_all_qitems/len(country_language_qitems)
+                    intersections.append((coincident_qitems_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode,'wp'))
+                    country_language_qitems = set()
+
+                country_language_qitems.add(qitem)
 
                 # titles
                 try:
                     page_title=qitems_page_titles[qitem]
-                    if position <= 100: count+=1 # for intersections
+                    count+=1 # for intersections
                 except:
                     pass
 
+                position = cur_position
                 country = cur_country
                 list_name = cur_list_name
 
-            # print (languagecode_2,len(intersections))
 
             # LAST ITERATION
+            # list level
             if list_name!='initial':
                 if country != 'all' and country != '': 
                     list_origin = country+'_('+languagecode_2+')'
@@ -1382,171 +1367,35 @@ def update_top_diversity_articles_intersections():
                 else:
                     rel_value = 0
 
-                intersections.append((list_origin,list_name,languagecode_1,'wp',count,rel_value, measurement_date)) # second field: ca_(ca)
-                # print (list_origin,list_name,languagecode_1,'wp',count,rel_value, measurement_date)
+                intersections.append((count,rel_value, measurement_date,list_origin,list_name,languagecode_1,'wp')) # second field: ca_(ca)
+                # print (list_origin,list_name,languagecode,'wp',count,rel_value, measurement_date)
 
-
-            # INSERT INTERSECTIONS
-            # if len(intersections) > 500000 or wikilanguagecodes.index(languagecode_1) == len(wikilanguagecodes)-1:
-
-            query = 'INSERT OR IGNORE INTO wcdo_intersections (set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, measurement_date) VALUES (?,?,?,?,?,?,?)'
-            cursor4.executemany(query,intersections); 
-            conn4.commit() 
-            count_intersections += len(intersections)
-
-            # print (str(len(intersections))+' intersections inserted')
-            # with open('top_diversity_selection.txt', 'a') as f: f.write(str(len(intersections))+' intersections calculated.\n')
-
-            intersections = list()
-        print (str(count_intersections)+' intersections inserted for this language.')
-
-    query = 'DELETE FROM wcdo_intersections WHERE measurement_date IN (SELECT MIN(measurement_date) FROM wcdo_intersections);'
-    cursor4.execute(query)
-    conn4.commit()
-
-
-def generate_top_diversity_articles_lists_intersections():
-
-    def insert_intersections_values(cursor3, set1, set1descriptor, set2, set2descriptor, abs_value, base, period):
-
-        if abs_value == None: abs_value = 0
-
-        if base == None or base == 0: rel_value = 0
-        else: rel_value = 100*abs_value/base
-
-        if 'avg' in set1 or 'avg' in set2: rel_value = base # exception for calculations in generate_langs_ccc_intersections()
-
-
-        if rel_value != 0.0 or abs_value != 0:
-            query_insert = 'INSERT OR IGNORE INTO wcdo_intersections'+' (abs_value, rel_value, set1, set1descriptor, set2, set2descriptor, measurement_date) VALUES (?,?,?,?,?,?,?)'
-
-            values = (abs_value, rel_value, set1, set1descriptor, set2, set2descriptor, period)
-            cursor3.execute(query_insert,values);
-
-            query_update = 'UPDATE wcdo_intersections'+' SET abs_value = ?, rel_value = ? WHERE set1 = ? AND set1descriptor = ? AND set2 = ? AND set2descriptor = ? AND measurement_date = ?'
-            cursor3.execute(query_update,values);
-            # print(values)
-
-
-
-    # time_range = 'last accumulated'
-    # function_name = 'generate_top_diversity_articles_lists_intersections '+time_range
-    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
-
-    functionstartTime = time.time()
-    period = measurement_date
-
-    conn4 = sqlite3.connect(databases_path + top_diversity_db); cursor4 = conn4.cursor()
-    conn3 = sqlite3.connect(databases_path + top_diversity_db); cursor3 = conn4.cursor()
-
-
-    all_articles = {}
-    for languagecode_1 in wikilanguagecodes:
-        qitems = set()
-        query = 'SELECT qitem FROM '+languagecode_1+'wiki_top_articles_page_titles WHERE generation_method = "sitelinks";'
-        for row in cursor4.execute(query): qitems.add(row[0])
-        all_articles[languagecode_1]=qitems
-        print (languagecode_1,len(qitems))
-    print ('all loaded.')
-
-
-    # PERHAPS: THIS SHOULD BE LIMITED TO 100 ARTICLES PER LIST.
-    # CCC TOP ARTICLES LISTS
-#    lists = ['editors', 'featured', 'geolocated', 'keywords', 'women', 'men', 'created_first_three_years', 'created_last_year', 'pageviews', 'discussions']
-
-    lists = ['editors', 'featured', 'geolocated', 'keywords', 'women', 'men', 'created_first_three_years', 'created_last_year', 'pageviews', 'discussions','edits','edited_last_month','images','wdproperty_many','interwiki_many','interwiki_editors','interwiki_wdproperty','wikirank','earth','monuments_and_buildings','sport_and_teams','glam','folk','music_creations_and_organizations','food','paintings','books','clothing_and_fashion','industry']
-
-    for languagecode in wikilanguagecodes:
-        print (languagecode +'\t'+ str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-        wpnumberofarticles=wikipedialanguage_currentnumberarticles[languagecode]
-        all_top_diversity_articles_count = 0
-        all_top_diversity_articles_coincident_count = 0
-
-        all_ccc_lists_items=set()
-        for list_name in lists:
-            lists_qitems = set()
-
-            for languagecode_2 in wikilanguagecodes:
-                query = 'SELECT qitem FROM '+languagecode_2+'wiki_top_articles_lists WHERE list_name ="'+list_name+'"'# measurement_date IS (SELECT MAX(measurement_date) FROM '+languagecode_2+'wiki_top_articles_lists);'
-
-                # query = 'SELECT qitem FROM ccc_'+languagecode_2+'wiki_top_articles_lists WHERE list_name ="'+list_name+'" AND measurement_date IS (SELECT MAX(measurement_date) FROM ccc_'+languagecode_2+'wiki_top_articles_lists);'
-
-                for row in cursor4.execute(query):
-                    all_ccc_lists_items.add(row[0])
-                    lists_qitems.add(row[0])
-
-            all_top_diversity_articles_count+=len(lists_qitems)
-            ccc_list_coincident_count=len(lists_qitems.intersection(all_articles[languagecode]))
-
-            insert_intersections_values(cursor3,'top_diversity_articles_lists',list_name,'wp',languagecode,ccc_list_coincident_count,len(lists_qitems), period)
-
-            insert_intersections_values(cursor3,languagecode,'wp','top_diversity_articles_lists',list_name,ccc_list_coincident_count,wpnumberofarticles, period)
-
-
-        lang_art = all_articles[languagecode]
-        #  CCC Top articles lists - sum spread and sum coverage
-        for languagecode_2 in wikilanguagecodes:
-            qitems_unique = set()
-            country = ''
-#                query = 'SELECT qitem, country FROM '+languagecode_2+'wiki_top_articles_lists WHERE measurement_date IS (SELECT MAX(measurement_date) FROM '+languagecode_2+'wiki_top_articles_lists) AND position <= 100 ORDER BY country'
-
-            query = 'SELECT qitem, country FROM '+languagecode_2+'wiki_top_articles_lists WHERE position <= 100 ORDER BY country'# measurement_date IS (SELECT MAX(measurement_date) FROM 
-
-            # print (query)
-            # SELECT qitem, country FROM cawiki_top_articles_lists WHERE position <= 100 ORDER BY country
-            for row in cursor4.execute(query):
-                cur_country = str(row[1])
-
-                if cur_country != country and country != '':
-                    coincident_qitems_all_qitems = len(qitems_unique.intersection(lang_art))
-                    list_origin = ''
-                    if country != 'all': 
-                        list_origin = country+'_('+languagecode_2+')'
-                    else: 
-                        list_origin = languagecode_2
-
-                    insert_intersections_values(cursor3,list_origin,'all_top_diversity_articles',languagecode,'wp',coincident_qitems_all_qitems,len(qitems_unique), period)
-                    qitems_unique = set()
-
-                qitems_unique.add(row[0])
-                country = cur_country
-
-            # last iteration
+            # country level
             if country != 'all' and country != '': 
                 list_origin = country+'_('+languagecode_2+')'
             else: 
                 list_origin = languagecode_2
 
+            coincident_qitems_all_qitems = len(country_language_qitems.intersection(lang_art))
+            if len(country_language_qitems) == 0: rel_value = 0
+            else: rel_value = 100*coincident_qitems_all_qitems/len(country_language_qitems)
+            intersections.append((coincident_qitems_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode,'wp'))
 
-            coincident_qitems_all_qitems = len(qitems_unique.intersection(lang_art))
-            # print(list_origin,'all_top_diversity_articles',languagecode,'wp',coincident_qitems_all_qitems,len(qitems_unique), period)
+        # INSERT INTERSECTIONS FOR THE LANGUAGE
+        # if len(intersections) > 500000 or wikilanguagecodes.index(languagecode_1) == len(wikilanguagecodes)-1:
+        query = 'INSERT OR IGNORE INTO wcdo_intersections (abs_value, rel_value, measurement_date, set1, set1descriptor, set2, set2descriptor) VALUES (?,?,?,?,?,?,?)'
+        cursor4.executemany(query,intersections);
 
-            insert_intersections_values(cursor3,list_origin,'all_top_diversity_articles',languagecode,'wp',coincident_qitems_all_qitems,len(qitems_unique), period)
+        query = 'UPDATE wcdo_intersections SET abs_value = ?, rel_value = ?, measurement_date = ? WHERE set1 = ? AND set1descriptor = ? AND set2 = ? AND set2descriptor = ?;'
+        cursor4.executemany(query,intersections);
+        conn4.commit() 
+        count_intersections += len(intersections)
 
-        # CCC Top articles lists
-        all_top_diversity_articles_coincident_count = len(all_ccc_lists_items.intersection(lang_art))
-        insert_intersections_values(cursor3,'ccc','all_top_diversity_articles',languagecode,'wp',all_top_diversity_articles_coincident_count,all_top_diversity_articles_count, period)
+        # print (str(len(intersections))+' intersections inserted')
+        # with open('top_diversity_selection.txt', 'a') as f: f.write(str(len(intersections))+' intersections calculated.\n')
 
-        insert_intersections_values(cursor3,languagecode,'wp','ccc','all_top_diversity_articles',all_top_diversity_articles_coincident_count,wpnumberofarticles, period)
-
-        conn4.commit()
-
-    print ('top_diversity_articles_lists, list_name, wp, languagecode,'+ period)
-    print ('wp, languagecode, top_diversity_articles_lists, list_name,'+ period)
-
-    print ('languagecode_2, all_top_diversity_articles, languagecode, list_name,'+ period)
-
-    print ('ccc, all_top_diversity_articles, languagecode, wp,'+ period)
-    print ('languagecode, wp, ccc, all_top_diversity_articles,'+ period)
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-
-
-
-
-#    input('')
-
+        print (str(count_intersections)+' intersections inserted for this language: '+languagecode_1)
+        print (str(datetime.timedelta(seconds=time.time() - langTime)))
 
 
 def top_diversity_db_transfer():
@@ -1562,32 +1411,6 @@ def top_diversity_db_transfer():
         query = 'INSERT OR IGNORE INTO '+languagecode+'wiki_top_articles_page_titles (measurement_date, qitem, page_title_target, generation_method) values (?,?,?,?)'
         cursor4.executemany(query, parameters)
         conn4.commit()
-
-
-def count_number_qitems_per_list():
-    # COUNT THE NUMBER OF QITEMS PER LIST
-    conn = sqlite3.connect(databases_path + top_diversity_db); cursor = conn.cursor()
-    lists=['geolocated', 'keywords', 'women', 'men']  
-
-    list_count_100_wp = {}
-    list_count_100 = {}
-    for list_name in lists:
-        for languagecode in wikilanguagecodes:
-            query = 'SELECT count(*) FROM ccc_'+languagecode+'wiki_top_articles_lists WHERE list_name ="'+list_name+'" AND measurement_date;'
-
-
-            cursor.execute(query)
-            num_list = int(cursor.fetchone()[0])
-            if num_list < 100:
-                list_count_100_wp[languages.loc[languagecode]['languagename']]=wikipedialanguage_currentnumberarticles[languagecode]
-                list_count_100[languages.loc[languagecode]['languagename']]=num_list
-
-        print (list_name,len(list_count_100))
-
-        print (sorted( ((v,k) for k,v in list_count_100_wp.items()), reverse=True))
-        print (sorted( ((v,k) for k,v in list_count_100.items()), reverse=True))
-
-
 
 
 
@@ -1648,16 +1471,6 @@ if __name__ == '__main__':
     sys.stderr = Logger_err()
 
 
-
-    # while True:
-    #     # DAILY
-    #     update_top_diversity_articles_interwiki()
-    #     update_top_diversity_articles_intersections()       
-    #     time.sleep(84600)
-    #     print ("Good morning. It is: "+time.today()+". Let's see if today is the day to generate the Top Diversity Lists...")
-
-
-
     cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
 #    check_time_for_script_run(script_name, cycle_year_month)
     startTime = time.time()
@@ -1667,7 +1480,6 @@ if __name__ == '__main__':
     measurement_date = time.strftime('%Y%m%d', time.gmtime(os.path.getmtime('/srv/wcdo/databases/wikipedia_diversity.db')))
 #    measurement_date = '20180926'
 
-    cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
 
     periods_monthly,periods_accum = wikilanguages_utils.get_months_queries()
 
@@ -1695,7 +1507,7 @@ if __name__ == '__main__':
     print (wikilanguagecodes)
 
 
-    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '')
+    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()

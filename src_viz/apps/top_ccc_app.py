@@ -7,7 +7,7 @@ from dash_apps import *
 dash_app7 = Dash(server = app, url_base_pathname = webtype + '/top_ccc_articles/', external_stylesheets = external_stylesheets)
 dash_app7.config['suppress_callback_exceptions']=True
 
-dash_app7.title = 'Top CCC Articles Lists'+title_addenda
+dash_app7.title = 'Top CCC Diversity Lists'+title_addenda
 dash_app7.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content') 
@@ -33,7 +33,7 @@ text_default2 = '''
 covered = {'Existing articles':'existing', 'Non-existing articles':'non-existing'}
 
 def dash_app7_build_layout(params):
-    features_dict = {'Number of Editors':'num_editors','Number of Edits':'num_edits','Number of images':'num_images','Wikirank':'wikirank','Number of Pageviews':'num_pageviews','Number of Inlinks':'num_inlinks','Number of References':'num_references','Number of Bytes':'num_bytes','Number of Outlinks':'num_outlinks','Number of Interwiki':'num_interwiki','Number of WDProperties':'num_wdproperty','Number of Discussions':'num_discussions','Creation Date':'date_created','Number of Inlinks from CCC':'num_inlinks_from_CCC'}
+    features_dict = {'Number of Editors':'num_editors','Number of Edits':'num_edits','Number of Images':'num_images','Wikirank':'wikirank','Number of Pageviews':'num_pageviews','Number of Inlinks':'num_inlinks','Number of References':'num_references','Number of Bytes':'num_bytes','Number of Outlinks':'num_outlinks','Number of Interwiki':'num_interwiki','Number of WDProperties':'num_wdproperty','Number of Discussions':'num_discussions','Creation Date':'date_created','Number of Inlinks from CCC':'num_inlinks_from_CCC'}
 
 
     lists_dict = {'Editors':'editors','Featured':'featured','Geolocated':'geolocated','Keywords':'keywords','Women':'women','Men':'men','Created First Three Years':'created_first_three_years','Created Last Year':'created_last_year','Pageviews':'pageviews','Discussions':'discussions','Edits':'edits', 'Edited Last Month':'edited_last_month', 'Images':'images', 'WD Properties':'wdproperty_many', 'Interwiki':'interwiki_many', 'Least Interwiki Most Editors':'interwiki_editors', 'Least Interwiki Most WD Properties':'interwiki_wdproperty', 'Wikirank':'wikirank', 'Wiki Loves Earth':'earth', 'Wiki Loves Monuments':'monuments_and_buildings', 'Wiki Loves Sports':'sport_and_teams', 'Wiki Loves GLAM':'glam', 'Wiki Loves Folk':'folk', 'Wiki Loves Music':'music_creations_and_organizations', 'Wiki Loves Food':'food', 'Wiki Loves Paintings':'paintings', 'Wiki Loves Books':'books', 'Wiki Loves Clothing and Fashion':'clothing_and_fashion', 'Wiki Loves Industry':'industry'}
@@ -63,7 +63,7 @@ def dash_app7_build_layout(params):
             exclude_articles='none'
 
         if 'order_by' in params:
-            order_by=params['order_by'].lower()
+            order_by=params['order_by']#.lower()
         else:
             order_by='none'
 
@@ -209,9 +209,10 @@ def dash_app7_build_layout(params):
         # NEW LISTS
         query += 'f.num_inlinks_from_CCC, f.date_created, p.page_title_target, p.generation_method, p0.page_title_target pt0, p0.generation_method pg0, p1.page_title_target pt1, p1.generation_method pg1, p2.page_title_target pt2, p2.generation_method pg2, p3.page_title_target pt3, p3.generation_method pg3 '
 
-        columns+= ['Inlinks from CCC','Creation Date']
+        if 'Inlinks from CCC' not in columns: columns+= ['Inlinks from CCC']
+        columns+= ['Creation Date']
         columns+= ['Related Languages',' Article Title']
-
+#        columns= list(dict.fromkeys(columns))
 
         query += 'FROM '+source_lang+'wiki_top_articles_lists r '
         query += 'LEFT JOIN '+target_lang+'wiki_top_articles_page_titles p USING (qitem) '
@@ -235,10 +236,12 @@ def dash_app7_build_layout(params):
             query += 'ORDER BY r.position ASC;'
 
 
-#        print (query)
+        # print (query)
+        # print (columns)
+
         df = pd.read_sql_query(query, conn)#, parameters)
         df = df.fillna(0)
-
+        # print (df.columns)
 
         if country == 'all':
             main_title = source_language + ' Top CCC articles list "'+list_dict_inv[list_name]+'" and its coverage by '+target_language+' Wikipedia'
@@ -253,7 +256,7 @@ def dash_app7_build_layout(params):
         results_text = '''
         The following table shows the Top 500 articles list '''+list_dict_inv[list_name] + ''' from '''+source_language+''' CCC '''+source_country+''' and its article availability in '''+target_language+''' Wikipedia. The columns present complementary features that are explicative of the article relevance (number of editors, edits, pageviews, Bytes, Wikidata properties or Interwiki links). In particular, number of Inlinks from CCC (incoming links from the CCC group of articles) highlights the article importance in terms of how much it is required by other articles. The column named Related Languages present Interwiki links to the article version when available in the four languages closer to the target language (those that cover best this language and therefore it is likely their editors consult it).
 
-        The table's last column shows the article title in its target language, in ***blue*** when it exists, in ***red*** as a proposal generated with the Wikimedia Content Translation tool or as an existing Wikidata label in the same language, and ***empty*** when the article does not exist or there is no title proposal available.
+        The table's last column shows the article title in its target language, in ***blue*** when it exists, in ***red*** as a proposal generated with the Wikimedia Content Translation tool or as an existing Wikidata label in the same language, and ***empty*** when the article does not exist or there is no title proposal available. This column is *updated once per day* with the new articles created.
         '''    
 
         if len(df) == 0: # there are no results.
@@ -404,10 +407,13 @@ def dash_app7_build_layout(params):
         worksheet.set_column(len_columns-2, len_columns-2, 10)
 
         k = 0
+        # print (df.columns)
+
         df=df.rename(columns=columns_dict)
 
 #        df.to_json(r'/srv/wcdo/src_viz/downloads/top_ccc_lists/'+filename+'.json',orient='split')
-
+        
+        # print (df.columns)
 
         df_list = list()
         for index, rows in df.iterrows():
@@ -703,7 +709,7 @@ def dash_app7_build_layout(params):
         # FIRST PAGE
         layout = html.Div([
             navbar,
-            html.H3('Top CCC articles lists', style={'textAlign':'center'}),
+            html.H3('Top CCC Diversity Lists', style={'textAlign':'center'}),
             dcc.Markdown(
                 text_default.replace('  ', '')),
 

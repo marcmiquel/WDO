@@ -3,17 +3,19 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 
-conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor()
+
+#### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
 #### CCC DATA
+conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor()
+
 df = pd.DataFrame(wikilanguagecodes)
 df = df.set_index(0)
 reformatted_wp_numberarticles = {}
 df['wp_number_articles']= pd.Series(wikipedialanguage_numberarticles)
 
-
 # CCC %
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "wp" AND set2descriptor = "ccc" AND content = "articles" AND set1=set2 AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY abs_value DESC;'
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "wp" AND set2descriptor = "ccc" AND content = "articles" AND set1=set2 AND period ="'+last_period+'" ORDER BY abs_value DESC;'
 rank_dict = {}; i=1
 lang_dict = {}
 abs_rel_value_dict = {}
@@ -30,44 +32,44 @@ df['Nº'] = pd.Series(rank_dict)
 df['ccc_percent'] = pd.Series(abs_rel_value_dict)
 df['ccc_number_articles'] = pd.Series(abs_value_dict)
 
-df['Region']=languages.region
+df['Continent']=languages.region
 for x in df.index.values.tolist():
-    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].split(';')[0]
+    if ';' in df.loc[x]['Continent']: df.at[x, 'Continent'] = df.loc[x]['Continent'].split(';')[0]
 
-df['Subregion']=languages.subregion
+df['Subcontinent']=languages.subregion
 for x in df.index.values.tolist():
-    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].split(';')[0]
+    if ';' in df.loc[x]['Subcontinent']: df.at[x, 'Subcontinent'] = df.loc[x]['Subcontinent'].split(';')[0]
 
 
 # CCC (GL %) 
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "ccc_geolocated" AND content = "articles" AND set1=set2 AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY rel_value DESC;'
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "ccc_geolocated" AND content = "articles" AND set1=set2 AND period ="'+last_period+'" ORDER BY rel_value DESC;'
 abs_rel_value_dict = {}
 for row in cursor.execute(query): abs_rel_value_dict[row[0]]= round(row[2],2)# ' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(round(row[2],2))+'%)</small>')
 df['geolocated_number_articles'] = pd.Series(abs_rel_value_dict)
 
 # CCC KW %
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "ccc_keywords" AND content = "articles" AND set1=set2 AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY rel_value DESC;'
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "ccc_keywords" AND content = "articles" AND set1=set2 AND period ="'+last_period+'" ORDER BY rel_value DESC;'
 abs_rel_value_dict = {}
 for row in cursor.execute(query):
     abs_rel_value_dict[row[0]]= round(row[2],2)#' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(round(row[2],2))+'%)</small>')
 df['keyword_title'] = pd.Series(abs_rel_value_dict)
 
 # CCC People %
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "wp" AND set2descriptor = "ccc_people" AND content = "articles" AND set1=set2 AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY rel_value DESC;'
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "wp" AND set2descriptor = "ccc_people" AND content = "articles" AND set1=set2 AND period ="'+last_period+'" ORDER BY rel_value DESC;'
 abs_rel_value_dict = {}
 for row in cursor.execute(query):
     abs_rel_value_dict[row[0]]= round(row[2],2)#' '+str('{:,}'.format(int(row[1]))+' '+'<small>('+str(round(row[2],2))+'%)</small>')
 df['people_ccc_wp_percent'] = pd.Series(abs_rel_value_dict)
 
 # CCC Female %
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "female" AND content = "articles" AND set1=set2  AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY rel_value DESC;'
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "female" AND content = "articles" AND set1=set2  AND period ="'+last_period+'" ORDER BY rel_value DESC;'
 female_abs_value_dict = {}
 for row in cursor.execute(query):
     female_abs_value_dict[row[0]]=row[1]
 df['female_ccc'] = pd.Series(female_abs_value_dict)
 
 # CCC Male %
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "male" AND content = "articles" AND set1=set2 AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY rel_value DESC'
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2descriptor = "male" AND content = "articles" AND set1=set2 AND period ="'+last_period+'" ORDER BY rel_value DESC'
 male_abs_value_dict = {}
 for row in cursor.execute(query):
     male_abs_value_dict[row[0]]=row[1]
@@ -125,24 +127,28 @@ df.set_index('id', inplace=True, drop=False)
 
 df = df.fillna('')
 
-columns = ['Nº','Language','Wiki','Articles','CCC art.','CCC %','CCC (GL %)','CCC (KW Title %)','CCC (People %)','CCC People (Women %)','Subregion','Region']
+columns = ['Nº','Language','Wiki','Articles','CCC art.','CCC %','CCC (GL %)','CCC (KW Title %)','CCC (People %)','CCC People (Women %)','Subcontinent','Continent']
 df = df[columns] # selecting the parameters to export
 df = df.loc[(df['Language']!='')]
+
+df = df.sort_values(by=['CCC art.'], ascending = False)
+
+
 
 
 #### TERRITORIES CCC DATA
 # CCC
-query = 'SELECT set1 || " " || set2descriptor as id, set1 as languagecode, set2descriptor as Qitem, abs_value as CCC_articles, ROUND(rel_value,2) CCC_percent FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2 = "ccc" AND content = "articles" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1, set2descriptor DESC;'
+query = 'SELECT set1 || " " || set2descriptor as id, set1 as languagecode, set2descriptor as Qitem, abs_value as CCC_articles, ROUND(rel_value,2) CCC_percent FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2 = "ccc" AND content = "articles" AND period ="'+last_period+'" ORDER BY set1, set2descriptor DESC;'
 df1 = pd.read_sql_query(query, conn)
 df1 = df1.set_index('id')
 
 # GL
-query = 'SELECT set1 || " " || set2descriptor as id, set1 as languagecode2, set2descriptor as Qitem2, abs_value as CCC_articles_GL, ROUND(rel_value,2) CCC_percent_GL FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2 = "ccc_geolocated" AND content = "articles" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1, set2descriptor DESC;'
+query = 'SELECT set1 || " " || set2descriptor as id, set1 as languagecode2, set2descriptor as Qitem2, abs_value as CCC_articles_GL, ROUND(rel_value,2) CCC_percent_GL FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2 = "ccc_geolocated" AND content = "articles" AND period ="'+last_period+'" ORDER BY set1, set2descriptor DESC;'
 df2 = pd.read_sql_query(query, conn)
 df2 = df2.set_index('id')
 
 # KW
-query = 'SELECT set1 || " " || set2descriptor as id, set1 as languagecode3, set2descriptor as Qitem3, abs_value as CCC_articles_KW, ROUND(rel_value,2) CCC_percent_KW FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2 = "ccc_keywords" AND content = "articles" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1, set2descriptor DESC;'
+query = 'SELECT set1 || " " || set2descriptor as id, set1 as languagecode3, set2descriptor as Qitem3, abs_value as CCC_articles_KW, ROUND(rel_value,2) CCC_percent_KW FROM wcdo_intersections_accumulated WHERE set1descriptor = "ccc" AND set2 = "ccc_keywords" AND content = "articles" AND period ="'+last_period+'" ORDER BY set1, set2descriptor DESC;'
 df3 = pd.read_sql_query(query, conn)
 df3 = df3.set_index('id')
 
@@ -174,14 +180,16 @@ df_territories = pd.concat([dfx, all_territories], axis=1, sort=True)
 
 
 
-columns_dict = {'languagename':'Language','languagecode':'Wiki','Qitem':'Qitem','CCC_articles':'CCC art.','CCC_percent':'CCC %','CCC_articles_GL':'CCC GL art.','CCC_percent_GL':'CCC (GL %)','CCC_percent_KW':'CCC (KW %)', 'CCC_articles_KW':'CCC art. KW','territoryname':'Territory name','territorynameNative':'Territory name (native)','country':'country','ISO3166':'ISO3166','ISO31662':'ISO3166-2','subregion':'Subregion','region':'Region'}
+columns_dict = {'languagename':'Language','languagecode':'Wiki','Qitem':'Qitem','CCC_articles':'CCC art.','CCC_percent':'CCC %','CCC_articles_GL':'CCC GL art.','CCC_percent_GL':'CCC (GL %)','CCC_percent_KW':'CCC (KW %)', 'CCC_articles_KW':'CCC art. KW','territoryname':'Territory name','territorynameNative':'Territory name (native)','country':'country','ISO3166':'ISO3166','ISO31662':'ISO3166-2','subregion':'Subcontinent','region':'Continent'}
 df_territories=df_territories.rename(columns=columns_dict)
 
 
-columns_territory = ['Qitem','Territory name','Language','Wiki','CCC art.','CCC %','CCC GL art.','CCC (KW %)','ISO3166','ISO3166-2','Subregion','Region']
+columns_territory = ['Qitem','Territory name','Language','Wiki','CCC art.','CCC %','CCC GL art.','CCC (KW %)','ISO3166','ISO3166-2','Subcontinent','Continent']
 df_territories = df_territories[columns_territory]
 df_territories = df_territories.fillna('')
 df_territories['Territory name wiki'] = df_territories['Territory name']+' ('+df_territories['Wiki']+')'
+
+
 
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
@@ -194,27 +202,33 @@ dash_app2.layout = html.Div([
     html.H3(title, style={'textAlign':'center'}),
 
     dcc.Markdown('''
-        This page shows stastistics and graphs that explain the extent and composition of [Cultural Context Content (CCC)](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content) in Wikipedia language editions. Cultural Context Content is the group of articles in a Wikipedia language edition that relates to the editors' geographical and cultural context (places, traditions, language, politics, agriculture, biographies, events, etcetera.). 
+        This page shows statistics and graphs that explain the extent and composition of [Cultural Context Content (CCC)](https://meta.wikimedia.org/wiki/Wikipedia_Cultural_Diversity_Observatory/Cultural_Context_Content) in Wikipedia language editions. Cultural Context Content is the group of articles in a Wikipedia language edition that relates to the editors' geographical and cultural context (places, traditions, language, politics, agriculture, biographies, events, etcetera.). This is often known as *"local content"*.
 
         The statistics and graphs answer the following questions:
         * What is the extent of CCC in each Wikipedia language edition?
-        * What is the extent of the Wikipedia language related territories in their corresponding CCC?
+        * What is the extent of topics about each language associated territories in the language CCC?
+
+
         '''),
 
     html.Br(),
 
     dcc.Tabs([
-        dcc.Tab(label='Extent of Cultural Context Content in Wikipedias (Table)', children=[
+        dcc.Tab(label='Extent of Cultural Context Content in each Wikipedia (Table)', children=[
             html.Br(),
 
-            html.H5('Extent of Cultural Context Content in each Wikipedia Table', style={'textAlign':'left'}),
+            html.H5('Extent of Cultural Context Content in each Wikipedia (Table)', style={'textAlign':'left'}),
             dcc.Markdown(
             '''
             * **What is the extent of CCC in each Wikipedia language edition?**        
 
             The following table contains a list of all the current Wikipedia language editions ordered by their number of articles from their Cultural Context Content dataset that relate to territories where the language is spoken as official or as indigeneous.
 
-            For each language edition, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC (GL %)** as the percentage of articles from CCC that are geolocated, **CCC (KW Title %)** as the percentage of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles, **CCC (People %)** as the percentage of articles from CCC that are about people, **CCC People (Women %)** as the percentage of articles in CCC people articles that are about women. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
+            For each language edition, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles: **(CCC art.)** and **CCC (%)** as the number and percentage of CCC articles, **CCC (GL %)** as the percentage of articles from CCC that are geolocated, **CCC (KW Title %)** as the percentage of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles, CCC (People %) as the percentage of articles from CCC that are about people, CCC People (Women %) as the percentage of articles in CCC people articles that are about women. Finally, **Continent** and **Subcontinent** are introduced in order to contextualize the results.
+
+
+
+            '''.replace('  ', '')),
 
             dash_table.DataTable(
                 id='datatable-cccextent',
@@ -247,15 +261,15 @@ dash_app2.layout = html.Div([
             html.Div(id='datatable-cccextent-container'),
         ]),
 
-        dcc.Tab(label="Extent of Territories in Languages' CCC (Table)", children=[
+        dcc.Tab(label="Extent of Language Related Territories in CCC (Table)", children=[
             html.Br(),
 
-            html.H5('Extent of Language Territories in their Language CCC Table', style={'textAlign':'left'}),
+            html.H5('Extent of Language Related Territories in CCC (Table)', style={'textAlign':'left'}),
             dcc.Markdown(
             '''
-            * **What is the extent of the language related territories in their corresponding CCC?**
+            * **What is the extent of topics about each language associated territories in the language CCC?**
 
-            The following table contains each Wikipedia language edition Cultural Context Content and the extent of the territories where the language is spoken according to the language-territories mapping. Articles from each language CCC are assigned to territories according to the different strategies that have been used to include them into CCC. The label Not Assigned is for those articles which were not possible to classify.
+            The following table contains each Wikipedia language edition Cultural Context Content and the extent of content dedicated to topics related the territories where the language is spoken according to the language-territories mapping. Articles from each language CCC are assigned to territories according to the different strategies that have been used to include them into CCC. The label Not Assigned is for those articles which were not possible to classify.
 
             For each territory, statistics account for the number of articles of different CCC segments and their percentage computed in relation to the overall total number of Wikipedia articles. This is **(CCC art.)** and **CCC (%)** as the number of CCC articles and percentage, **CCC GL (%)** as the number of articles from CCC that are geolocated, **KW Title (%)** as the number of articles from CCC that contain specific keywords (language name, territory name or demonym) in their titles. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
          
@@ -297,6 +311,13 @@ dash_app2.layout = html.Div([
 ], className="container")
 
 
+
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+#### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
+
 @dash_app2.callback(
     Output('datatable-cccextent', 'style_data_conditional'),
     [Input('datatable-cccextent', 'selected_columns')]
@@ -312,15 +333,6 @@ def update_styles(selected_columns):
     [Input('datatable-cccextent', "derived_virtual_data"),
      Input('datatable-cccextent', "derived_virtual_selected_rows")])
 def update_graphs(rows, derived_virtual_selected_rows):
-    # When the table is first rendered, `derived_virtual_data` and
-    # `derived_virtual_selected_rows` will be `None`. This is due to an
-    # idiosyncracy in Dash (unsupplied properties are always None and Dash
-    # calls the dependent callbacks when the component is first rendered).
-    # So, if `rows` is `None`, then the component was just rendered
-    # and its value will be the same as the component's dataframe.
-    # Instead of setting `None` in here, you could also set
-    # `derived_virtual_data=df.to_rows('dict')` when you initialize
-    # the component.
     if derived_virtual_selected_rows is None:
         derived_virtual_selected_rows = []
 
@@ -356,9 +368,6 @@ def update_graphs(rows, derived_virtual_selected_rows):
                 },
             },
         )
-        # check if column exists - user may have deleted it
-        # If `column.deletable=False`, then you don't
-        # need to do this check.
         for column in ['Articles','CCC art.','CCC %'] if column in dff
     ]
 
@@ -380,26 +389,11 @@ def update_styles(selected_columns):
     [Input('datatable-cccextentqitem', 'derived_virtual_data'),
      Input('datatable-cccextentqitem', 'derived_virtual_selected_rows')])
 def update_graphs(rows, derived_virtual_selected_rows):
-    # When the table is first rendered, `derived_virtual_data` and
-    # `derived_virtual_selected_rows` will be `None`. This is due to an
-    # idiosyncracy in Dash (unsupplied properties are always None and Dash
-    # calls the dependent callbacks when the component is first rendered).
-    # So, if `rows` is `None`, then the component was just rendered
-    # and its value will be the same as the component's dataframe.
-    # Instead of setting `None` in here, you could also set
-    # `derived_virtual_data=df.to_rows('dict')` when you initialize
-    # the component.
     if derived_virtual_selected_rows is None:
         derived_virtual_selected_rows = []
 
 
     dff = df if rows is None else pd.DataFrame(rows)
-
-    # print ('prova open')
-    # print (dff.columns)
-    # print (df.columns)
-    # print ('prova closed')
-
 
     colors = ['#7FDBFF' if i in derived_virtual_selected_rows else '#0074D9'
               for i in range(len(dff))]
@@ -432,9 +426,6 @@ def update_graphs(rows, derived_virtual_selected_rows):
                 },
             },
         )
-        # check if column exists - user may have deleted it
-        # If `column.deletable=False`, then you don't
-        # need to do this check.
         for column in cols if column in dff
     ]
 

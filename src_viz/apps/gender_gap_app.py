@@ -12,10 +12,8 @@ conn2 = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); c
 gender = {'Q6581097':'male','Q6581072':'female', 'Q1052281':'transgender female','Q1097630':'intersex','Q1399232':"fa'afafine",'Q17148251':'travesti','Q19798648':'unknown value','Q207959':'androgyny','Q215627':'person','Q2449503':'transgender male','Q27679684':'transfeminine','Q27679766':'transmasculine','Q301702':'two-Spirit','Q303479':'hermaphrodite','Q3177577':'muxe','Q3277905':'māhū','Q430117':'Transgene','Q43445':'female non-human organism'}
 lang_groups.insert(3, 'All languages')
 
-
-#### COVERAGE DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # articles gender
-query = 'SELECT set1, set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content = "articles" AND set1descriptor = "wp" AND set2descriptor IN ("male","female") AND set2 = "wikidata_article_qitems" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1, rel_value DESC;'
+query = 'SELECT set1, set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content = "articles" AND set1descriptor = "wp" AND set2descriptor IN ("male","female") AND set2 = "wikidata_article_qitems" AND period = "'+last_period+'" ORDER BY set1, rel_value DESC;'
 df_gender_articles = pd.read_sql_query(query, conn)
 df_gender_articles = df_gender_articles.rename(columns={'set1':'Wiki', 'set2descriptor':'Gender', 'abs_value':'Articles', 'rel_value':'Extent Articles (%)'})
 df_gender_articles = df_gender_articles.fillna(0).round(1)
@@ -45,15 +43,9 @@ for x in df_gender_articles_male.index.values.tolist():
 df_gender_articles_male = df_gender_articles_male.reset_index().round(1)
 df_gender_articles_female = df_gender_articles_female.reset_index().round(1)
 
-# print (df_gender_articles_male.head(10))
-# print (df_gender_articles_female.head(10))
-# input('')
 
 
-### FUNCTIONS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-
-
-### DASH APP TEST IN LOCAL ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app12 = Dash(__name__, server = app, url_base_pathname= webtype + '/gender_gap/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 
 dash_app12.config['suppress_callback_exceptions']=True
@@ -80,6 +72,8 @@ dash_app12.layout = html.Div([
     html.Div(
     html.P('Select a group of Wikipedias'),
     style={'display': 'inline-block','width': '200px'}),
+
+    html.Br(),
 
     html.Div(
     dcc.Dropdown(
@@ -147,11 +141,6 @@ def update_barchart(langs):
     height = len(df2)*25
     if len(languagecodes)==10: height = 500
 
-#    print (height)
-
-#    print (df.head(10))
-#    print (df2.head(10))
-
     fig = go.Figure()
     fig.add_trace(go.Bar(
         y=df['Language'],
@@ -184,15 +173,6 @@ def update_barchart(langs):
         titlefont_size=12,
         width=700,
         barmode='stack')
-
-    # fig.update_layout(
-    #     autosize=True,
-    # #        width=700,
-    #     height=900,
-    #     paper_bgcolor="White",
-    #     title_text=geographicalentity+" Extent in Geolocated Articles (Left) and "+geographicalentity+" Extent in Geolocated Articles' Pageviews (Right)",
-    #     title_x=0.5,
-    # )
 
 
 

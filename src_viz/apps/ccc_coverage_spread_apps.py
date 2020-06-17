@@ -3,16 +3,183 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 
+
+# COVERAGE APP
+
+#### FUNCTIONS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
+# COVERAGE FUNCTIONS
+def heatmapcoverage_values(lang_list,df_langs_map_coverage):
+    lang_list2 = []
+    for lg in lang_list:
+        lgcode = language_names[lg]
+        if lgcode in ccc_art_wp:
+            lang_list2.append(lgcode)
+    lang_list = sorted(lang_list2, reverse=False)
+
+    if lang_list != None:
+        df_langs_map_coverage2 = df_langs_map_coverage.loc[df_langs_map_coverage['set1'].isin(lang_list)]
+        df_langs_map_coverage2 = df_langs_map_coverage2.loc[df_langs_map_coverage2['set2'].isin(lang_list)]
+    else:
+        df_langs_map_coverage2 = df_langs_map_coverage
+
+    x = sorted(list(df_langs_map_coverage2.set1.unique()), reverse=False)
+#    x = sorted(lang_list)
+    y = sorted(x,reverse=True)
+    lang_list = x
+
+    for lang in x:
+        df_langs_map_coverage2 = df_langs_map_coverage2.append(pd.Series([lang,lang,'',''], index=df_langs_map_coverage2.columns ), ignore_index=True)
+
+    df_langs_map_coverage2 = df_langs_map_coverage2.sort_values(by=['set2', 'set1'])
+    df_langs_map_coverage2 = df_langs_map_coverage2.reset_index(drop=True)
+    df_langs_map_coverage2 = df_langs_map_coverage2.set_index('set2')
+    df_langs_map_coverage2 = df_langs_map_coverage2.fillna(0)
+
+    z = list()
+    z_text = list()
+    z_text2 = list()
+    for langx in lang_list:
+        z_row = []
+        z_textrow = []
+        z_textrow2 = []
+        try:
+            df_langs_map_coverage3 = df_langs_map_coverage2.loc[langx]
+            df_langs_map_coverage3 = df_langs_map_coverage3.set_index('set1')
+        except:
+            pass
+
+        for langy in lang_list:
+            try:
+                rel_value = round(df_langs_map_coverage3.loc[langy].at['rel_value'],2)
+                abs_value = df_langs_map_coverage3.loc[langy].at['abs_value']
+            except:
+                if langx == langy:
+                    abs_value = ccc_art_wp[langx]
+                    rel_value = 100
+                else:
+                    abs_value = 0
+                    rel_value = 0
+
+            z_row.append(rel_value)
+            z_textrow.append(str(abs_value)+ ' articles')
+            z_textrow2.append(abs_value)
+
+        z.append(z_row)
+        z_text.append(z_textrow)
+        z_text2.append(z_textrow2)
+
+    z.reverse()
+    z_text.reverse()
+    z_text2.reverse()
+    return x, y, z, z_text, z_text2
+
+
+def treemapcoverage_values(source_lang, df_langs_map_coverage):
+
+    if source_lang == None: return
+
+    long_languagename = source_lang
+    source_lang = language_names[source_lang]
+
+    df_langs_map_coverage1 = df_langs_map_coverage.set_index('set2')
+    df_langs_map_coverage2 = df_langs_map_coverage1.loc[source_lang]
+
+    df_langs_map_coverage2['languagename'] = df_langs_map_coverage2['set1'].map(language_names_inv)
+    df_langs_map_coverage2['languagename_full'] = df_langs_map_coverage2['set1'].map(language_names_full)
+
+    df_langs_map_coverage2 = df_langs_map_coverage2.append({'set1':source_lang, 'rel_value':100, 'abs_value':ccc_art_wp[source_lang], 'languagename':long_languagename, 'languagename_full':languages.loc[source_lang]['languagename']}, ignore_index = True)
+
+    # round(ccc_percent_wp[source_lang],2) -> this was the rel_value.
+    
+    df_langs_map_coverage2 = df_langs_map_coverage2.round(1)
+
+    df_langs_map_coverage2['self_rel_value'] = round(100*df_langs_map_coverage2.abs_value / wikipedialanguage_numberarticles[source_lang],2)
+#    print (df_langs_map_coverage2.tail(10))
+#    print (df_langs_map_coverage2.head(10))
+    return df_langs_map_coverage2
+
+
+def scatterplotccccoverage_values(source_lang, df_langs_map_coverage):
+
+    if source_lang == None: return
+
+    long_languagename = source_lang
+    source_lang = language_names[source_lang]
+
+    df_langs_map_coverage = df_langs_map_coverage.set_index('set2')
+    df_langs_map_coverage2 = df_langs_map_coverage.loc[source_lang]
+
+    df_langs_map_coverage2 = df_langs_map_coverage2.set_index('set1')
+
+    df_langs_map_coverage2['Region']=languages.region
+    for x in df_langs_map_coverage2.index.values.tolist():
+        if ';' in df_langs_map_coverage2.loc[x]['Region']: df_langs_map_coverage2.at[x, 'Region'] = df_langs_map_coverage2.loc[x]['Region'].split(';')[0]
+
+    df_langs_map_coverage2['Subregion']=languages.subregion
+    for x in df_langs_map_coverage2.index.values.tolist():
+        if ';' in df_langs_map_coverage2.loc[x]['Subregion']: df_langs_map_coverage2.at[x, 'Subregion'] = df_langs_map_coverage2.loc[x]['Subregion'].split(';')[0]
+
+    df_langs_map_coverage2['Language']=languages.languagename
+
+    df_langs_map_coverage2 = df_langs_map_coverage2.reset_index()
+
+    df_langs_map_coverage2['Language (Wiki)'] = df_langs_map_coverage2['set1'].map(language_names_inv)
+    df_langs_map_coverage2['Language'] = df_langs_map_coverage2['set1'].map(language_names_full)
+
+#    df_langs_map_coverage2 = df_langs_map_coverage2.append({'set1':source_lang, 'rel_value':round(ccc_percent_wp[source_lang],2), 'abs_value':ccc_art_wp[source_lang], 'Language':long_languagename}, ignore_index = True)
+
+    df_langs_map_coverage2 = df_langs_map_coverage2.round(1)
+
+    df_langs_map_coverage2 = df_langs_map_coverage2.rename(columns={"rel_value": "CCC Coverage Percentage", "abs_value": "Covered CCC Articles", "set1": "Wiki"})
+
+    df_langs_map_coverage2 = df_langs_map_coverage2.loc[(df_langs_map_coverage2['Region']!='')]
+
+#    print (df_langs_map_coverage2.head(10))
+    return df_langs_map_coverage2
+
+
+def scatterplotsum_values(df_langs_sumofCCC_coverage):
+
+    df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.set_index('set2')
+
+    df_langs_sumofCCC_coverage['Region']=languages.region
+    for x in df_langs_sumofCCC_coverage.index.values.tolist():
+        if ';' in df_langs_sumofCCC_coverage.loc[x]['Region']: df_langs_sumofCCC_coverage.at[x, 'Region'] = df_langs_sumofCCC_coverage.loc[x]['Region'].split(';')[0]
+
+    df_langs_sumofCCC_coverage['Subregion']=languages.subregion
+    for x in df_langs_sumofCCC_coverage.index.values.tolist():
+        if ';' in df_langs_sumofCCC_coverage.loc[x]['Subregion']: df_langs_sumofCCC_coverage.at[x, 'Subregion'] = df_langs_sumofCCC_coverage.loc[x]['Subregion'].split(';')[0]
+
+    df_langs_sumofCCC_coverage['Language']=languages.languagename
+
+    df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.reset_index()
+
+    df_langs_sumofCCC_coverage['Articles'] = df_langs_sumofCCC_coverage['set2'].map(wikipedialanguage_numberarticles)
+
+    columns_dict = {'set2':'Wiki','abs_value':'Sum of All Languages CCC Articles Covered','Articles':'Wikipedia Number of Articles', 'rel_value':'Percentage of Sum of All CCC Articles'}
+    df_langs_sumofCCC_coverage=df_langs_sumofCCC_coverage.rename(columns=columns_dict)
+
+    #df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.rename(columns={0: 'Wiki'})
+    df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.fillna('')
+
+#    print(df_langs_sumofCCC_coverage[df_langs_sumofCCC_coverage['Region'] == ""])
+    return df_langs_sumofCCC_coverage
+
+
+
+
+
+#### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
 # GENERAL DATA
 conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
 conn2 = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cursor2 = conn2.cursor() 
 
-#--------------------------------------------------------------------------------------------------
-
-#### COVERAGE DATA
+#### CCC COVERAGE DATA
 ccc_percent_wp = {}
 ccc_art_wp = {}
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) AND content="articles" AND set1descriptor="wp" AND set2descriptor = "ccc" AND set1 = set2'
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE period = "'+last_period+'" AND content="articles" AND set1descriptor="wp" AND set2descriptor = "ccc" AND set1 = set2'
 for row in cursor.execute(query):
     value = row[1]
     value2 = row[2]
@@ -30,19 +197,19 @@ for languagecode in wikilanguagecodes:
 
 coverage_art = {}
 t_coverage = {}
-query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1="all_ccc_articles" AND set1descriptor="" AND set2descriptor="wp" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set2;'
+query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1="all_ccc_articles" AND set1descriptor="" AND set2descriptor="wp" AND period = "'+last_period+'" ORDER BY set2;'
 for row in cursor.execute(query):
     coverage_art[row[0]]=row[1]
     t_coverage[row[0]]=round(row[2],1)
 
 r_coverage = {}
-query = 'SELECT set2, rel_value FROM wcdo_intersections_accumulated WHERE set1="all_ccc_avg" AND set1descriptor="" AND set2descriptor="wp" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set2;'
+query = 'SELECT set2, rel_value FROM wcdo_intersections_accumulated WHERE set1="all_ccc_avg" AND set1descriptor="" AND set2descriptor="wp" AND period = "'+last_period+'" ORDER BY set2;'
 for row in cursor.execute(query):
     r_coverage[row[0]]=round(row[1],1)
 
 
 language_dict={}
-query = 'SELECT set2, set1, rel_value, period FROM wcdo_intersections_accumulated WHERE content="articles" AND set1descriptor="ccc" AND set2descriptor = "wp" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set2, abs_value DESC;'
+query = 'SELECT set2, set1, rel_value, period FROM wcdo_intersections_accumulated WHERE content="articles" AND set1descriptor="ccc" AND set2descriptor = "wp" AND period = "'+last_period+'" ORDER BY set2, abs_value DESC;'
 
 ranking = 5
 row_dict = {}
@@ -137,174 +304,17 @@ df_coverage = df_coverage[column_coverage] # selecting the parameters to export
 
 # Coverage of all Wikipedia languages CCC (%) by all Wikipedia language editions
 # set1, set1descriptor, set2, set2descriptor
-query = 'SELECT set2, set1, rel_value, abs_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1descriptor="ccc" AND set2descriptor = "wp" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated);'
+query = 'SELECT set2, set1, rel_value, abs_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1descriptor="ccc" AND set2descriptor = "wp" AND period = "'+last_period+'";'
 df_langs_map_coverage = pd.read_sql_query(query, conn)
 
 
 # Coverage of the sum of all Wikipedia languages CCC articles by all Wikipedia language editions
-query = 'SELECT set2, rel_value, abs_value FROM wcdo_intersections_accumulated WHERE period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) AND content="articles" AND set1="all_ccc_articles" AND set2descriptor = "wp" ORDER BY set2, abs_value DESC;'
+query = 'SELECT set2, rel_value, abs_value FROM wcdo_intersections_accumulated WHERE period = "'+last_period+'" AND content="articles" AND set1="all_ccc_articles" AND set2descriptor = "wp" ORDER BY set2, abs_value DESC;'
 df_langs_sumofCCC_coverage = pd.read_sql_query(query, conn)
 
 
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-# COVERAGE FUNCTIONS
-def heatmapcoverage_values(lang_list,df_langs_map_coverage):
-    lang_list2 = []
-    for lg in lang_list:
-        lgcode = language_names[lg]
-        if lgcode in ccc_art_wp:
-            lang_list2.append(lgcode)
-    lang_list = sorted(lang_list2, reverse=False)
-
-    if lang_list != None:
-        df_langs_map_coverage2 = df_langs_map_coverage.loc[df_langs_map_coverage['set1'].isin(lang_list)]
-        df_langs_map_coverage2 = df_langs_map_coverage2.loc[df_langs_map_coverage2['set2'].isin(lang_list)]
-    else:
-        df_langs_map_coverage2 = df_langs_map_coverage
-
-    x = sorted(list(df_langs_map_coverage2.set1.unique()), reverse=False)
-#    x = sorted(lang_list)
-    y = sorted(x,reverse=True)
-    lang_list = x
-
-    for lang in x:
-        df_langs_map_coverage2 = df_langs_map_coverage2.append(pd.Series([lang,lang,'',''], index=df_langs_map_coverage2.columns ), ignore_index=True)
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.sort_values(by=['set2', 'set1'])
-    df_langs_map_coverage2 = df_langs_map_coverage2.reset_index(drop=True)
-    df_langs_map_coverage2 = df_langs_map_coverage2.set_index('set2')
-    df_langs_map_coverage2 = df_langs_map_coverage2.fillna(0)
-
-    z = list()
-    z_text = list()
-    z_text2 = list()
-    for langx in lang_list:
-        z_row = []
-        z_textrow = []
-        z_textrow2 = []
-        try:
-            df_langs_map_coverage3 = df_langs_map_coverage2.loc[langx]
-            df_langs_map_coverage3 = df_langs_map_coverage3.set_index('set1')
-        except:
-            pass
-
-        for langy in lang_list:
-            try:
-                rel_value = round(df_langs_map_coverage3.loc[langy].at['rel_value'],2)
-                abs_value = df_langs_map_coverage3.loc[langy].at['abs_value']
-            except:
-                if langx == langy:
-                    abs_value = ccc_art_wp[langx]
-                    rel_value = 100
-                else:
-                    abs_value = 0
-                    rel_value = 0
-
-            z_row.append(rel_value)
-            z_textrow.append(str(abs_value)+ ' articles')
-            z_textrow2.append(abs_value)
-
-        z.append(z_row)
-        z_text.append(z_textrow)
-        z_text2.append(z_textrow2)
-
-    z.reverse()
-    z_text.reverse()
-    z_text2.reverse()
-    return x, y, z, z_text, z_text2
-
-
-def treemapcoverage_values(source_lang, df_langs_map_coverage):
-
-    if source_lang == None: return
-
-    long_languagename = source_lang
-    source_lang = language_names[source_lang]
-
-    df_langs_map_coverage1 = df_langs_map_coverage.set_index('set2')
-    df_langs_map_coverage2 = df_langs_map_coverage1.loc[source_lang]
-
-    df_langs_map_coverage2['languagename'] = df_langs_map_coverage2['set1'].map(language_names_inv)
-    df_langs_map_coverage2['languagename_full'] = df_langs_map_coverage2['set1'].map(language_names_full)
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.append({'set1':source_lang, 'rel_value':round(ccc_percent_wp[source_lang],2), 'abs_value':ccc_art_wp[source_lang], 'languagename':long_languagename, 'languagename_full':languages.loc[source_lang]['languagename']}, ignore_index = True)
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.round(1)
-
-    df_langs_map_coverage2['self_rel_value'] = round(100*df_langs_map_coverage2.abs_value / wikipedialanguage_numberarticles[source_lang],2)
-#    print (df_langs_map_coverage2.tail(10))
-#    print (df_langs_map_coverage2.head(10))
-    return df_langs_map_coverage2
-
-
-def scatterplotccccoverage_values(source_lang, df_langs_map_coverage):
-
-    if source_lang == None: return
-
-    long_languagename = source_lang
-    source_lang = language_names[source_lang]
-
-    df_langs_map_coverage = df_langs_map_coverage.set_index('set2')
-    df_langs_map_coverage2 = df_langs_map_coverage.loc[source_lang]
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.set_index('set1')
-
-    df_langs_map_coverage2['Region']=languages.region
-    for x in df_langs_map_coverage2.index.values.tolist():
-        if ';' in df_langs_map_coverage2.loc[x]['Region']: df_langs_map_coverage2.at[x, 'Region'] = df_langs_map_coverage2.loc[x]['Region'].split(';')[0]
-
-    df_langs_map_coverage2['Subregion']=languages.subregion
-    for x in df_langs_map_coverage2.index.values.tolist():
-        if ';' in df_langs_map_coverage2.loc[x]['Subregion']: df_langs_map_coverage2.at[x, 'Subregion'] = df_langs_map_coverage2.loc[x]['Subregion'].split(';')[0]
-
-    df_langs_map_coverage2['Language']=languages.languagename
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.reset_index()
-
-    df_langs_map_coverage2['Language (Wiki)'] = df_langs_map_coverage2['set1'].map(language_names_inv)
-    df_langs_map_coverage2['Language'] = df_langs_map_coverage2['set1'].map(language_names_full)
-
-#    df_langs_map_coverage2 = df_langs_map_coverage2.append({'set1':source_lang, 'rel_value':round(ccc_percent_wp[source_lang],2), 'abs_value':ccc_art_wp[source_lang], 'Language':long_languagename}, ignore_index = True)
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.round(1)
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.rename(columns={"rel_value": "CCC Coverage Percentage", "abs_value": "Covered CCC Articles", "set1": "Wiki"})
-
-    df_langs_map_coverage2 = df_langs_map_coverage2.loc[(df_langs_map_coverage2['Region']!='')]
-
-#    print (df_langs_map_coverage2.head(10))
-    return df_langs_map_coverage2
-
-
-def scatterplotsum_values(df_langs_sumofCCC_coverage):
-
-    df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.set_index('set2')
-
-    df_langs_sumofCCC_coverage['Region']=languages.region
-    for x in df_langs_sumofCCC_coverage.index.values.tolist():
-        if ';' in df_langs_sumofCCC_coverage.loc[x]['Region']: df_langs_sumofCCC_coverage.at[x, 'Region'] = df_langs_sumofCCC_coverage.loc[x]['Region'].split(';')[0]
-
-    df_langs_sumofCCC_coverage['Subregion']=languages.subregion
-    for x in df_langs_sumofCCC_coverage.index.values.tolist():
-        if ';' in df_langs_sumofCCC_coverage.loc[x]['Subregion']: df_langs_sumofCCC_coverage.at[x, 'Subregion'] = df_langs_sumofCCC_coverage.loc[x]['Subregion'].split(';')[0]
-
-    df_langs_sumofCCC_coverage['Language']=languages.languagename
-
-    df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.reset_index()
-
-    df_langs_sumofCCC_coverage['Articles'] = df_langs_sumofCCC_coverage['set2'].map(wikipedialanguage_numberarticles)
-
-    columns_dict = {'set2':'Wiki','abs_value':'Sum of All Languages CCC Articles Covered','Articles':'Wikipedia Number of Articles', 'rel_value':'Percentage of Sum of All CCC Articles'}
-    df_langs_sumofCCC_coverage=df_langs_sumofCCC_coverage.rename(columns=columns_dict)
-
-    #df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.rename(columns={0: 'Wiki'})
-    df_langs_sumofCCC_coverage = df_langs_sumofCCC_coverage.fillna('')
-
-#    print(df_langs_sumofCCC_coverage[df_langs_sumofCCC_coverage['Region'] == ""])
-    return df_langs_sumofCCC_coverage
-
-
-#--------------------------------------------------------------------------------------------------
 
 
 
@@ -361,8 +371,6 @@ dash_app4.layout = html.Div([
             html.P('Show the selected language CCC extent in the graph'),
             style={'display': 'inline-block','width': '400px'}),
             html.Br(),
-
-#            html.Br(),
 
 
             html.Div(
@@ -580,10 +588,11 @@ dash_app4.layout = html.Div([
 ], className="container")
 
 
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-###############################################################################
 
-# CALLBACKS
+#### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
 # HEATMAP COVERAGE Dropdown 
 @dash_app4.callback(
     dash.dependencies.Output('sourcelangdropdown_coverageheatmap', 'value'),
@@ -670,11 +679,11 @@ def update_treemap_coverage(value,value2,exclude):
     fig = make_subplots(
         cols = 2, rows = 1,
         column_widths = [0.45, 0.45],
-        # subplot_titles = ('CCC Coverage % (Size)<br />&nbsp;<br />', 'CCC Extent % (Size)<br />&nbsp;<br />'),
+        subplot_titles = (value+' Wikipedia<br />&nbsp;<br />', value2+' Wikipedia<br />&nbsp;<br />'),
         specs = [[{'type': 'treemap', 'rowspan': 1}, {'type': 'treemap'}]]
     )
 
-#   Size and color: percentage Coverage
+
     fig.add_trace(go.Treemap(
         parents = parents,
         labels = df_langs_map_coverage2['languagename_full'],
@@ -688,7 +697,7 @@ def update_treemap_coverage(value,value2,exclude):
         ),
             row=1, col=1)
 
-#   Size and color: percentage Extent
+
     fig.add_trace(go.Treemap(
         parents = parents,
         labels = df_langs_map_coverage3['languagename_full'],
@@ -811,150 +820,10 @@ def update_graphs(rows, derived_virtual_selected_rows):
 
 
 
-#--------------------------------------------------------------------------------------------------
 
-# SPREAD DATA
-ccc_percent_wp = {}
-ccc_art_wp = {}
-query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1 = set2 AND set1descriptor="wp" AND set2descriptor = "ccc" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated);'
-for row in cursor.execute(query):
-    value = row[1]
-    value2 = row[2]
-    if value == None: value = 0
-    if value2 == None: value2 = 0
-    ccc_art_wp[row[0]]=value
-    ccc_percent_wp[row[0]]=value2
+# SPREAD APP
 
-
-# Not spread of each Wikipedia CCC.
-inlinkszero_spread = {}
-query = 'SELECT set1, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1=set2 AND set1descriptor="ccc" AND set2descriptor="zero_ill" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set1;'
-for row in cursor.execute(query):
-    inlinkszero_spread[row[0]]=round(row[1],2)
-
-spread_art = {}
-t_spread = {}
-query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1="all_wp_all_articles" AND set1descriptor="" AND set2descriptor="ccc" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set2;'
-for row in cursor.execute(query):
-    spread_art[row[0]]=row[1]
-    t_spread[row[0]]=round(row[2],1)
-
-
-r_spread = {}
-query = 'SELECT set2, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1="all_wp_avg" AND set1descriptor="" AND set2descriptor="ccc" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set2;'
-for row in cursor.execute(query):
-    r_spread[row[0]]=round(row[1],1)
-
-
-language_dict={}
-query = 'SELECT set2, set1, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set2descriptor="ccc" AND set1descriptor = "wp" AND period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) ORDER BY set2, abs_value DESC;'
-
-ranking = 5
-row_dict = {}
-i=1
-languagecode_spreading='aa'
-for row in cursor.execute(query):
-    cur_languagecode_spreading=row[0]
-    if row[0]==row[1]: continue
-    
-    if cur_languagecode_spreading!=languagecode_spreading: # time to save
-        row_dict['language']=languages.loc[languagecode_spreading]['languagename']
-
-        try:
-            row_dict['CCC articles']=ccc_art_wp[languagecode_spreading]
-        except:
-            row_dict['CCC articles']=0
-        try:
-            row_dict['relative_spread_index']=r_spread[languagecode_spreading]
-        except:
-            row_dict['relative_spread_index']=0
-        try:
-            row_dict['total_spread_index']=t_spread[languagecode_spreading]
-        except:
-            row_dict['total_spread_index']=0
-        try:
-            row_dict['spread_articles_sum']=spread_art[languagecode_spreading]
-        except:
-            row_dict['spread_articles_sum']=0
-
-        try:
-            row_dict['links_zero']=inlinkszero_spread[languagecode_spreading]
-        except:
-            row_dict['links_zero']=0
-
-
-        language_dict[languagecode_spreading]=row_dict
-        row_dict = {}
-        i = 1
-#            input('')
-
-    if i <= ranking:
-        languagecode_spread=row[1]
-        if languagecode_spread in languageswithoutterritory:
-            i-=1;
-        else:
-            rel_value=round(row[2],1)
-
-            languagecode_spread = languagecode_spread.replace('be_tarask','be_x_old')
-            languagecode_spread = languagecode_spread.replace('zh_min_nan','nan')
-            languagecode_spread = languagecode_spread.replace('zh_classical','lzh')
-            languagecode_spread = languagecode_spread.replace('_','-')
-            value = languagecode_spread + ' ('+str(rel_value)+'%)'
-            row_dict[str(i)]=value
-    #            print (cur_languagecode_spreading,languagecode_spread,i,value)
-
-    languagecode_spreading = cur_languagecode_spreading
-    i+=1
-
-
-column_list_dict = {'language':'Language', 'Wiki':'Wiki', 'CCC articles':'CCC art.','links_zero':'CCC% no IW','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','relative_spread_index':'R.Spread','total_spread_index':'T.Spread','spread_articles_sum':'Spread Art.'}
-
-columns_spread = ['Language', 'Wiki','CCC art.','CCC% no IW','nº1','nº2','nº3','nº4','nº5','R.Spread','T.Spread','Spread Art.','Region','Subregion','World Region']
-
-df_spread=pd.DataFrame.from_dict(language_dict,orient='index')
-
-df_spread['World Region']=languages.region
-for x in df_spread.index.values.tolist():
-    if ';' in df_spread.loc[x]['World Region']: df_spread.at[x, 'World Region'] = df_spread.loc[x]['World Region'].split(';')[0]
-
-df_spread['Region']=languages.region
-for x in df_spread.index.values.tolist():
-#    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].split(';')[0]
-    if ';' in df_spread.loc[x]['Region']: df_spread.at[x, 'Region'] = df_spread.loc[x]['Region'].replace(';',', ')
-
-df_spread['Subregion']=languages.subregion
-for x in df_spread.index.values.tolist():
-#    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].split(';')[0]
-    if ';' in df_spread.loc[x]['Subregion']: df_spread.at[x, 'Subregion'] = df_spread.loc[x]['Subregion'].replace(';',', ')
-
-df_spread=df_spread.rename(columns=column_list_dict)
-
-df_spread = df_spread.fillna('')
-df_spread = df_spread.sort_values('Language')
-
-df_spread['Wiki'] = df_spread.index
-
-df_spread['id'] = df_spread['Language']
-df_spread.set_index('id', inplace=True, drop=False)
-df_spread = df_spread[columns_spread] # selecting the parameters to export
-df_spread = df_spread.loc[(df_spread['World Region']!='')]
-
-
-# Spread of each Wikipedia language CCC (%) in all Wikipedia language editions
-# set1, set1descriptor, set2, set2descriptor
-query = 'SELECT set2, set1, rel_value, abs_value FROM wcdo_intersections_accumulated WHERE period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) AND content="articles" AND set1descriptor="wp" AND set2descriptor = "ccc" ORDER BY set2, abs_value DESC;'
-df_langs_map_spread = pd.read_sql_query(query, conn)
-
-# Spread of each Wikipedia language CCC in all Wikidata article qitems.
-query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) AND content="articles" AND set2descriptor="ccc" AND set1 = "wikidata_article_qitems" ORDER BY set2, abs_value DESC;'
-df_langs_wikidata_spread = pd.read_sql_query(query, conn)
-#print (df_langs_wikidata_spread.head(10))
-
-# Spread of each Wikipedia language CCC in all languages CCC articles.
-query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE period IN (SELECT MAX(period) FROM wcdo_intersections_accumulated) AND content="articles" AND set2descriptor="ccc" AND set1 = "all_ccc_articles" ORDER BY set2, abs_value DESC;'
-df_langs_all_ccc_spread = pd.read_sql_query(query, conn)
-#print (df_langs_all_ccc_spread.head(10))
-
+#### FUNCTIONS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
 # SPREAD FUNCTIONS
 def heatmapspread_values(lang_list,df_langs_map_spread):
@@ -1080,10 +949,155 @@ def barchartcccspread_values(source_lang, df_langs_map_coverage):
 
 
 
+#### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
+# CCC SPREAD DATA
+ccc_percent_wp = {}
+ccc_art_wp = {}
+query = 'SELECT set1, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1 = set2 AND set1descriptor="wp" AND set2descriptor = "ccc" AND period = "'+last_period+'";'
+for row in cursor.execute(query):
+    value = row[1]
+    value2 = row[2]
+    if value == None: value = 0
+    if value2 == None: value2 = 0
+    ccc_art_wp[row[0]]=value
+    ccc_percent_wp[row[0]]=value2
+
+
+# Not spread of each Wikipedia CCC.
+inlinkszero_spread = {}
+query = 'SELECT set1, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1=set2 AND set1descriptor="ccc" AND set2descriptor="zero_ill" AND period = "'+last_period+'" ORDER BY set1;'
+for row in cursor.execute(query):
+    inlinkszero_spread[row[0]]=round(row[1],2)
+
+spread_art = {}
+t_spread = {}
+query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1="all_wp_all_articles" AND set1descriptor="" AND set2descriptor = "ccc" AND period = "'+last_period+'" ORDER BY set2;'
+for row in cursor.execute(query):
+    spread_art[row[0]]=row[1]
+    t_spread[row[0]]=round(row[2],1)
+
+
+r_spread = {}
+query = 'SELECT set2, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set1="all_wp_avg" AND set1descriptor="" AND set2descriptor="ccc" AND period = "'+last_period+'" ORDER BY set2;'
+for row in cursor.execute(query):
+    r_spread[row[0]]=round(row[1],1)
+
+
+language_dict={}
+query = 'SELECT set2, set1, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND set2descriptor="ccc" AND set1descriptor = "wp" AND period = "'+last_period+'" ORDER BY set2, abs_value DESC;'
+
+ranking = 5
+row_dict = {}
+i=1
+languagecode_spreading='aa'
+for row in cursor.execute(query):
+    cur_languagecode_spreading=row[0]
+    if row[0]==row[1]: continue
+    
+    if cur_languagecode_spreading!=languagecode_spreading: # time to save
+        row_dict['language']=languages.loc[languagecode_spreading]['languagename']
+
+        try:
+            row_dict['CCC articles']=ccc_art_wp[languagecode_spreading]
+        except:
+            row_dict['CCC articles']=0
+        try:
+            row_dict['relative_spread_index']=r_spread[languagecode_spreading]
+        except:
+            row_dict['relative_spread_index']=0
+        try:
+            row_dict['total_spread_index']=t_spread[languagecode_spreading]
+        except:
+            row_dict['total_spread_index']=0
+        try:
+            row_dict['spread_articles_sum']=spread_art[languagecode_spreading]
+        except:
+            row_dict['spread_articles_sum']=0
+
+        try:
+            row_dict['links_zero']=inlinkszero_spread[languagecode_spreading]
+        except:
+            row_dict['links_zero']=0
+
+
+        language_dict[languagecode_spreading]=row_dict
+        row_dict = {}
+        i = 1
+#            input('')
+
+    if i <= ranking:
+        languagecode_spread=row[1]
+        if languagecode_spread in languageswithoutterritory:
+            i-=1;
+        else:
+            rel_value=round(row[2],1)
+
+            languagecode_spread = languagecode_spread.replace('be_tarask','be_x_old')
+            languagecode_spread = languagecode_spread.replace('zh_min_nan','nan')
+            languagecode_spread = languagecode_spread.replace('zh_classical','lzh')
+            languagecode_spread = languagecode_spread.replace('_','-')
+            value = languagecode_spread + ' ('+str(rel_value)+'%)'
+            row_dict[str(i)]=value
+    #            print (cur_languagecode_spreading,languagecode_spread,i,value)
+
+    languagecode_spreading = cur_languagecode_spreading
+    i+=1
+
+
+column_list_dict = {'language':'Language', 'Wiki':'Wiki', 'CCC articles':'CCC art.','links_zero':'CCC% no IW','1':'nº1','2':'nº2','3':'nº3','4':'nº4','5':'nº5','relative_spread_index':'R.Spread','total_spread_index':'T.Spread','spread_articles_sum':'Spread Art.'}
+
+columns_spread = ['Language', 'Wiki','CCC art.','CCC% no IW','nº1','nº2','nº3','nº4','nº5','R.Spread','T.Spread','Spread Art.','Region','Subregion','World Region']
+
+df_spread=pd.DataFrame.from_dict(language_dict,orient='index')
+
+df_spread['World Region']=languages.region
+for x in df_spread.index.values.tolist():
+    if ';' in df_spread.loc[x]['World Region']: df_spread.at[x, 'World Region'] = df_spread.loc[x]['World Region'].split(';')[0]
+
+df_spread['Region']=languages.region
+for x in df_spread.index.values.tolist():
+#    if ';' in df.loc[x]['Region']: df.at[x, 'Region'] = df.loc[x]['Region'].split(';')[0]
+    if ';' in df_spread.loc[x]['Region']: df_spread.at[x, 'Region'] = df_spread.loc[x]['Region'].replace(';',', ')
+
+df_spread['Subregion']=languages.subregion
+for x in df_spread.index.values.tolist():
+#    if ';' in df.loc[x]['Subregion']: df.at[x, 'Subregion'] = df.loc[x]['Subregion'].split(';')[0]
+    if ';' in df_spread.loc[x]['Subregion']: df_spread.at[x, 'Subregion'] = df_spread.loc[x]['Subregion'].replace(';',', ')
+
+df_spread=df_spread.rename(columns=column_list_dict)
+
+df_spread = df_spread.fillna('')
+df_spread = df_spread.sort_values('Language')
+
+df_spread['Wiki'] = df_spread.index
+
+df_spread['id'] = df_spread['Language']
+df_spread.set_index('id', inplace=True, drop=False)
+df_spread = df_spread[columns_spread] # selecting the parameters to export
+df_spread = df_spread.loc[(df_spread['World Region']!='')]
+
+
+# Spread of each Wikipedia language CCC (%) in all Wikipedia language editions
+# set1, set1descriptor, set2, set2descriptor
+query = 'SELECT set2, set1, rel_value, abs_value FROM wcdo_intersections_accumulated WHERE period = "'+last_period+'" AND content="articles" AND set1descriptor="wp" AND set2descriptor = "ccc" ORDER BY set2, abs_value DESC;'
+df_langs_map_spread = pd.read_sql_query(query, conn)
+
+# Spread of each Wikipedia language CCC in all Wikidata article qitems.
+query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE period = "'+last_period+'" AND content="articles" AND set2descriptor="ccc" AND set1 = "wikidata_article_qitems" ORDER BY set2, abs_value DESC;'
+df_langs_wikidata_spread = pd.read_sql_query(query, conn)
+#print (df_langs_wikidata_spread.head(10))
+
+# Spread of each Wikipedia language CCC in all languages CCC articles.
+query = 'SELECT set2, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE period = "'+last_period+'" AND content="articles" AND set2descriptor="ccc" AND set1 = "all_ccc_articles" ORDER BY set2, abs_value DESC;'
+df_langs_all_ccc_spread = pd.read_sql_query(query, conn)
+#print (df_langs_all_ccc_spread.head(10))
+
+
+
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app5 = Dash(__name__, server = app, url_base_pathname= webtype + '/ccc_spread/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
-
 
 
 # LAYOUT
@@ -1275,8 +1289,11 @@ dash_app5.layout = html.Div([
 ], className="container")
 
 
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-# CALLBACKS
+
+#### CALLBACKS ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
 # HEATMAP SPREAD Dropdown 
 @dash_app5.callback(
     dash.dependencies.Output('sourcelangdropdown_spreadheatmap', 'value'),
@@ -1366,18 +1383,6 @@ def update_treemap_coverage_allccc_allwp(none):
         ),
             row=1, col=1)
 
-#     fig.add_trace(go.Treemap(
-#         parents = parents,
-#         labels = df_langs_wikidata_spread2['languagename_full'],
-#         values = df_langs_wikidata_spread2['abs_value'],
-#         customdata = df_langs_wikidata_spread2['rel_value'],
-# #        text = df_langs_wikidata_spread2['rel_value'],
-# #        textinfo = "label+value+text",
-#         texttemplate = "<b>%{label} </b><br>%{customdata}%<br>%{value} Art.<br>",
-#         hovertemplate='<b>%{label} </b><br>Extent: %{customdata}%<br>Art.: %{value}<br><extra></extra>',
-#         marker_colorscale = 'Blues',
-#         ),
-#             row=1, col=2)
 
     fig.add_trace(go.Treemap(
         parents = parents,
@@ -1447,15 +1452,6 @@ def update_styles(selected_columns):
     [Input('datatable-cccspread', 'derived_virtual_data'),
      Input('datatable-cccspread', 'derived_virtual_selected_rows')])
 def update_graphs(rows, derived_virtual_selected_rows):
-    # When the table is first rendered, `derived_virtual_data` and
-    # `derived_virtual_selected_rows` will be `None`. This is due to an
-    # idiosyncracy in Dash (unsupplied properties are always None and Dash
-    # calls the dependent callbacks when the component is first rendered).
-    # So, if `rows` is `None`, then the component was just rendered
-    # and its value will be the same as the component's dataframe.
-    # Instead of setting `None` in here, you could also set
-    # `derived_virtual_data=df.to_rows('dict')` when you initialize
-    # the component.
     if derived_virtual_selected_rows is None:
         derived_virtual_selected_rows = []
 
@@ -1489,9 +1485,6 @@ def update_graphs(rows, derived_virtual_selected_rows):
                 },
             },
         )
-        # check if column exists - user may have deleted it
-        # If `column.deletable=False`, then you don't
-        # need to do this check.
         for column in ['Spread Art.','T.Spread', 'CCC% Without Interwiki Links'] if column in dff
     ]
 

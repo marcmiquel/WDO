@@ -4,12 +4,31 @@ sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
 
-conn2 = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cursor2 = conn2.cursor()
-# query = 'SELECT set2, set1, abs_value FROM wcdo_intersections WHERE set1descriptor ="all_top_ccc_articles" ORDER BY set2;' # spread
 
-query = 'SELECT set2, set1, abs_value FROM wcdo_intersections WHERE set1descriptor ="all_top_ccc_articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY set2;' # spread
+#### DATA
+
+conn = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cursor = conn.cursor()
+# countries Top CCC article lists totals
+query = 'SELECT set1, set1descriptor, abs_value FROM wcdo_intersections WHERE set1 LIKE "%(" ||  set2 || ")%" AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY set1;'
+df_countries = pd.read_sql_query(query, conn)
+df_countries = df_countries.set_index('set1')
+
+# languages Top CCC article lists totals
+query = 'SELECT set1, set1descriptor, abs_value FROM wcdo_intersections WHERE set1 = set2 AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY set1;'    
+df_langs = pd.read_sql_query(query, conn)
+df_langs = df_langs.set_index('set1')
+
+
+
+
+conn2 = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cursor2 = conn2.cursor()
+query = 'SELECT set2, set1, abs_value FROM wcdo_intersections WHERE set1descriptor ="all_top_ccc_articles" ORDER BY set2;' # spread
+
+# query = 'SELECT set2, set1, abs_value FROM wcdo_intersections WHERE set1descriptor ="all_top_ccc_articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY set2;' # spread
 df_cover = pd.read_sql_query(query, conn2)
 df_cover = df_cover.set_index('set2')
+
+
 
 
 
@@ -18,14 +37,12 @@ df_cover = df_cover.set_index('set2')
 dash_app8 = Dash(__name__, server = app, url_base_pathname= webtype + '/languages_top_ccc_articles_coverage/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 dash_app8.config['suppress_callback_exceptions']=True
 
-#dash_app8.config.supress_callback_exceptions = True
 
 dash_app8.title = 'Languages Top 100 CCC article lists coverage'+title_addenda
 dash_app8.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
 ])
-
 
 column_list_dict = {'languagename':'Language','Wiki':'Wiki','editors':'Editors', 'featured':'Featured', 'geolocated':'Geolocated', 'keywords':'Keywords', 'created_first_three_years':'First 3Y. A. Edits', 'created_last_year':'Last Y. A. Edits', 'women':'Women', 'men':'Men', 'pageviews':'Page views', 'discussions':'Talk Edits','edits':'Edits', 'edited_last_month':'Edited Last Month', 'images':'Images', 'wdproperty_many':'WD Properties', 'interwiki_many':'Interwiki', 'interwiki_editors':'Least Interwiki Most Editors', 'interwiki_wdproperty':'Least Interwiki Most WD Properties', 'wikirank':'Wikirank', 'earth':'Wiki Loves Earth', 'monuments_and_buildings':'Wiki Loves Monuments', 'sport_and_teams':'Wiki Loves Sports', 'glam':'Wiki Loves GLAM', 'folk':'Wiki Loves Folk', 'music_creations_and_organizations':'Wiki Loves Music', 'food':'Wiki Loves Food', 'paintings':'Wiki Loves Paintings', 'books':'Wiki Loves Books', 'clothing_and_fashion':'Wiki Loves Clothing and Fashion', 'industry':'Wiki Loves Industry','list_coverage_index':'Coverage Idx.','covered_list_articles_sum':'Covered Articles','list_spread_index':'List Spread Idx.','spread_list_articles_sum':'Spread Articles','World Subregion':'World Subregion'}
 
@@ -34,9 +51,6 @@ lists = ['editors', 'featured', 'geolocated', 'keywords', 'women', 'men', 'creat
 default_lists = ['pageviews', 'editors', 'discussions', 'created_first_three_years', 'created_last_year', 'geolocated', 'keywords', 'women', 'men']
 
 lists_dict = {'Editors':'editors', 'Featured':'featured', 'Geolocated':'geolocated', 'Keywords':'keywords', 'Women':'women', 'Men':'men', 'First 3Y. A. Edits':'created_first_three_years', 'Last Y. A. Edits':'created_last_year', 'Pageviews':'pageviews', 'Talk Edits':'discussions','Edits':'edits','edited_last_month':'Edited Last Month','Images':'images','WD Properties':'wdproperty_many','Interwiki':'interwiki_many','Least Interwiki Most Editors':'interwiki_editors','Least Interwiki Most WD Properties':'interwiki_wdproperty','Wikirank':'wikirank','Wiki Loves Earth':'earth','Wiki Loves Monuments':'monuments_and_buildings','Wiki Loves Sports':'sport_and_teams','Wiki Loves GLAM':'glam','Wiki Loves Folk':'folk','Wiki Loves Music':'music_creations_and_organizations','Wiki Loves Food':'food','Wiki Loves Paintings':'paintings','Wiki Loves Books':'books','Wiki Loves Clothing and Fashion':'clothing_and_fashion','Wiki Loves Industry':'industry'}
-
-
-
 
 # Languages Top CCC Coverage
 text_app8 = '''This page shows some statistics that explain how well a Wikipedia language edition covers the Top 100 of the [Top CCC articles lists](https://wcdo.wmflabs.org/top_ccc_articles/) from other Wikipedia language editions. Every cell of the table is a clickable link to a Top CCC list.
@@ -56,10 +70,8 @@ text2_app8 = '''
 '''
 
 
-
 def dash_app8_build_layout(params):
     functionstartTime = time.time()
-
 
     if len(params)!=0 and params['lang'].lower()!='none' and 'lists' in params:      
 
@@ -71,7 +83,6 @@ def dash_app8_build_layout(params):
 
         lists_p = params['lists']
         lists_p = lists_p.split(',')
-
 
     #    language_covering='ca'
         conn = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cursor = conn.cursor()
@@ -182,9 +193,7 @@ def dash_app8_build_layout(params):
             row_dict[remaining_list] = '0/0'
 
         language_dict[languagecode_covered]=row_dict
-
         # duration = 'data is ready'+' '+str(datetime.timedelta(seconds=time.time() - functionstartTime))
-
 
         df=pd.DataFrame.from_dict(language_dict,orient='index')
 
@@ -222,6 +231,9 @@ def dash_app8_build_layout(params):
         results_text = '''
                 The following table is useful to assess how well '''+language_cover+''' Wikipedia covers the Top 100 CCC articles from the lists generated from all the other language editions CCC. Languages are sorted in alphabetic order by their Wikicode, and columns present the number of articles from each list covered by English language. The last two columns, All Top CCC Lists **Coverage Idx.** and All Top CCC Lists **Covered Articles** present for each language, the average percentage of articles from the selected lists and the overall sum of articles from all the Top CCC lists covered by '''+language_cover+''' Wikipedia. When Covered Articles has 100 or more articles it will turn green. In some languages, it is not be possible to cover them because unfortunately the lists do not have enough articles.
                 '''
+                # The values of this table are *updated once per day* counting the new articles created.
+
+        
 
         layout = html.Div([
             navbar,
@@ -410,7 +422,6 @@ text2_app9 = '''
 
 def dash_app9_build_layout(params):
 
-
     if len(params)!=0 and params['lang'].lower()!='none' and 'lists' in params:      
 
         languagecode_covering=params['lang'].lower()
@@ -427,12 +438,6 @@ def dash_app9_build_layout(params):
 
         query = 'SELECT set1descriptor, set1, rel_value, abs_value FROM wcdo_intersections WHERE set2 = "'+languagecode_covering+'" AND set2descriptor = "wp" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) '
         query+= 'AND set1descriptor IN (%s) ORDER BY set1, set1descriptor DESC;' % page_asstring
-
-#        print (query)
-#        print (lists_p)
-
-        # list_dict = {'editors':'Editors', 'featured':'Featured', 'geolocated':'Geolocated', 'keywords':'Keywords', 'created_first_three_years':'First 3Y. A. Edits', 'created_last_year':'Last Y. A. Edits', 'women':'Women', 'men':'Men', 'pageviews':'Page views', 'discussions':'Talk Edits'}
-        # lists = ['editors', 'featured', 'geolocated', 'keywords', 'women', 'men', 'created_first_three_years', 'created_last_year', 'pageviews', 'discussions']
 
         list_top = lists.copy()
 
@@ -560,6 +565,7 @@ def dash_app9_build_layout(params):
                 The following table is useful to assess how well '''+language_cover+''' Wikipedia covers the Top 100 CCC articles from all the lists generated from the other language editions CCC down at country level. Languages CCC are sorted in alphabetic order with the country subselection between parenthesis - e.g. Italian CCC (Switzerland) row would be for Ticino, while Catalan CCC (Spain) row would be for Catalonia, Balearic Islands and Valencia. When a language is spoken in several countries there is one row per country and by hovering on it you can see the regions where it is spoken. If you detect any territory which you do not consider correct, please contact us as we may need to modify the Language-Territories Mapping table used to obtain the CCC for this particular language.
 
                 The rest of columns present the number of articles from each list covered by English language. The last two columns, All Top CCC Lists **Coverage Idx.** and All Top CCC Lists **Covered Articles** present for each language, the average percentage of articles from the selected lists and the overall sum of articles from all the Top CCC lists covered by '''+language_cover+''' Wikipedia. When Covered Articles has 100 or more articles it will turn green. In some languages, it is not be possible to cover them because unfortunately the lists do not have enough articles.'''
+                # The values of this table are *updated once per day* counting the new articles created.
 
 
         layout = html.Div([
@@ -707,8 +713,10 @@ def page_load(href):
     state = dash_apps.parse_state(href)
     return dash_app9_build_layout(state)
 
-
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+
+
+
 
 
 ### DASH APP ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
@@ -719,8 +727,14 @@ dash_app10.config['suppress_callback_exceptions']=True
 title = 'Top 100 CCC article lists spread across the Wikipedias'
 dash_app10.title = title+title_addenda
 
-conn2 = sqlite3.connect(databases_path + 'stats_production.db'); cursor2 = conn2.cursor()
-query = 'SELECT set1, set2, abs_value FROM wcdo_intersections_accumulated WHERE set1descriptor ="all_top_ccc_articles" AND period IN (SELECT max(period) FROM wcdo_intersections_accumulated) ORDER BY set1;' # spread
+conn2 = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cursor2 = conn2.cursor()
+query = 'SELECT set1, set2, abs_value FROM wcdo_intersections WHERE set1descriptor ="all_top_ccc_articles" ORDER BY set1;' # spread
+
+
+# conn2 = sqlite3.connect(databases_path + 'stats_production.db'); cursor2 = conn2.cursor()
+# query = 'SELECT set1, set2, abs_value FROM wcdo_intersections_accumulated WHERE set1descriptor ="all_top_ccc_articles" AND period IN (SELECT max(period) FROM wcdo_intersections_accumulated) ORDER BY set1;' # spread
+
+
 df_spread = pd.read_sql_query(query, conn2)
 df_spread = df_spread.set_index('set1')
 
@@ -740,6 +754,7 @@ text2_app10 = '''
 **The challenge is to reach 100 articles (Spread Articles) in each other Wikipedia language edition!**
 '''
 
+
 def dash_app10_build_layout(params):
 
     if len(params)!=0 and params['lang'].lower()!='none' and 'lists' in params:      
@@ -756,8 +771,12 @@ def dash_app10_build_layout(params):
         conn = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cursor = conn.cursor()
         query = 'SELECT set1descriptor, set2, rel_value, abs_value FROM wcdo_intersections WHERE set1="'+languagecode_spread+'" AND set2descriptor = "wp" AND set1descriptor != "all_top_ccc_articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY set2;'
 
-        lists_p = params['lists']
+        # SELECT set1descriptor, set2, rel_value, abs_value FROM wcdo_intersections WHERE set1="ca" AND set2descriptor = "wp" AND set1descriptor != "all_top_ccc_articles" AND measurement_date IN (SELECT MAX(measurement_date) FROM wcdo_intersections) ORDER BY set2;
 
+        # SELECT set1descriptor, set2, rel_value, abs_value FROM wcdo_intersections WHERE set1="ca" AND set2descriptor = "wp" AND set1descriptor != "all_top_ccc_articles" ORDER BY set2;
+
+
+        lists_p = params['lists']
         lists_p = lists_p.split(',')
 
         for x in range(0,len(lists_p)):
@@ -866,6 +885,7 @@ def dash_app10_build_layout(params):
         results_text = '''
                 The following table is useful in order to assess how known the Top 100 CCC articles from '''+language_spread+''' Wikipedia language are in the entire Wikipedia project. Languages are sorted in alphabetic order by their Wikicode, and columns present the number of articles from each list covered by the language. The last column **Spread Articles** the overall sum of articles from the Top 100 of each list spread across a specific language. The maximum Spread Articles can be 1000 (there are 100 in each of the 10 lists), although it may be lower since some lists have articles in common. When Spread Articles has 100 or more articles it will turn green.
                 '''
+                # The values of this table are *updated once per day* counting the new articles created.
 
         layout = html.Div([
             navbar,
@@ -927,17 +947,14 @@ def dash_app10_build_layout(params):
 
             html.Table(
                 # Header
-                [html.Tr([html.Th(col) for col in columns])] +
+                [html.Tr([html.Th(col) for col in df.columns])] +
 
                 # Body
                 [html.Tr([
-                    html.Td(
-                        row[col]
-                        ) for col in columns
-                ]) for i,row in sorted(country_dict.items())]
+                    html.Td(df.iloc[i][col]) for col in df.columns
+                ]) for i in range(len(df))]
             ),
             footbar,
-
             ], className="container")
 
 
@@ -1009,6 +1026,7 @@ def update_url_state(*values):
 
     state = urlencode(dict(zip(component_ids10, values)))
     return '?'+state
+
 
 # callback update page layout
 @dash_app10.callback(Output('page-content', 'children'),
