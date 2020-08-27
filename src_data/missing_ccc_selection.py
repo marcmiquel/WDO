@@ -1795,7 +1795,7 @@ if __name__ == '__main__':
             wikilanguagecodes.remove(a)
     print (wikilanguagecodes)
 
-    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
+    languageswithoutterritory=list(set(languages.index.tolist()) - set(list(territories.index.tolist())))
     # Only those with a geographical context
     for languagecode in languageswithoutterritory: wikilanguagecodes.remove(languagecode)
 

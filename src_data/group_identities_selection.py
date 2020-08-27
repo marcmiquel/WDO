@@ -49,11 +49,15 @@ import gc
 def main():
 
 
+    
 
-    create_group_identities_content_db()
+    input('')
 
-    obtain_group_identities()
+    create_group_identities_db()
+
     # agafar el CCC actual i obtenir group identities (sexual_identities, ethnic_group). posar-ho a diversity_groups i posar-ho directament a cada llengua amb l'estructura de la base de dades, on també tenim per cada llengua si és ccc, etc. que sigui ccc serà necessari per identificar 
+
+
 
     for languagecode in wikilanguagecodes:
         copy_group_identities_articles_groundtruth(languagecode)
@@ -74,8 +78,8 @@ def main():
 ################################################################
 
 
-def create_group_identities_content_db():
-    function_name = 'create_group_identities_content_db'
+def create_group_identities_db():
+    function_name = 'create_group_identities_db'
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + group_identities_db); cursor = conn.cursor()
@@ -95,13 +99,18 @@ def create_group_identities_content_db():
 
         'group_identity_name_en text, '+
         'group_identity_name_lang text, '+
+
+        'group_identity_qitem text, '+
+
+
+        'gender text, '+
         'sexual_group text, '+
         'ethnic_group text, '+
         'supra_ethnic_group text, '+
 
         # relevance features
 
-        'PRIMARY KEY (qitem,page_id,languagecode));')
+        'PRIMARY KEY (qitem,page_id));')
 
         try:
             cursor.execute(query)
@@ -115,21 +124,12 @@ def create_group_identities_content_db():
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
-def obtain_group_identities(): # això és candidat a que vagi a wikipedia_diversity.py
-    function_name = 'obtain_group_identities '+languagecode
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
-
-    # posar a una taula de grups de diversity_groups.db
-    # posar dades a les taules de cada llengua de group_identities.db
-
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-
 
 def copy_group_identities_articles_groundtruth(languagecode):
     function_name = 'label_group_identities_groundtruth '+languagecode
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
+    # posar dades a les taules de cada llengua de group_identities.db a partir de wikipedia_diversity.db
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -169,7 +169,6 @@ def label_potential_group_identities_with_links(group_identity):
 
     # no matter it is female, male, lgtb, romani people, etc.
     dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-pagelinks.sql.gz'
-#    dumps_path = 'gnwiki-20190720-pagelinks.sql.gz' # read_dump = '/public/dumps/public/wikidatawiki/latest-all.json.gz'
     dump_in = gzip.open(dumps_path, 'r')
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -351,33 +350,6 @@ def classifier_group_identities(languagecode):
 
 
 
-################################################################
-
-### SAFETY FUNCTIONS ###
-
-def main_with_email():
-    try:
-        main()
-    except:
-    	wikilanguages_utils.send_email_toolaccount('GROUP IDENTITIES CONTENT SELECTION: '+ cycle_year_month, 'ERROR.')
-
-def main_loop_retry():
-    page = ''
-    while page == '':
-        try:
-            main()        #          main()
-            page = 'done.'
-        except:
-            print('There was an error in the main. \n')
-            path = '/srv/wcdo/src_data/ccc_selection.err'
-            file = open(path,'r')
-            lines = file.read()
-            wikilanguages_utils.send_email_toolaccount('GROUP IDENTITIES CONTENT SELECTION: '+ cycle_year_month, 'ERROR.' + lines); print("Now let's try it again...")
-            continue
-
-
-
-
 
 #######################################################################################
 
@@ -410,17 +382,11 @@ if __name__ == '__main__':
     sys.stderr = Logger_err()
 
     cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
-#    check_time_for_script_run(script_name, cycle_year_month)
     startTime = time.time()
 
-   
+
     territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
     languages = wikilanguages_utils.load_wiki_projects_information();
-    pairs = wikilanguages_utils.load_language_pairs_territory_status()
-
-
-    # Verify there is a new language
-    wikilanguages_utils.extract_check_new_wiki_projects();
 
     wikilanguagecodes = sorted(languages.index.tolist())
     print ('checking languages Replicas databases and deleting those without one...')
@@ -428,10 +394,9 @@ if __name__ == '__main__':
     for a in wikilanguagecodes:
         if wikilanguages_utils.establish_mysql_connection_read(a)==None:
             wikilanguagecodes.remove(a)
-    print (wikilanguagecodes)
 
-    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
     # Only those with a geographical context
+    languageswithoutterritory=list(set(languages.index.tolist()) - set(list(territories.index.tolist())))
     for languagecode in languageswithoutterritory: wikilanguagecodes.remove(languagecode)
 
     # Get the number of Articles for each Wikipedia language edition
@@ -439,10 +404,9 @@ if __name__ == '__main__':
     wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=False)]
 
 
-    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+
+    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit();
     main()
-#    main_with_exception_email()
-#    main_loop_retry()
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 

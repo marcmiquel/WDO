@@ -7,13 +7,12 @@ from dash_apps import *
 ### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 
 conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor() 
-conn2 = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cursor2 = conn2.cursor() 
 
-gender = {'Q6581097':'male','Q6581072':'female', 'Q1052281':'transgender female','Q1097630':'intersex','Q1399232':"fa'afafine",'Q17148251':'travesti','Q19798648':'unknown value','Q207959':'androgyny','Q215627':'person','Q2449503':'transgender male','Q27679684':'transfeminine','Q27679766':'transmasculine','Q301702':'two-Spirit','Q303479':'hermaphrodite','Q3177577':'muxe','Q3277905':'māhū','Q430117':'Transgene','Q43445':'female non-human organism'}
+gender_dict = {'Q6581097':'male','Q6581072':'female', 'Q1052281':'transgender female','Q1097630':'intersex','Q1399232':"fa'afafine",'Q17148251':'travesti','Q19798648':'unknown value','Q207959':'androgyny','Q215627':'person','Q2449503':'transgender male','Q27679684':'transfeminine','Q27679766':'transmasculine','Q301702':'two-Spirit','Q303479':'hermaphrodite','Q3177577':'muxe','Q3277905':'māhū','Q430117':'Transgene','Q43445':'female non-human organism'}
 lang_groups.insert(3, 'All languages')
 
 # articles gender
-query = 'SELECT set1, set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE content = "articles" AND set1descriptor = "wp" AND set2descriptor IN ("male","female") AND set2 = "wikidata_article_qitems" AND period = "'+last_period+'" ORDER BY set1, rel_value DESC;'
+query = 'SELECT set1, set2descriptor, abs_value, rel_value FROM wdo_intersections_accumulated WHERE content = "articles" AND set1descriptor = "wp" AND set2descriptor IN ("male","female") AND set2 = "wikidata_article_qitems" AND period = "'+last_period+'" ORDER BY set1, rel_value DESC;'
 df_gender_articles = pd.read_sql_query(query, conn)
 df_gender_articles = df_gender_articles.rename(columns={'set1':'Wiki', 'set2descriptor':'Gender', 'abs_value':'Articles', 'rel_value':'Extent Articles (%)'})
 df_gender_articles = df_gender_articles.fillna(0).round(1)
@@ -32,7 +31,7 @@ for x in df_gender_articles_male.index.values.tolist():
     try:
         male = df_gender_articles_male.loc[x]['Articles']
     except:
-        male = 0    
+        male = 0  
     try:
         female = df_gender_articles_female.loc[x]['Articles']
     except:
@@ -58,13 +57,9 @@ dash_app12.layout = html.Div([
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows stastistics and graphs that illustrate the gender gap in Wikipedia language editions content. For a detailed analysis on the evolution of gender gap over time or the pageviews women articles receive, you can check [Diversity Over Time](http://wcdo.wmflabs.org/diversity_over_time) and [Last Month Pageviews](https://wcdo.wmflabs.org/last_month_pageviews/).
-
-        * What is the gender gap in specific groups of Wikipedia language editions?
         '''),
 
-    html.Hr(),
-
-    html.H5('Gender Gap in Wikipedia Language Editions Barchart'),
+    # html.H5('Gender Gap in Wikipedia Language Editions'),
 
     dcc.Markdown('''* **What is the gender gap in specific groups of Wikipedia language editions?**'''.replace('  ', '')),
 

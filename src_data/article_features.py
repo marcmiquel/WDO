@@ -45,14 +45,7 @@ import xml.etree.ElementTree as etree
 
 # MAIN
 def main():
-
-
-    for languagecode in ['ca']: 
-        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        extend_articles_history_features(languagecode, page_titles_qitems, page_titles_page_ids)
-
-    return
-
+  
     extend_articles_pageviews()
     extend_articles_images()
     extend_articles_wikirank()
@@ -623,25 +616,33 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
 
     functionstartTime = time.time()
     function_name = 'extend_articles_history_features '+languagecode
-#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+   if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     page_ids_qitems = {page_titles_page_ids[k]: v for k, v in page_titles_qitems.items()}
 
-    last_month_date = datetime.date.today() - relativedelta.relativedelta(months=1)
-    first_day = int(last_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S'))
-    last_day = int(last_month_date.replace(day = calendar.monthrange(last_month_date.year, last_month_date.month)[1]).strftime('%Y%m%d%H%M%S'))
+    # last_month_date = datetime.date.today() - relativedelta.relativedelta(months=1)
+    last_month_date = datetime.datetime.strptime(cycle_year_month,'%Y-%m')
+    next_month_date = datetime.datetime.strptime(cycle_year_month,'%Y-%m') + relativedelta.relativedelta(months=1)
 
-    conn2 = sqlite3.connect(databases_path + 'editors_pages.db'); cursor2 = conn2.cursor()
+    first_day = int(last_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S'))
+    last_day = int(next_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S'))
+
+    # last_day = int(last_month_date.replace(day = calendar.monthrange(last_month_date.year, last_month_date.month)[1]).strftime('%Y%m%d%H%M%S'))
+    print (first_day, last_day)
+
     try:
         os.remove(databases_path+'editors_pages.db')
     except:
         pass
 
+    conn2 = sqlite3.connect(databases_path + 'editors_pages.db'); cursor2 = conn2.cursor()
     try:
         query = 'CREATE TABLE editors (page_id integer, editor integer, PRIMARY KEY (page_id, editor));'
         cursor2.execute(query)
         conn2.commit()
+        print ('editors table created.')
     except:
+        print ('editors table could not be created.')
         pass
 
     article_completed = {}
@@ -665,6 +666,7 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
 
     d_paths = []
 
+    print (languagecode)
     cym = cycle_year_month
     print ('/public/dumps/public/other/mediawiki_history/'+cym)
     if os.path.isdir('/public/dumps/public/other/mediawiki_history/'+cym)==False:
@@ -672,7 +674,7 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
         cym = cym.strftime('%Y-%m')
         print ('/public/dumps/public/other/mediawiki_history/'+cym)
 
-    dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.all-time.tsv.bz2'
+    dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+cym+'.'+languagecode+'wiki/'+languagecode+'wiki.all-time.tsv.bz2'
     if os.path.isfile(dumps_path):
         print ('one all-time file.')
         d_paths.append(dumps_path)
@@ -680,7 +682,7 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
     else:
         print ('multiple files.')
         for year in range (2025, 1999, -1):
-            dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'.tsv.bz2'
+            dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+cym+'.'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'.tsv.bz2'
             if os.path.isfile(dumps_path): 
                 d_paths.append(dumps_path)
 
@@ -688,9 +690,9 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
             for year in range(2025, 1999, -1): # months
                 for month in range(13, 0, -1):
                     if month > 9:
-                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-'+str(month)+'.tsv.bz2'
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+cym+'.'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-'+str(month)+'.tsv.bz2'
                     else:
-                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-0'+str(month)+'.tsv.bz2'
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+cym+'.'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-0'+str(month)+'.tsv.bz2'
 
                     if os.path.isfile(dumps_path) == True:
                         d_paths.append(dumps_path)
@@ -700,9 +702,9 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
     print ('Total number of articles: '+str(len(num_edits)))
 
     if (len(d_paths)==0):
-        print ('dump error at script '+script_name)
-        send_email_toolaccount('dump error at script '+script_name, dumps_path)
-        quit()
+        print ('dump error at script '+script_name+'. this language has no mediawiki_history dump: '+languagecode)
+        # wikilanguages_utils.send_email_toolaccount('dump error at script '+script_name, dumps_path)
+        # quit()
 
     for dump_path in d_paths:
 
@@ -729,6 +731,8 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
             # page_title_historical = values[24]
             page_id = values[23]
             page_title = values[25]
+
+
             if page_title not in first_edit_timestamp: continue
 
             try:
@@ -737,6 +741,9 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
                 continue
 
             edit_count = values[34]
+            if edit_count == 'null': edit_count = 1
+            else: edit_count = int(edit_count)
+
             # seconds_last_edit = values[35]
 
             last_timestamp = values[3]
@@ -744,9 +751,11 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
             else: last_timestamp = 0
 
             if page_namespace == 0:
-                if last_edit_timestamp[page_title] < last_timestamp:
+                if last_edit_timestamp[page_title] <= last_timestamp:
                     last_edit_timestamp[page_title] = last_timestamp
-                    num_edits[page_title]=edit_count
+
+                    if edit_count > num_edits[page_title]: num_edits[page_title] = edit_count
+                    # num_edits[page_title]=edit_count
 
                 first_timestamp = values[33]
                 if first_timestamp != 'null': first_timestamp = int(datetime.datetime.strptime(first_timestamp[:len(first_timestamp)-2],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S'))
@@ -785,6 +794,8 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
 
         for page_title in article_completed.keys():
 
+            if num_edits_last_month[page_title] > num_edits[page_title]: num_edits[page_title] = num_edits_last_month[page_title]
+
             try:
                 parameters.append((num_edits[page_title], num_discussions[page_title], num_edits_last_month[page_title], first_edit_timestamp[page_title], last_edit_timestamp[page_title], last_discussion_timestamp[page_title], page_titles_page_ids[page_title], page_titles_qitems[page_title], page_title))
 
@@ -798,6 +809,7 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
 
             except:
                 pass
+
         article_completed = {}
 
         conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -807,9 +819,10 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
         print ('Articles introduced: '+str(len(parameters))+'. Articles left for next files or not in the database: '+str(len(num_edits))+'.')
         print ('This file took: '+str(datetime.timedelta(seconds=time.time() - iterTime)))
         parameters = []
+        conn.commit()
 
-    parameters = []
-    
+
+    parameters = []   
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + 'editors_pages.db'); cursor2 = conn2.cursor()
     query = 'SELECT count(*), page_id FROM editors GROUP BY page_id ORDER BY page_id;'
@@ -827,13 +840,13 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
 
     print(languagecode+' history parsed and stored')
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-#    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
 def extend_articles_first_timestamp_lang():
     function_name = 'extend_articles_first_timestamp_lang'
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
     functionstartTime = time.time()
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -876,7 +889,7 @@ def extend_articles_first_timestamp_lang():
         conn.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+#    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -955,19 +968,17 @@ if __name__ == '__main__':
     wikilanguagecodeswiki = []
     for a in wikilanguagecodes: wikilanguagecodeswiki.append(a+'wiki')
 
-    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
-
     # Get the number of Articles for each Wikipedia language edition
     wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')   
     wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=False)]
     biggest = wikilanguagecodes_by_size[20:]; smallest = wikilanguagecodes_by_size[:50]
 
 
-#    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
     duration = str(datetime.timedelta(seconds=time.time() - startTime))
-#    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
+    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
     wikilanguages_utils.finish_email(startTime,'article_features.out', 'WIKIPEDIA DIVERSITY ARTICLE features')

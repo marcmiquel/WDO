@@ -20,10 +20,10 @@ home_app.layout = html.Div([
     html.Br(),
     html.Br(),
     html.Br(),
-    html.H2(html.B('Wikipedia Cultural Diversity Observatory'), style={'textAlign':'center', 'font-weight':'bold'}),
+    html.H2(html.B('Wikipedia Diversity Observatory'), style={'textAlign':'center', 'font-weight':'bold'}),
     html.Div(
     dcc.Markdown('''
-    Providing data, visualizations and tools to work towards more cultural diversity within Wikipedia language editions.'''.replace('  ', '')), style={'textAlign':'center'},),
+    Providing data, visualizations and tools to work towards more diversity within Wikipedia language editions.'''.replace('  ', '')), style={'textAlign':'center'},),
     html.Br(),
     html.Br(),
     html.Br(),

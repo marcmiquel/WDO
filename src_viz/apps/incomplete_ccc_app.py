@@ -23,18 +23,187 @@ columns_dict = {'position':'Nº','languagecode':'Lang.','num_editors':'Editors',
 
 features_dict_inv = {'num_editors':'Editors', 'num_edits':'Edits', 'num_images':'Images', 'wikirank':'Wikirank', 'num_pageviews':'Pageviews', 'num_inlinks':'Inlinks', 'num_references':'References','num_bytes':'Bytes','num_outlinks':'Outlinks','num_interwiki':'Interwiki','num_wdproperty':'Wikidata Properties','num_discussions':'Discussions','date_created':'Creation Date','num_inlinks_from_CCC':'Inlinks from CCC','featured_article':'Featured Article'}
 
+lists_dict = {'Editors':'editors','Featured':'featured','Geolocated':'geolocated','Keywords':'keywords','Women':'women','Men':'men','Created First Three Years':'created_first_three_years','Created Last Year':'created_last_year','Pageviews':'pageviews','Discussions':'discussions','Edits':'edits', 'Edited Last Month':'edited_last_month', 'Images':'images', 'WD Properties':'wdproperty_many', 'Interwiki':'interwiki_many', 'Least Interwiki Most Editors':'interwiki_editors', 'Least Interwiki Most WD Properties':'interwiki_wdproperty', 'Wikirank':'wikirank', 'Wiki Loves Earth':'earth', 'Wiki Loves Monuments':'monuments_and_buildings', 'Wiki Loves Sports':'sport_and_teams', 'Wiki Loves GLAM':'glam', 'Wiki Loves Folk':'folk', 'Wiki Loves Music':'music_creations_and_organizations', 'Wiki Loves Food':'food', 'Wiki Loves Paintings':'paintings', 'Wiki Loves Books':'books', 'Wiki Loves Clothing and Fashion':'clothing_and_fashion', 'Wiki Loves Industry':'industry', 'Wiki Loves Religion':'religion', 'Religious Group':'religious_group','LGTB+':'sexual_orientation','Ethnic Group':'ethnic_group'}
+
+
+
 
 columns_dict.update(features_dict_inv)
 
 language_names_2 = language_names.copy()
 language_names_3 = language_names.copy()
 
-text_base = '''In this page you can check whether the articles of a language edition you introduce manually or a Top CCC list is more complete in other language editions. In other words, you can compare each article stats (number of Bytes, number of references, number of images, number of outlinks, among others) in other languages, and then, decide whether to expand these articles or not. You can also compare engagement characteristics (e.g. number of editors, number of edits or number of pageviews) or the 'featured article' distinction.
-
-    You need to select the *source language* for each of the two options (**Option A: Select a Top CCC List** or **Option B: Paste a list of articles' titles**). For the Option A: You need to choose a *source language* from which you want to retrieve articles. The *source country* is used to filter some part of the language context, in case it encompasses more than one country (i.e. English is used in several countries besides the United Kingdom, you can choose among them). In case no country is selected, the default is 'all'. Then, you can choose among the following *lists*. In case no list is selected, the default list is 'editors'. If you have any idea for a new list, please, ask: tools.wcdo@tools.wmflabs.org. For the Option B: you need to choose a *source language* and paste the list of articles (titles or full URL) separated by a comma, semicolon or a line feed.
-
-    Then you can select whether you want to see only articles from other languages that are more complete in specific features (*show only feature*) - leaving it empty allows you to see all those more complete in any feature - or articles from a specific language (*show only language*). Finally you can also sort the results by a specific feature (*order articles by*) or limit the number of articles (*limit the number of articles* is 300 by default).
+text_base = '''In this page you can check whether the articles of a language edition you introduce manually or a Top CCC list is more complete in other language editions. In other words, you can compare each article stats (number of Bytes, number of references, number of images, number of outlinks, among others) in other languages, and then, decide whether to expand these articles or not. 
 '''
+
+
+
+option_A = html.Div([
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                "Option A",
+                id="tooltip-target-optionA",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+            ": Select a Top CCC List",
+        ], style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}
+    ),
+    dbc.Tooltip(
+        html.P(
+            "For the Option A: You need to choose a *source language* from which you want to retrieve articles. The *source country* is used to filter some part of the language context, in case it encompasses more than one country (i.e. English is used in several countries besides the United Kingdom, you can choose among them). In case no country is selected, the default is 'all'. Then, you can choose among the following *lists*. In case no list is selected, the default list is 'editors'.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-optionA",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '400px'},
+    )
+    ])
+
+option_B = html.Div([
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                "Option B",
+                id="tooltip-target-optionB",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+            ": Paste a list of articles' titles",
+        ], style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}
+    ),
+    dbc.Tooltip(
+        html.P(
+            "For the Option B: you need to choose a *source language* and paste the list of articles (titles or full URL) separated by a comma, semicolon or a line feed.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-optionB",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '400px'},
+    )
+    ])
+
+
+
+
+interface_row3 = html.Div([
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Show only ",
+            html.Span(
+                "feature",
+                id="tooltip-target-shfeat",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Filter the results and show only those limited to a list of features.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-shfeat",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Show only ",
+            html.Span(
+                "language",
+                id="tooltip-target-lang",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Filter the results and show only those limited to a specific Wikipedia language edition.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-lang",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    ])
+
+
+
+interface_row4 = html.Div([
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Order articles ",
+            html.Span(
+                "by",
+                id="tooltip-target-feat",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a feature to sort the results.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-feat",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Limit the ",
+            html.Span(
+                "number of articles",
+                id="tooltip-target-limit",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Choose a number of results (by default 100)",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-limit",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    ])
 
 
 
@@ -372,12 +541,7 @@ def dash_app25_build_layout(params):
 
                 html.H5('Source of content'),
 
-                html.Div(
-                html.P('Option A: Select a Top CCC List'),
-                style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-
-                html.Br(),
+                option_A,
 
                 html.Div(
                 html.P('Source language'),
@@ -426,11 +590,7 @@ def dash_app25_build_layout(params):
                 html.Br(),
                 html.Br(),
 
-                html.Div(
-                html.P("Option B: Paste a list of articles' titles"),
-                style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-                html.Br(),
+                option_B,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -454,18 +614,7 @@ def dash_app25_build_layout(params):
 
                 html.H5('Filter the results'),
 
-
-                html.Div(
-                html.P('Show only feature'),
-                style={'display': 'inline-block','width': '200px'}),
-
-
-                html.Div(
-                html.P('Show only language'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
-
+                interface_row3,
 
 
                 html.Div(
@@ -474,9 +623,9 @@ def dash_app25_build_layout(params):
                     options=[{'label': i, 'value': features_dict_lv[i]} for i in sorted(features_dict_lv)],
                     value='none',
                     multi=True,
-                    placeholder="Show only articles more complete in these features...",           
+                    placeholder="Show only articles more complete in these features",           
                     style={'width': '390pxpx'}
-                 ), style={'display': 'inline-block','width': '400px'}),
+                 ), style={'display': 'inline-block','width': '390px'}),
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -489,15 +638,7 @@ def dash_app25_build_layout(params):
 
                 html.Br(),
 
-                html.Div(
-                html.P('Order articles by'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Limit the number of articles'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
+                interface_row4,
 
 
                 html.Div(
@@ -567,14 +708,9 @@ def dash_app25_build_layout(params):
     #        html.Br(),
 
             # HERE GOES THE INTERFACE
-               html.H5('Source of content'),
+                html.H5('Source of content'),
 
-                html.Div(
-                html.P('Option A: Select a Top CCC List'),
-                style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-
-                html.Br(),
+                option_A,
 
                 html.Div(
                 html.P('Source language'),
@@ -623,11 +759,7 @@ def dash_app25_build_layout(params):
                 html.Br(),
                 html.Br(),
 
-                html.Div(
-                html.P("Option B: Paste a list of articles' titles"),
-                style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-                html.Br(),
+                option_B,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -651,16 +783,7 @@ def dash_app25_build_layout(params):
 
                 html.H5('Filter the results'),
 
-                html.Div(
-                html.P('Show only feature'),
-                style={'display': 'inline-block','width': '400px'}),
-
-                html.Div(
-                html.P('Show only language'),
-                style={'display': 'inline-block','width': '200px'}),
-                html.Br(),
-
-
+                interface_row3,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -668,9 +791,9 @@ def dash_app25_build_layout(params):
                     options=[{'label': i, 'value': features_dict_lv[i]} for i in sorted(features_dict_lv)],
                     value='none',
                     multi=True,
-                    placeholder="Show only articles more complete in these features...",           
+                    placeholder="Show only articles more complete in these features",           
                     style={'width': '390pxpx'}
-                 ), style={'display': 'inline-block','width': '400px'}),
+                 ), style={'display': 'inline-block','width': '390px'}),
 
 
                 html.Div(
@@ -683,15 +806,8 @@ def dash_app25_build_layout(params):
                  ), style={'display': 'inline-block','width': '200px'}),
 
                 html.Br(),
-                html.Div(
-                html.P('Order articles by'),
-                style={'display': 'inline-block','width': '200px'}),
 
-                html.Div(
-                html.P('Limit the number of articles'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
+                interface_row4,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -744,12 +860,7 @@ def dash_app25_build_layout(params):
 
             html.H5('Source of content'),
 
-            html.Div(
-            html.P('Option A: Select a Top CCC List'),
-            style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-
-            html.Br(),
+            option_A,
 
             html.Div(
             html.P('Source language'),
@@ -798,11 +909,7 @@ def dash_app25_build_layout(params):
             html.Br(),
             html.Br(),
 
-            html.Div(
-            html.P("Option B: Paste a list of articles' titles"),
-            style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-            html.Br(),
+            option_B,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -826,15 +933,7 @@ def dash_app25_build_layout(params):
 
             html.H5('Filter the results'),
 
-            html.Div(
-            html.P('Show only feature'),
-            style={'display': 'inline-block','width': '400px'}),
-
-            html.Div(
-            html.P('Show only language'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
+            interface_row3,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -842,9 +941,9 @@ def dash_app25_build_layout(params):
                 options=[{'label': i, 'value': features_dict_lv[i]} for i in sorted(features_dict_lv)],
                 value='none',
                 multi=True,
-                placeholder="Show only articles more complete in these features...",           
+                placeholder="Show only articles more complete in these features",           
                 style={'width': '390pxpx'}
-             ), style={'display': 'inline-block','width': '400px'}),
+             ), style={'display': 'inline-block','width': '390px'}),
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -858,15 +957,9 @@ def dash_app25_build_layout(params):
 
             html.Br(),
 
-            html.Div(
-            html.P('Order articles by'),
-            style={'display': 'inline-block','width': '200px'}),
+            interface_row4,           
 
-            html.Div(
-            html.P('Limit the number of articles'),
-            style={'display': 'inline-block','width': '200px'}),
 
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='order_by',

@@ -43,7 +43,6 @@ import gc
 # MAIN
 def main():
 
-
     execution_block_potential_ccc_features()
     execution_block_classifying_ccc()
 
@@ -388,23 +387,67 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         other_content_selection_page_id[row[0]]=row[1]
         other_content_selection_page_title[row[1]]=row[0]
 
+
+    female_page_title = {}
+    female_page_id = {}
+    query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE gender = "Q6581072";'
+    for row in cursor.execute(query):
+        female_page_id[row[0]]=row[1]
+        female_page_title[row[1]]=row[0]
+
+
+    male_page_title = {}
+    male_page_id = {}
+    query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE gender = "Q6581097";'
+    for row in cursor.execute(query):
+        male_page_id[row[0]]=row[1]
+        male_page_title[row[1]]=row[0]
+
+
+    lgbt_page_title = {}
+    lgbt_page_id = {}
+    query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE sexual_orientation != "Q1035954";'
+    for row in cursor.execute(query):
+        lgbt_page_id[row[0]]=row[1]
+        lgbt_page_title[row[1]]=row[0]
+
+
 #    print (len(page_titles_page_ids),len(content_selection_page_id),len(other_content_selection_page_id))
     num_of_outlinks = {}
+    num_of_inlinks = {}
+
     num_outlinks_ccc = {}
     num_outlinks_other_ccc = {}
+    num_outlinks_women = {}
+    num_outlinks_men = {}
+    num_outlinks_lgbt = {}
 
-    num_of_inlinks = {}
     num_inlinks_ccc = {}
     num_inlinks_other_ccc = {}
+    num_inlinks_women = {}
+    num_inlinks_men = {}
+    num_inlinks_lgbt = {}
+
 
     for page_id in page_titles_page_ids.values():
         num_of_outlinks[page_id]=0
+        num_of_inlinks[page_id]=0
+
         num_outlinks_ccc[page_id]=0
         num_outlinks_other_ccc[page_id]=0
 
-        num_of_inlinks[page_id]=0
         num_inlinks_ccc[page_id]=0
         num_inlinks_other_ccc[page_id]=0
+
+        num_inlinks_women[page_id]=0
+        num_outlinks_women[page_id]=0
+
+        num_inlinks_men[page_id]=0
+        num_outlinks_men[page_id]=0
+
+        num_inlinks_lgbt[page_id]=0
+        num_outlinks_lgbt[page_id]=0
+
 
     print ('Iterating the dump.')
     while True:
@@ -441,6 +484,9 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
 
                 if pl_from_namespace != '0' or pl_namespace != '0': continue
 
+                ########
+                # OUTLINKS
+
                 try:
                     num_of_outlinks[pl_from]= num_of_outlinks[pl_from] + 1
 #                    print('num_outlinks')
@@ -451,8 +497,6 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                 try:
                     ccc=content_selection_page_id[pl_title_page_id]
                     num_outlinks_ccc[pl_from] = num_outlinks_ccc[pl_from] + 1
-                    
-
 #                    print (num_outlinks_ccc[pl_from])
                 except:
                     pass
@@ -465,20 +509,40 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                 except:
                     pass
 
+                ########
+
+                try:
+                    female=female_page_id[pl_title_page_id]
+                    num_outlinks_women[pl_from] = num_outlinks_women[pl_from] + 1
+                except:
+                    pass
+
+                try:
+                    male=male_page_id[pl_title_page_id]
+                    num_outlinks_men[pl_from] = num_outlinks_men[pl_from] + 1
+                except:
+                    pass
+
+                try:
+                    lgbt=lgbt_page_id[pl_title_page_id]
+                    num_outlinks_lgbt[pl_from] = num_outlinks_lgbt[pl_from] + 1
+                except:
+                    pass
+
+
+                ########
+
+                # INLINKS
 
                 try:
                     page_id = page_titles_page_ids[pl_title]
                     num_of_inlinks[page_id] = num_of_inlinks[page_id] + 1
-#                    print('num_inlinks')                    
-#                    print (num_of_inlinks[page_titles_page_ids[pl_title]])
                 except:
                     pass
 
                 try:
                     ccc=content_selection_page_id[pl_from]
                     num_inlinks_ccc[pl_title_page_id] = num_inlinks_ccc[pl_title_page_id] + 1
-#                    print('num_inlinks_ccc')                    
-#                    print (num_inlinks_ccc[page_titles_page_ids[pl_title]])
                 except:
                     pass
 
@@ -490,16 +554,47 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                 except:
                     pass
 
+
+
+                ########
+
+                try:
+                    female=female_page_id[pl_from]
+                    num_inlinks_women[pl_title_page_id] = num_inlinks_women[pl_title_page_id] + 1
+                except:
+                    pass
+
+                try:
+                    male=male_page_id[pl_from]
+                    num_inlinks_men[pl_title_page_id] = num_inlinks_men[pl_title_page_id] + 1
+                except:
+                    pass
+
+                try:
+                    lgbt=other_content_selection_page_id[pl_from]
+                    num_inlinks_lgbt[pl_title_page_id] = num_inlinks_lgbt[pl_title_page_id] + 1
+                except:
+                    pass
+
+
 #    input('')
     print ('Done with the dump.')
 
     n_outlinks=0
     n_outlinks_ccc =0
     n_outlinks_other_ccc =0
+    n_outlinks_women = 0
+    n_outlinks_men = 0
+    n_outlinks_lgbt = 0
+
 
     n_inlinks =0
     n_inlinks_ccc =0
     n_inlinks_other_ccc =0
+    n_inlinks_women =0
+    n_inlinks_men =0
+    n_inlinks_lgbt =0
+
 
     parameters = []
     for page_title, page_id in page_titles_page_ids.items():
@@ -508,9 +603,18 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         num_outlinks = 0
         num_outlinks_to_CCC = 0
         num_outlinks_to_geolocated_abroad = 0
+        num_outlinks_to_women = 0
+        num_outlinks_to_men = 0
+        num_outlinks_to_lgbt = 0
+
         num_inlinks = 0
         num_inlinks_from_CCC = 0
         num_inlinks_from_geolocated_abroad = 0
+        num_inlinks_from_women = 0
+        num_inlinks_from_men = 0
+        num_inlinks_from_lgbt = 0
+
+
 
         num_outlinks = num_of_outlinks[page_id]
         num_outlinks_to_CCC = num_outlinks_ccc[page_id]
@@ -521,6 +625,20 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         if num_outlinks!= 0: percent_outlinks_to_geolocated_abroad = float(num_outlinks_to_geolocated_abroad)/float(num_outlinks)
         else: percent_outlinks_to_geolocated_abroad = 0
 
+        num_outlinks_to_women = num_outlinks_women[page_id]
+        if num_outlinks!= 0: percent_outlinks_to_women = float(num_outlinks_to_women)/float(num_outlinks)
+        else: percent_outlinks_to_women = 0
+
+        num_outlinks_to_men = num_outlinks_men[page_id]
+        if num_outlinks!= 0: percent_outlinks_to_men = float(num_outlinks_to_men)/float(num_outlinks)
+        else: percent_outlinks_to_men = 0
+
+        num_outlinks_to_lgbt = num_outlinks_lgbt[page_id]
+        if num_outlinks!= 0: percent_outlinks_to_lgbt = float(num_outlinks_to_lgbt)/float(num_outlinks)
+        else: percent_outlinks_to_lgbt = 0
+
+
+
         num_inlinks = num_of_inlinks[page_id]
         num_inlinks_from_CCC = num_inlinks_ccc[page_id]
         if num_inlinks!= 0: percent_inlinks_from_CCC = float(num_inlinks_from_CCC)/float(num_inlinks)
@@ -530,22 +648,44 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         if num_inlinks!= 0: percent_inlinks_from_geolocated_abroad = float(num_inlinks_from_geolocated_abroad)/float(num_inlinks)
         else: percent_inlinks_from_geolocated_abroad = 0
 
-        parameters.append((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,page_id,qitem,page_title))
+        num_inlinks_from_women = num_inlinks_women[page_id]
+        if num_inlinks!= 0: percent_inlinks_from_women = float(num_inlinks_from_women)/float(num_inlinks)
+        else: percent_inlinks_from_women = 0
+
+        num_inlinks_from_men = num_inlinks_men[page_id]
+        if num_inlinks!= 0: percent_inlinks_from_men = float(num_inlinks_from_men)/float(num_inlinks)
+        else: percent_inlinks_from_men = 0
+
+        num_inlinks_from_lgbt = num_inlinks_lgbt[page_id]
+        if num_inlinks!= 0: percent_inlinks_from_lgbt = float(num_inlinks_from_lgbt)/float(num_inlinks)
+        else: percent_inlinks_from_lgbt = 0
+
+
+        parameters.append((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt,page_id,qitem,page_title))
+
 
 #        print((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,page_id,qitem,page_title))
 
         if num_outlinks != 0: n_outlinks=n_outlinks+1
         if num_outlinks_to_CCC != 0: n_outlinks_ccc =n_outlinks_ccc+1
         if num_outlinks_to_geolocated_abroad != 0: n_outlinks_other_ccc =n_outlinks_other_ccc+1
+        if num_outlinks_to_women != 0: n_outlinks_women =n_outlinks_women+1
+        if num_outlinks_to_men != 0: n_outlinks_men =n_outlinks_men+1
+        if num_outlinks_to_lgbt != 0: n_outlinks_lgbt =n_outlinks_lgbt+1
+
 
         if num_inlinks != 0: n_inlinks =n_inlinks+1
         if num_inlinks_from_CCC != 0: n_inlinks_ccc =n_inlinks_ccc+1
         if num_inlinks_from_geolocated_abroad != 0: n_inlinks_other_ccc =n_inlinks_other_ccc+1
+        if num_inlinks_from_women != 0: n_inlinks_women =n_inlinks_women+1
+        if num_inlinks_from_men != 0: n_inlinks_men =n_inlinks_men+1
+        if num_inlinks_from_lgbt != 0: n_inlinks_lgbt =n_inlinks_lgbt+1
 
     # print ((n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc))
     # print ('(n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc)')
-    
-    query = 'UPDATE '+languagecode+'wiki SET (num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad)=(?,?,?,?,?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+
+
+    query = 'UPDATE '+languagecode+'wiki SET (num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt)=(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
         
     cursor.executemany(query,parameters)
     conn.commit()
@@ -1805,8 +1945,6 @@ if __name__ == '__main__':
             wikilanguagecodes.remove(a)
     print (wikilanguagecodes)
     print (len(wikilanguagecodes))
-
-    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
 
     # Get the number of Articles for each Wikipedia language edition
     wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')

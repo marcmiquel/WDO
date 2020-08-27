@@ -110,6 +110,25 @@ def create_wikipedia_diversity_db():
         'sexual_orientation text, '+ # wikidata properties
         'religious_group text, '+ # wikidata religious adscription for people
 
+            # from links to/from women articles.
+        'num_inlinks_from_women integer, '+
+        'num_outlinks_to_women integer, '+
+        'percent_inlinks_from_women real, '+
+        'percent_outlinks_to_women real, '+
+
+            # from links to/from men articles.
+        'num_inlinks_from_men integer, '+
+        'num_outlinks_to_men integer, '+
+        'percent_inlinks_from_men real, '+
+        'percent_outlinks_to_men real, '+
+
+            # from links to/from LGBT+ articles.
+        'num_inlinks_from_lgbt integer, '+
+        'num_outlinks_to_lgbt integer, '+
+        'percent_inlinks_from_lgbt real, '+
+        'percent_outlinks_to_lgbt real, '+
+
+
         # CULTURAL CONTEXT DIVERSITY TOPICS
         # calculations:
         'ccc_binary integer, '+
@@ -324,7 +343,7 @@ def wd_properties():
 
 def wd_dump_iterator():
     function_name = 'wd_dump_iterator'
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -410,6 +429,11 @@ def wd_dump_iterator():
         # PROPERTIES
     #    print ([qitem,len(claims),len(entity['sitelinks'])])
         claims = entity['claims']
+
+
+        # print (entity['aliases'])
+        # here we could save "aliases".
+
 
         # meta info
         metadata_list.append((qitem,len(claims),len(sitelinks)-1))
@@ -1169,6 +1193,7 @@ if __name__ == '__main__':
 
     script_name = 'wikipedia_diversity.py'
 
+
     cycle_year_month = wikilanguages_utils.get_new_cycle_year_month() 
 #    check_time_for_script_run(script_name, cycle_year_month)
 
@@ -1198,6 +1223,7 @@ if __name__ == '__main__':
     # biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
 
     allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties = wd_properties()
+
 
 
     if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()

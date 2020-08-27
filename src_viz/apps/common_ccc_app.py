@@ -42,13 +42,7 @@ columns_dict = {'num':'Nº','source_langs':'Source Langs.', 'sl_page_title':'Tit
 columns_dict.update(features_dict_inv)
 
 
-full_text = '''In this page, you can consult a list of articles that are related to more than one language CCC. In other words, it allows you to retrieve articles that could belong to more than one cultural context.
-
-It is possible to query articles by changing the URL parameters or by using the following menus. You first need to select the *Source Languages*. The first language selected will set the reference CCC, and the other languages will be used to filter the resulting list of articles depending on how related they are to it. The *Target Languages* parameter allows you to select a list of languages in which you want to check whether the resulting list of articles exist in their language editions.
-
-You can retrieve different results and filter content by setting requirements. Selecting a *Topic* allows you obtain articles geolocated, related to people, GLAM, among others. The parameter *CCC requirement* allows you to select whether the set the requirement that the resulting articles need also to be part of the other source languages’ CCC in addition to the first language. It is highly recommended for better results, although it is a limitation to its number. The *% Outlinks to CCC* sets the criterion for which articles are selected: the minimal percentage of their outgoing links to their CCC. Articles with a lower percentage of Outlinks to CCC are filtered out of the results. Thus, the higher the percentage the more the easier they’d be part of their CCC (by default it is set to 20%).
-
-Finally, you can modify three parameters in order to filter the final resulting list of articles. You can use *Order by feature* in order to sort the results according to some features (by default it is pageviews). Using *Show the gaps* you can limit the results to only the articles that are missing in the target languages (All Gaps), that are missing in at least one language (At least one gap) or that are not missing (No language gaps). Using *Limit the results* you can choose to display only a specific number of articles (by default it is 100).'''
+full_text = '''In this page, you can consult a list of articles that are related to more than one language CCC. In other words, it allows you to retrieve articles that could belong to more than one cultural context.'''
 
 
 results_text = '''
@@ -58,6 +52,229 @@ The column Source Langs. provides links to the article version in each of the se
 
 The results provided are only an approximation to common local content and may contain unrelated articles. For the best results, set the CCC requirement to 'CCC in all source languages'.
 '''
+
+
+
+
+
+interface_row1 = html.Div([
+    html.Div(
+    [
+    html.P(
+        [
+            "Source ",
+            html.Span(
+                "Languages' CCC",
+                id="tooltip-target-srclangccc",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select the Languages you want to find articles in common in their local content or CCC. The first language selected will set the reference CCC, and the other languages will be used to filter the resulting list of articles depending on how related they are to it.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-srclangccc",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Target ",
+            html.Span(
+                "Languages",
+                id="tooltip-target-targetlangs",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select the target Wikipedia language editions in which you want to check whether the resulting list of articles exist or not.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-targetlangs",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+    ])
+
+
+
+
+interface_row2 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                "Topic",
+                id="tooltip-target-topic",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a Topic to filter the resulting articles to those geolocated, biographies, GLAM, among others.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-topic",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "CCC ",
+            html.Span(
+                "requirement",
+                id="tooltip-target-ccc",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Check the CCC requirement parameter to enforce that resulting articles need also to be part of the other source languages’ CCC in addition to the first language. It is highly recommended for better results, although it is a limitation to the number of results.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-ccc",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "% Outlinks to ",
+            html.Span(
+                "CCC",
+                id="tooltip-target-outlinks",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a % Outlinks to CCC to set the criterion for which articles are selected: the minimal percentage of their outgoing links to their CCC. Articles with a lower percentage of Outlinks to CCC are filtered out of the results. Thus, the higher the percentage the more the easier they’d be part of their CCC (by default it is set to 20%).",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-outlinks",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    ])
+
+
+
+
+interface_row3 = html.Div([
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Order by ",
+            html.Span(
+                "feature",
+                id="tooltip-target-feat",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a feature to sort the results (by default it uses the number of pageviews).",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-feat",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Show the ",
+            html.Span(
+                "gaps",
+                id="tooltip-target-exclude",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select Show the gaps to limit the results to only the articles that are missing in the target languages (All Gaps), that are missing in at least one language (At least one gap) or that are not missing (No language gaps.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-exclude",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Limit the ",
+            html.Span(
+                "results",
+                id="tooltip-target-limit",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Choose a number of results (by default 100)",
+        style={"width": "auto", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-limit",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    ])
+
+
+
+
 
 
 def dash_app33_build_layout(params):
@@ -321,19 +538,13 @@ def dash_app33_build_layout(params):
                 html.Br(),
 
                 dcc.Markdown(full_text.replace('  ', '')),
+                html.Br(),
 
                 html.H5('Select the Languages'),
 
-                html.Div(
-                html.P("Source Languages' CCC"),
-                style={'display': 'inline-block','width': '400px'}),
-
-                html.Div(
-                html.P('Target languages'),
-                style={'display': 'inline-block','width': '400px'}),
+                interface_row1,
 
 
-                html.Br(),
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='source_langs',
@@ -361,20 +572,8 @@ def dash_app33_build_layout(params):
 
                 html.H5('Filter content'),
 
-                html.Div(
-                html.P('Topic'),
-                style={'display': 'inline-block','width': '200px'}),
+                interface_row2,
 
-                html.Div(
-                html.P('CCC requirement'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('% Outlinks to CCC'),
-                style={'display': 'inline-block','width': '200px'}),
-
-
-                html.Br(),
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='topic',
@@ -405,19 +604,7 @@ def dash_app33_build_layout(params):
 
                 html.Br(),
 
-                html.Div(
-                html.P('Order by feature'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Show the gaps'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Limit the results'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
+                interface_row3,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -608,18 +795,10 @@ def dash_app33_build_layout(params):
             html.Br(),
 
             # here there is the interface
-            html.H5('Select the Wikipedias'),
+            html.H5('Select the Languages'),
 
-            html.Div(
-            html.P("Source Languages' CCC"),
-            style={'display': 'inline-block','width': '400px'}),
+            interface_row1,
 
-            html.Div(
-            html.P('Target Languages'),
-            style={'display': 'inline-block','width': '400px'}),
-
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_langs',
@@ -644,20 +823,7 @@ def dash_app33_build_layout(params):
             html.Br(),
             html.H5('Filter content'),
 
-            html.Div(
-            html.P('Topic'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('CCC requirement'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('% Outlinks to CCC'),
-            style={'display': 'inline-block','width': '200px'}),
-
-
-            html.Br(),
+            interface_row2,
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='topic',
@@ -688,19 +854,7 @@ def dash_app33_build_layout(params):
 
             html.Br(),
 
-            html.Div(
-            html.P('Order by feature'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Show the gaps'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit the results'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
+            interface_row3,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -762,19 +916,13 @@ def dash_app33_build_layout(params):
             navbar,
             html.H3('Common CCC Articles', style={'textAlign':'center'}),
             dcc.Markdown(full_text.replace('  ', '')),
+            html.Br(),
 
             # here there is the interface
             html.H5('Select the Languages'),
 
-            html.Div(
-            html.P("Source Languages' CCC"),
-            style={'display': 'inline-block','width': '400px'}),
+            interface_row1,
 
-            html.Div(
-            html.P('Target Languages'),
-            style={'display': 'inline-block','width': '400px'}),
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_langs',
@@ -802,20 +950,8 @@ def dash_app33_build_layout(params):
 
             html.H5('Filter content'),
 
-            html.Div(
-            html.P('Topic'),
-            style={'display': 'inline-block','width': '200px'}),
+            interface_row2,
 
-            html.Div(
-            html.P('CCC requirement'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('% Outlinks to CCC'),
-            style={'display': 'inline-block','width': '200px'}),
-
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='topic',
@@ -846,19 +982,7 @@ def dash_app33_build_layout(params):
 
             html.Br(),
 
-            html.Div(
-            html.P('Order by feature'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Show the gaps'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit the results'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
+            interface_row3,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(

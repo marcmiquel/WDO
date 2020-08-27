@@ -51,17 +51,262 @@ columns_dict.update(features_dict_inv)
 default_text = '''
 In this page, you can consult a list of articles that could and might need to exist or be extended in a language CCC (i.e. part of their local content), and instead, they only exist in other Wikipedia language editions or they are longer (more Bytes).
 
-It is possible to query any list by changing the URL parameters or by using the following menus. You first need to select the *Target language* (where you would like to improve local content representation). 
-Additionally, if you want to aim at specific part of a language context, you can select the *target country* and *Target region* - they are optional and allow you to filter for a specific area. For instance, for target language French, whose language context encompasses several countries, Target country and Target region could be France and Québec.
-
-It is also possible to filter the content according to several purposes. *Type of gap* allows you decide whether you want articles ‘missing’ in the target language and existing in the source languages or simply less complete (by default the type of gap is in missing mode), *CCC segment* allows you to select some specific part of the CCC, and *Topic* allows you to select a among the following topics (all, people, women, men, folk, earth, monuments and buildings, music creations and organizations, sports and teams, food, paintings, GLAM, books, clothing and fashion and industry).
-
-Finally, it is necessary to select the *Source language(s)* from which you want to obtain articles. It is possible to select all languages (this is the default), those with which the source language coexists in the same territority (i.e. Welsh coexists with English), those with which the source language does not coexists with, and a specific language from all the Wikipedia language editions. The last two optional parameters are *Order by feature* and *Limit the results*, which allow you to sort the results according to a specific feature and limit the entries to a specific number (by default 100).
-
 There are specific combinations of parameters that usually give relevant selections of articles. By order of importance, topics/CCC segments such as geolocated articles, men, women, monuments and buildings, GLAM and Earth, present valuable articles when results are ordered by features interwiki links, incoming links from CCC, bytes, edits in talk page, pageviews and references. Topics such as food, music, paintings and sports may also give interesting results when the choosen feature to sort the results is pageviews.
-
-This tool is in Alpha version - you may find bugs. In this case, please e-mail us at tools.wcdo@tools.wmflabs.org.
 '''
+
+
+
+interface_row1 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Target ",
+            html.Span(
+                "language",
+                id="tooltip-target-targetlanguage",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a target Wikipedia language edition where you want to bridge the gap in their 'local content' or CCC",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-targetlanguage",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Target ",
+            html.Span(
+                "country",
+                id="tooltip-target-targetcountry",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a target country to restrict the gap to a specific country of the language edition 'local content'. For instance, for target language French, whose language context encompasses several countries, Target country and Target region could be France and Québec.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-targetcountry",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Target ",
+            html.Span(
+                "region",
+                id="tooltip-target-targetregion",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a target region to restrict the gap to a specific region of the country related to the language edition 'local content'. For instance, for target language French, whose language context encompasses several countries, Target country and Target region could be France and Québec.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-targetregion",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    ])
+
+
+
+
+
+
+interface_row2 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Type of  ",
+            html.Span(
+                "gap",
+                id="tooltip-target-targettypegap",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a *Type of gap* to you decide whether you want articles ‘missing’ in the target language and existing in the source languages or simply less complete (by default the type of gap is in missing mode).",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-targettypegap",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "CCC ",
+            html.Span(
+                "segment",
+                id="tooltip-target-ccc",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a *CCC segment* to limit the results to a specific part of the CCC.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-ccc",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                "Topic",
+                id="tooltip-target-topic",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a *Topic* to limit the results to the following topics (all, people, women, men, folk, earth, monuments and buildings, music creations and organizations, sports and teams, food, paintings, GLAM, books, clothing and fashion and industry.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-topic",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    ])
+
+
+
+
+
+
+interface_row3 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Source ",
+            html.Span(
+                "language(s)",
+                id="tooltip-target-srclang",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "select the *Source language(s)* from which you want to obtain articles. It is possible to select all languages (this is the default), those with which the source language coexists in the same territority (i.e. Welsh coexists with English), those with which the source language does not coexists with, and a specific language from all the Wikipedia language editions.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-srclang",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Order by ",
+            html.Span(
+                "feature",
+                id="tooltip-target-feat",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a feature to sort the results.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-feat",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Limit the ",
+            html.Span(
+                "results",
+                id="tooltip-target-limit",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Choose a number of results (by default 100)",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-limit",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    ])
+
+
+
+
+
+
+
 
 
 def dash_app28_build_layout(params):
@@ -270,21 +515,7 @@ def dash_app28_build_layout(params):
                 html.Br(),
 
                 html.H5('Select the Wikipedia'),
-
-                html.Div(
-                html.P('Target language'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Target country'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Target region'),
-                style={'display': 'inline-block','width': '200px'}),
-
-
-                html.Br(),
+                interface_row1,
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='target_lang',
@@ -316,20 +547,8 @@ def dash_app28_build_layout(params):
 
                 html.Br(),
                 html.H5('Filter by content'),
+                interface_row2,
 
-                html.Div(
-                html.P('Search type'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('CCC segment'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Topic'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='type',
@@ -362,20 +581,8 @@ def dash_app28_build_layout(params):
 
                 html.Br(),
                 html.H5('Choose the source of content'),
+                interface_row3,
 
-                html.Div(
-                html.P('Source language(s)'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Order by feature'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Limit the results'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='source_lang',
@@ -514,21 +721,8 @@ def dash_app28_build_layout(params):
                 style={'float': 'right','width': '200px'}),
 
             html.H5('Select the Wikipedia'),
+            interface_row1,
 
-            html.Div(
-            html.P('Target language'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Target country'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Target region'),
-            style={'display': 'inline-block','width': '200px'}),
-
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='target_lang',
@@ -560,20 +754,8 @@ def dash_app28_build_layout(params):
 
             html.Br(),
             html.H5('Filter by content'),
+            interface_row2,
 
-            html.Div(
-            html.P('Search type'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('CCC segment'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Topic'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='type',
@@ -606,20 +788,8 @@ def dash_app28_build_layout(params):
 
             html.Br(),
             html.H5('Choose the source of content'),
+            interface_row3,
 
-            html.Div(
-            html.P('Source language(s)'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Order by feature'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit the results'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_lang',
@@ -685,20 +855,9 @@ def dash_app28_build_layout(params):
 
             html.H5('Select the Wikipedia'),
 
-            html.Div(
-            html.P('Target language'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Target country'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Target region'),
-            style={'display': 'inline-block','width': '200px'}),
+            interface_row1,
 
 
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='target_lang',
@@ -730,20 +889,8 @@ def dash_app28_build_layout(params):
 
             html.Br(),
             html.H5('Filter by content'),
+            interface_row2,
 
-            html.Div(
-            html.P('Type of gap'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('CCC segment'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Topic'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='type',
@@ -777,20 +924,8 @@ def dash_app28_build_layout(params):
             html.Br(),
 
             html.H5('Choose the source of content'),
+            interface_row3,
 
-            html.Div(
-            html.P('Source language(s)'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Order by feature'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit the results'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_lang',

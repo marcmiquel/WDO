@@ -30,7 +30,7 @@ def params_to_df(langs, content_type, geographical_entity):
 
     if content_type == 'zero_ill':
 
-        query = "SELECT set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, abs_value*100/rel_value as Geolocated_Articles, period FROM wcdo_intersections_accumulated WHERE set2='geolocated' AND set1='"+geographical_entity+"' AND set2descriptor = 'zero_ill' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
+        query = "SELECT set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, abs_value*100/rel_value as Geolocated_Articles, period FROM wdo_intersections_accumulated WHERE set2='geolocated' AND set1='"+geographical_entity+"' AND set2descriptor = 'zero_ill' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
         df_geolocated_countriessubregionsregions_noill = pd.read_sql_query(query, conn).fillna(0)
 
         df_geolocated_countriessubregionsregions_noill.Geolocated_Articles = df_geolocated_countriessubregionsregions_noill.Geolocated_Articles.astype(int)
@@ -54,7 +54,7 @@ def params_to_df(langs, content_type, geographical_entity):
 
     if content_type == 'wikidata_article_qitems':
 
-        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' AND set2 = '"+geographical_entity+"' AND set1 = 'wikidata_article_qitems' ORDER BY abs_value DESC;"
+        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value FROM wdo_intersections_accumulated WHERE set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' AND set2 = '"+geographical_entity+"' AND set1 = 'wikidata_article_qitems' ORDER BY abs_value DESC;"
         df_geolocated_extent_wikidata = pd.read_sql_query(query, conn)
         df_geolocated_extent_wikidata = df_geolocated_extent_wikidata.fillna(0).round(1)
 
@@ -77,7 +77,7 @@ def params_to_df(langs, content_type, geographical_entity):
 
     if content_type == 'all_wp_all_articles':
 
-        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value FROM wcdo_intersections_accumulated WHERE set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' AND set1 = 'all_wp_all_articles' AND set2 = '"+geographical_entity+"' ORDER BY abs_value DESC;"
+        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value FROM wdo_intersections_accumulated WHERE set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' AND set1 = 'all_wp_all_articles' AND set2 = '"+geographical_entity+"' ORDER BY abs_value DESC;"
         df_geolocated_extent_allwparticles = pd.read_sql_query(query, conn)
         df_geolocated_extent_allwparticles = df_geolocated_extent_allwparticles.fillna(0).round(1)
 
@@ -100,13 +100,13 @@ def params_to_df(langs, content_type, geographical_entity):
 
 
     if content_type == 'lang geographical entities':
-        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value, 100*abs_value/rel_value as Total_Articles, period as Period FROM wcdo_intersections_accumulated WHERE set2descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' AND set1 = '"+geographical_entity+"' AND set2 IN ("+lass+") ORDER BY abs_value DESC;"
+        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value, 100*abs_value/rel_value as Total_Articles, period as Period FROM wdo_intersections_accumulated WHERE set2descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' AND set1 = '"+geographical_entity+"' AND set2 IN ("+lass+") ORDER BY abs_value DESC;"
         df_languages_coverage = pd.read_sql_query(query, conn, params = langs)
         df_languages_coverage = df_languages_coverage.fillna(0)
         df_languages_coverage.Total_Articles = df_languages_coverage.Total_Articles.astype(int)
 
 
-        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value, period FROM wcdo_intersections_accumulated WHERE set1descriptor = 'geolocated' AND content = 'articles' AND set1 IN ("+lass+") AND set2 = '"+geographical_entity+"' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
+        query = "SELECT set1,set1descriptor,set2,set2descriptor, abs_value, rel_value, period FROM wdo_intersections_accumulated WHERE set1descriptor = 'geolocated' AND content = 'articles' AND set1 IN ("+lass+") AND set2 = '"+geographical_entity+"' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
         df_geolocated_extent = pd.read_sql_query(query, conn, params = langs)
         df_geolocated_extent = df_geolocated_extent.fillna(0).round(1)
 
@@ -177,11 +177,11 @@ def params_to_df(langs, content_type, geographical_entity):
 
 # GEOLOCATED ARTICLES EXTENT IN WIKIPEDIA LANGUAGE EDITIONS
 conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cursor()
-query = "SELECT set1 as Wiki, abs_value as Geolocated_articles, rel_value as Geolocated_percent, abs_value*100/rel_value as Articles FROM wcdo_intersections_accumulated WHERE set1descriptor = 'wp' AND set2 = 'languagecode' AND set2descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY 1 DESC;"
+query = "SELECT set1 as Wiki, abs_value as Geolocated_articles, rel_value as Geolocated_percent, abs_value*100/rel_value as Articles FROM wdo_intersections_accumulated WHERE set1descriptor = 'wp' AND set2 = 'languagecode' AND set2descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY 1 DESC;"
 df_geolocated_articles = pd.read_sql_query(query, conn)
 df_geolocated_articles = df_geolocated_articles.set_index('Wiki')
 
-query = "SELECT set1 as Wiki, abs_value as CCC_geolocated_art, rel_value as CCC_geolocated_percent, abs_value*100/rel_value as CCC_Articles FROM wcdo_intersections_accumulated WHERE set1descriptor = 'wp' AND set2descriptor = 'ccc_geolocated' AND content = 'articles' AND set1=set2 AND period = '"+last_period+"' ORDER BY 1 DESC;"
+query = "SELECT set1 as Wiki, abs_value as CCC_geolocated_art, rel_value as CCC_geolocated_percent, abs_value*100/rel_value as CCC_Articles FROM wdo_intersections_accumulated WHERE set1descriptor = 'wp' AND set2descriptor = 'ccc_geolocated' AND content = 'articles' AND set1=set2 AND period = '"+last_period+"' ORDER BY 1 DESC;"
 df_ccc_geolocated_articles = pd.read_sql_query(query, conn)
 df_ccc_geolocated_articles = df_ccc_geolocated_articles.set_index('Wiki')
 
@@ -223,25 +223,31 @@ dash_app3.layout = html.Div([
     dcc.Markdown('''
         This page shows stastistics and graphs that explain how well each Wikipedia language edition covers 
         the Geolocated articles.
-        They illustrate the content geography gap, that is the imbalances in representing the different geographical entities (country, subregion and world region). 
+        They illustrate the content geography gap, that is the imbalances in representing the different geographical entities (country, subregion and world region). '''.replace('  ', '')),
 
-        The graphs answer the following questions:
-        * What is the extent of geolocated articles in each Wikipedia language edition?
-        * What is the extent of geolocated articles without interwiki links in each country, subregion and world region?
-        * What is the extent of geographical entities in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?
-        * How well do Wikipedia language editions cover the available geolocated articles in each country?
-        * What Wikipedia language editions accumulated more geolocated articles in each country, subregion, and region?
-        '''),
+    # dcc.Markdown('''
+
+    #     The graphs answer the following questions:
+    #     * What is the extent of geolocated articles in each Wikipedia language edition?
+    #     * What is the extent of geolocated articles without interwiki links in each country, subregion and world region?
+    #     * What is the extent of geographical entities in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?
+    #     * How well do Wikipedia language editions cover the available geolocated articles in each country?
+    #     * What Wikipedia language editions accumulated more geolocated articles in each country, subregion, and region?
+    #     '''),
     html.Br(),
 
     dcc.Tabs([
         dcc.Tab(label='Geolocated Articles Without Interwiki (Scatterplot)', children=[
 		    html.Br(),
 
-		    html.H5('Geolocated Articles Without Interwiki Links Scatterplot'),
+		    # html.H5('Geolocated Articles Without Interwiki Links'),
 
 		    dcc.Markdown('''* **What is the extent of geolocated articles without Interwiki links in each country, subregion and world region?**'''),
-		    dcc.Markdown('''The following scatterplot graph shows for a list of countries, subregions or world regions the number of articles they contain (Y-axis) and on the percentage of articles without any interwiki links (X-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.'''),
+
+            html.Div(
+            html.P('Select a geographical entity'),
+            style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
 		    dcc.Dropdown(
 		        id='geolocateddropdown_coverage',
@@ -252,6 +258,7 @@ dash_app3.layout = html.Div([
 		    dcc.Graph(id = 'scatterplot_nointerwiki'),
 
 #		    html.Hr(),
+            dcc.Markdown('''The scatterplot graph shows for a list of countries, subregions or world regions the number of articles they contain (Y-axis) and on the percentage of articles without any interwiki links (X-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.'''),
 
         ]),
 
@@ -259,11 +266,14 @@ dash_app3.layout = html.Div([
         dcc.Tab(label='Extent of Geolocated Art. in Wikipedias/CCC (Scatterplot)', children=[
 		    html.Br(),
 
-		    html.H5('Extent of Geolocated Articles in Wikipedia Language Editions and Language CCC Scatterplot'),
+		    # html.H5('Extent of Geolocated Articles in Wikipedia Language Editions and Language CCC'),
 
-		    dcc.Markdown('''* **What is the extent of geolocated articles in each Wikipedia language edition?**'''.replace('  ', '')),
-		    dcc.Markdown('''The following scatterplot graph shows the extent of geolocated articles and CCC geolocated articles in each Wikipedia language edition. CCC geolocated articles are geolocated articles that belong to the language CCC. Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.
-		     '''),
+		    dcc.Markdown('''* **What is the extent of geolocated articles in each Wikipedia language edition and in each language CCC?**'''.replace('  ', '')),
+
+            html.Div(
+            html.P('Select the entity'),
+            style={'display': 'inline-block','width': '200px'}),
+            html.Br(),
 
 		    dcc.Dropdown(
 		        id='geolocatedarticlesdropdown_coverage',
@@ -273,19 +283,21 @@ dash_app3.layout = html.Div([
 		     ),
 		    dcc.Graph(id = 'scatterplot_geolocatedextent'),
 
+            dcc.Markdown('''The scatterplot graph shows the extent of geolocated articles and CCC geolocated articles in each Wikipedia language edition. CCC geolocated articles are geolocated articles that belong to the language CCC. Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name to see only the languages from that region.
+             '''),
+
         ]),
 
 		####
         dcc.Tab(label='Extent of Geolocated Entities in Geolocated Articles (Treemap)', children=[
 		    html.Br(),
 
-		    html.H5("Extent of Countries, Subregions, Regions in Wikipedia Content Treemap", style={'textAlign':'left'}),
+		    # html.H5("Extent of Countries, Subregions, Regions in Wikipedia Content", style={'textAlign':'left'}),
 
 		    dcc.Markdown('''
 		        * **What is the extent of geographical entities in the sum of all geolocated articles in all languages, all unique geolocated articles (qitems), and in each Wikipedia language edition?**
 		        '''.replace('  ', '')),
-		    dcc.Markdown('''The following treemap graphs show for two selected projects both the extent and the coverage of different geographical entities (countries, subregions and world regions). The size of the tiles and the colorscale (orange-dark blue) is according to the extent the geographical entities take in the selected project, which can be the sum of all geolocated articles in all Wikipedia language editions, all the Wikidata geolocated qitems or specific Wikipedia language editions. When you hover on a tile you can read the same information regarding the coverage and extent plus the number of articles.
-		        '''.replace('  ', '')),
+
 		    html.Br(),
 
 		    html.Div(
@@ -327,20 +339,20 @@ dash_app3.layout = html.Div([
 
 		    dcc.Graph(id = 'treemap_geolocated_coverage'),
 
+            dcc.Markdown('''The treemap graphs show for two selected projects both the extent and the coverage of different geographical entities (countries, subregions and world regions). The size of the tiles and the colorscale (orange-dark blue) is according to the extent the geographical entities take in the selected project, which can be the sum of all geolocated articles in all Wikipedia language editions, all the Wikidata geolocated qitems or specific Wikipedia language editions. When you hover on a tile you can read the same information regarding the coverage and extent plus the number of articles.
+                '''.replace('  ', '')),
         ]),
 
 		####
         dcc.Tab(label='Coverage of Countries Geolocated Articles (Map)', children=[
 		    html.Br(),
 
-		    html.H5("Coverage of Countries Geolocated Articles by Wikipedia Language Editions Map", style={'textAlign':'left'}),
+		    # html.H5("Coverage of Countries Geolocated Articles by Wikipedia Language Editions", style={'textAlign':'left'}),
 
 		    dcc.Markdown('''
 		        * **How well do Wikipedia language editions cover the available geolocated articles in each country?**
 		        '''.replace('  ', '')),
-		    dcc.Markdown('''
-		        The following map graphs show the coverage of the Total Articles geolocated in the following territories by a Wikipedia language edition, and the extent they take in the group of geolocated articles of this Wikipedia language edition. You can hover on each country and see the number of covered articles and total articles, the percentages of coverage and extent, as well as other information regarding the country.
-		        '''.replace('  ', '')),
+
 		    html.Br(),
 
 		    html.Div(
@@ -360,16 +372,17 @@ dash_app3.layout = html.Div([
 		    dcc.Graph(id = 'choropleth_map_countries_coverage'),
 		    dcc.Graph(id = 'choropleth_map_countries_extent'),
 
+            dcc.Markdown('''
+                The map graphs show the coverage of the Total Articles geolocated in the following territories by a Wikipedia language edition, and the extent they take in the group of geolocated articles of this Wikipedia language edition. You can hover on each country and see the number of covered articles and total articles, the percentages of coverage and extent, as well as other information regarding the country.
+                '''.replace('  ', '')),
         ]),
 
 		####
         dcc.Tab(label='Wikipedias by Coverage of Geographical Entities (Barchart)', children=[
 		    html.Br(),
 	
-		    html.H5('Wikipedia Language Editions Coverage of Countries, Subregions and Regions Barchart'),
+		    # html.H5('Wikipedia Language Editions Coverage of Countries, Subregions and Regions'),
 			dcc.Markdown('''* **What Wikipedia language editions cover best each country, subregion, and region geolocated articles?**'''),
-			dcc.Markdown('''The following barchart graph shows for a selected geographical entity (country, world subregion or region) the degree of coverage of its geolocated articles/Qitems in them by all Wikipedia language editions or a selected group. By hovering in each Wikipedia you can see the coverage percentage as well, the extent it takes in percentage of their total number of articles, the total number of articles geolocated in that geographical entity as well as other geographical information.'''.replace('  ', '')),
-
 
 		    html.Div(html.P('Select a Geographical Entity'), 
 		    	style={'display': 'inline-block','width': '400px'}),
@@ -432,7 +445,10 @@ dash_app3.layout = html.Div([
 		     ), style={'display': 'inline-block','width': '1000px'}),
 		    html.Br(),
 
-		    dcc.Graph(id = 'barchart_coverage')
+		    dcc.Graph(id = 'barchart_coverage'),
+
+
+            dcc.Markdown('''The barchart graph shows for a selected geographical entity (country, world subregion or region) the degree of coverage of its geolocated articles/Qitems in them by all Wikipedia language editions or a selected group. By hovering in each Wikipedia you can see the coverage percentage as well, the extent it takes in percentage of their total number of articles, the total number of articles geolocated in that geographical entity as well as other geographical information.'''.replace('  ', '')),
         ]),
     ]),
 

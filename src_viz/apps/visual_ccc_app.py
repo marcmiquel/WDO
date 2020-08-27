@@ -15,11 +15,184 @@ dash_app32.layout = html.Div([
 
 
 text_default = '''
-In this page you can look for gaps in images from different sources of content, whether it is a Top CCC list or a list of articles you introduce. 
+In this page you can look for gaps in images from different sources of content, whether it is a Top CCC list or a list of articles you introduce. For each article, you will obtain the most used images across the different language editions in which it exists. Each image has a caption with the number of languages in which it is used and the availability in the source language. You are able to select whether you only want to see the gaps or all the images.'''
 
-You can simply paste the list of article titles, the URLs, or select the list and query the gallery of images. For each article, you will obtain the most used images across the different language editions in which it exists. Each image has a caption with the number of languages in which it is used and the availability in the source language. You are able to select whether you only want to see the gaps or all the images.
 
-It is especially interesting to query excluding existing images or query articles with a low number of images. Some queries might time more time than usual or return a blank page. This is because the table imagelinks in the replicas performance might not be optimal at the moment.'''
+
+option_A = html.Div([
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                "Option A",
+                id="tooltip-target-optionA",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+            ": Select a Top CCC List",
+        ], style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}
+    ),
+    dbc.Tooltip(
+        html.P(
+            "For the Option A: You need to choose a *source language* from which you want to retrieve articles. The *source country* is used to filter some part of the language context. In case no country is selected, the default is 'all'. Then, you can choose among the Top CCC Diversity lists. In case no list is selected, the default list is 'editors'.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-optionA",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '400px'},
+    )
+    ])
+
+option_B = html.Div([
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                "Option B",
+                id="tooltip-target-optionB",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+            ": Paste a list of articles' titles",
+        ], style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}
+    ),
+    dbc.Tooltip(
+        html.P(
+            "For the Option B: you need to choose a *source language* and paste the list of articles (titles or full URL) separated by a comma, semicolon or a line feed.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-optionB",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '400px'},
+    )
+    ])
+
+
+
+
+
+
+
+interface_row3 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Order articles ",
+            html.Span(
+                "by",
+                id="tooltip-target-feat",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a feature to sort the results.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-feat",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Show only ",
+            html.Span(
+                "language",
+                id="tooltip-target-lang",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select an option ton filter the results to show all the articles, articles with less than five images, articlese with one image or articles without images.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-lang",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+])
+
+
+
+interface_row4 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Show images ",
+            html.Span(
+                "language",
+                id="tooltip-target-img",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "You can choose to show only those images that are missing in the source language edition articles.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-img",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Number of ",
+            html.Span(
+                "images",
+                id="tooltip-target-limit",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Choose a number of images to show in the columns (by default 4)",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-limit",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+])
+
+
+
+
+
+
+
 
 
 
@@ -27,7 +200,7 @@ It is especially interesting to query excluding existing images or query article
 language_names_2 = language_names.copy()
 
 showonly_dict = {'All images':'all', 'Missing images':'gaps'} # 'Existing images':'covered',
-showonlyart_dict = {'Articles with zero images':'zero','Articles with one image':'one','Articles with less than five imagess':'less_five','All articles':'all'}
+showonlyart_dict = {'Articles with zero images':'zero','Articles with one image':'one','Articles with less than five images, ':'less_five','All articles':'all'}
 
 features_dict = {'Number of Editors':'num_editors','Number of Edits':'num_edits','Number of images':'num_images','Wikirank':'wikirank','Number of Pageviews':'num_pageviews','Number of Inlinks':'num_inlinks','Number of References':'num_references','Number of Bytes':'num_bytes','Number of Outlinks':'num_outlinks','Number of Interwiki':'num_interwiki','Number of WDProperties':'num_wdproperty','Number of Discussions':'num_discussions','Creation Date':'date_created','Number of Inlinks from CCC':'num_inlinks_from_CCC'}
 
@@ -233,12 +406,7 @@ def dash_app32_build_layout(params):
 
                 html.H5('Source of content'),
 
-                html.Div(
-                html.P('Option A: Select a Top CCC List'),
-                style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-
-                html.Br(),
+                option_A,
 
                 html.Div(
                 html.P('Source language'),
@@ -287,11 +455,7 @@ def dash_app32_build_layout(params):
                 html.Br(),
                 html.Br(),
 
-                html.Div(
-                html.P('Option B: Paste a list of articles titles'),
-                style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-                html.Br(),
+                option_B,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -315,15 +479,7 @@ def dash_app32_build_layout(params):
 
                 html.H5('Filter the results'),
 
-                html.Div(
-                html.P('Order articles by'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Limit results to'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
+                interface_row3,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -345,16 +501,7 @@ def dash_app32_build_layout(params):
 
                 html.Br(),
 
-
-                html.Div(
-                html.P('Show images'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Number of images'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
+                interface_row4,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -514,12 +661,7 @@ def dash_app32_build_layout(params):
 
             html.H5('Source of content'),
 
-            html.Div(
-            html.P('Option A: Select a Top CCC List'),
-            style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-
-            html.Br(),
+            option_A,
 
             html.Div(
             html.P('Source language'),
@@ -568,9 +710,7 @@ def dash_app32_build_layout(params):
             html.Br(),
             html.Br(),
 
-            html.Div(
-            html.P('Option B: Paste a list of articles titles'),
-            style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
+            option_B,
 
             html.Br(),
 
@@ -596,15 +736,7 @@ def dash_app32_build_layout(params):
 
             html.H5('Filter the results'),
 
-            html.Div(
-            html.P('Order articles by'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit results to'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
+            interface_row3,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -626,17 +758,8 @@ def dash_app32_build_layout(params):
 
             html.Br(),
 
-
-            html.Div(
-            html.P('Show images'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Number of images'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
-
+            interface_row4,
+        
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='show_only',
@@ -692,12 +815,7 @@ def dash_app32_build_layout(params):
 
             html.H5('Source of content'),
 
-            html.Div(
-            html.P('Option A: Select a Top CCC List'),
-            style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-
-            html.Br(),
+            option_A,
 
             html.Div(
             html.P('Source language'),
@@ -746,11 +864,7 @@ def dash_app32_build_layout(params):
             html.Br(),
             html.Br(),
 
-            html.Div(
-            html.P('Option B: Paste a list of articles titles'),
-            style={'display': 'inline-block','fontSize':14, 'fontWeight':'bold'}),
-
-            html.Br(),
+            option_B,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -774,15 +888,7 @@ def dash_app32_build_layout(params):
 
             html.H5('Filter the results'),
 
-            html.Div(
-            html.P('Order articles by'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit results to'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
+            interface_row3,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -804,16 +910,7 @@ def dash_app32_build_layout(params):
 
             html.Br(),
 
-
-            html.Div(
-            html.P('Show images'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Number of images'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
+            interface_row4,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(

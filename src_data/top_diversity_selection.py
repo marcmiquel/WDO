@@ -26,7 +26,7 @@ from sklearn.linear_model import LinearRegression
 class Logger(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open("stats_generation"+""+".out", "w")
+        self.log = open("top_diversity_selection"+""+".out", "w")
     def write(self, message):
         self.terminal.write(message)
         self.log.write(message)
@@ -38,18 +38,18 @@ class Logger(object): # this prints both the output to a file and to the termina
 
 # MAIN
 def main():
-    
 
     create_top_diversity_lists_db()
     generate_all_top_ccc_diversity_articles_lists()
     update_top_ccc_diversity_articles_features()
     update_top_ccc_diversity_articles_titles('sitelinks')
     update_top_ccc_diversity_articles_titles('labels')
-    update_top_ccc_diversity_articles_titles('translations')
+    update_top_ccc_diversity_articles_titles('old translations')
+    # update_top_ccc_diversity_articles_titles('translations')
 
     # update_top_diversity_articles_interwiki()
     update_top_diversity_articles_intersections() # the data for Top CCC Coverage / Spread
-    wikilanguages_utils.copy_db_for_production(missing_ccc_db, 'top_diversity_selection.py', databases_path)
+    # wikilanguages_utils.copy_db_for_production(top_diversity_db, 'top_diversity_selection.py', databases_path)
 
 
 
@@ -64,6 +64,7 @@ def create_top_diversity_lists_db():
         os.remove(databases_path + top_diversity_db); 
         print (top_diversity_db+' deleted.');
     except:
+        print (top_diversity_db+' could not be deleted.')
         pass
 
     functionstartTime = time.time()
@@ -84,7 +85,6 @@ def create_top_diversity_lists_db():
         query = ('CREATE table if not exists '+languagecode+'wiki_top_articles_features ('+
         'qitem text,'+
         'page_title_original text,'+
-
         'num_inlinks integer, '+
         'num_outlinks integer, '+
         'num_bytes integer, '+
@@ -100,7 +100,10 @@ def create_top_diversity_lists_db():
         'featured_article integer, '+
         'num_inlinks_from_CCC integer, '+
         'date_created integer, '+
-        'measurement_date text,'+
+        'sexual_orientation text, '+
+        'ethnic_group text, '+
+        'religious_group text, '+
+        'measurement_date text, '+
 
         'PRIMARY KEY (qitem))')
         cursor.execute(query)
@@ -114,7 +117,7 @@ def create_top_diversity_lists_db():
         'PRIMARY KEY (qitem))')
         cursor.execute(query)
 
-        query = ('CREATE table if not exists wcdo_intersections ('+
+        query = ('CREATE table if not exists wdo_intersections ('+
         'set1 text not null, '+
         'set1descriptor text, '+
 
@@ -139,18 +142,25 @@ def generate_all_top_ccc_diversity_articles_lists():
 
     print ('Generating all the Top articles lists.')
 
+    function_realname = 'generate_all_top_ccc_diversity_articles_lists'
+    functionrealstartTime = time.time()
+
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_realname, 'check','')==1: return
+
 #    wikilanguagecodes_real = ['ca']
 #    wikilanguagecodes_real=['it']
 #    wikilanguagecodes_real = ['ca','it','en','es','ro']
 #    wikilanguagecodes_real=['it', 'fr', 'ca', 'en', 'de', 'es', 'nl', 'uk', 'pt', 'pl']
-
 #    wikilanguagecodes_real=wikilanguagecodes[wikilanguagecodes.index('ki'):]
 
     # LANGUAGES
     for languagecode in wikilanguagecodes_real:
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(1,languagecode)
 
-        print ('\n### language '+str(wikilanguagecodes.index(languagecode)+1)+'/'+str(len(wikilanguagecodes))+': \t'+languages.loc[languagecode]['languagename']+' '+languagecode+' \t| '+languages.loc[languagecode]['region']+'\t'+languages.loc[languagecode]['subregion']+'\t'+languages.loc[languagecode]['intermediateregion']+' | '+languages.loc[languagecode]['languageofficialnational']+' '+languages.loc[languagecode]['languageofficialregional'])
+        try:
+            print ('\n### language '+str(wikilanguagecodes.index(languagecode)+1)+'/'+str(len(wikilanguagecodes))+': \t'+languages.loc[languagecode]['languagename']+' '+languagecode+' \t| '+languages.loc[languagecode]['region']+'\t'+languages.loc[languagecode]['subregion']+'\t'+languages.loc[languagecode]['intermediateregion']+' | ')
+        except:
+            pass
 
         # COUNTRIES FOR THE CCC COUNTRY LISTS
         countries = wikilanguages_utils.load_countries_from_language(languagecode,territories)
@@ -188,9 +198,10 @@ def generate_all_top_ccc_diversity_articles_lists():
             if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: continue
             functionstartTime = time.time()
 
+
             # (languagecode, content_type, category, percentage_filtered, time_frame, relevance_rank, relevance_sense, window, representativity, columns, page_titles_qitems, country, list_name)
 
-            ### GENERAL CCC ###
+            ## GENERAL CCC ###
 
             # EDITORS
             make_top_ccc_diversity_articles_list(languagecode, ['ccc'], category, 80, '', {'num_editors': 1}, 'positive', length, 'none', ['num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'editors')
@@ -253,14 +264,16 @@ def generate_all_top_ccc_diversity_articles_lists():
             make_top_ccc_diversity_articles_list(languagecode, ['ccc','male'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'men')
 
 
+
+
             # LGTB BIOGRAPHY MOST EDITED
             make_top_ccc_diversity_articles_list(languagecode, ['ccc','lgtb'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'sexual_orientation')
 
             # ETHNIC GROUPS BIOGRAPHY MOST EDITED
-            make_top_ccc_diversity_articles_list(languagecode, ['ccc','ethnic_groups'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_wdproperty','num_interwiki','supra_ethnic_groups'], page_titles_qitems, country, 'ethnic_groups')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','ethnic_group'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_wdproperty','num_interwiki','supra_ethnic_groups'], page_titles_qitems, country, 'ethnic_group')
 
             # RELIGIOUS GROUPS BIOGRAPHY MOST EDITED
-            make_top_ccc_diversity_articles_list(languagecode, ['ccc','religious_groups'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'religious_groups')
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','religious_group'], category, 80, '', {'num_edits': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'religious_group')
 
 
 
@@ -299,8 +312,8 @@ def generate_all_top_ccc_diversity_articles_lists():
             # INDUSTRY PAGEVIEWS
             make_top_ccc_diversity_articles_list(languagecode, ['ccc','industry'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'industry')
 
-            # INDUSTRY PAGEVIEWS
-            make_top_ccc_diversity_articles_list(languagecode, ['ccc','religion'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'industry')
+            # RELIGION PAGEVIEWS
+            make_top_ccc_diversity_articles_list(languagecode, ['ccc','religion'], category, 80, '', {'num_pageviews': 1}, 'positive', length, 'none', ['num_edits','num_editors','num_pageviews','num_bytes','num_references','num_wdproperty','num_interwiki'], page_titles_qitems, country, 'religion')
 
 
             with open('top_diversity_selection.txt', 'a') as f: f.write(languagecode+'\t'+languages.loc[languagecode]['languagename']+'\t'+country+'\t'+str(datetime.timedelta(seconds=time.time() - country_Time))+'\t'+'done'+'\t'+str(datetime.datetime.now())+'\n')
@@ -309,6 +322,9 @@ def generate_all_top_ccc_diversity_articles_lists():
             duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
             wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionrealstartTime))
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_realname, 'mark', duration)
 
 
 def make_top_ccc_diversity_articles_list(languagecode, content_type, category, percentage_filtered, time_frame, relevance_rank, relevance_sense, window, representativity, columns, page_titles_qitems, country, list_name):
@@ -420,6 +436,8 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
 
     # FILTER ARTICLES IN CASE OF CONTENT TYPE
     if len(content_type)>1:
+        ctype = content_type[1]
+        if ctype == 'lgtb': ctype = 'sexual_orientation'
 
         if content_type[1] == 'people': 
             query = 'SELECT qitem FROM '+languagecode+'wiki WHERE gender IS NOT NULL'
@@ -433,10 +451,14 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
         elif content_type[1] == 'lgtb':
             query = 'SELECT qitem FROM '+languagecode+'wiki WHERE sexual_orientation != "Q1035954"'
 
+        elif content_type[1] == 'religious_group':
+            query = 'SELECT qitem FROM '+languagecode+'wiki WHERE religious_group IS NOT NULL AND gender IS NOT NULL'
+
+        elif content_type[1] == 'ethnic_group':
+            query = 'SELECT qitem FROM '+languagecode+'wiki WHERE ethnic_group IS NOT NULL AND gender IS NOT NULL'
+
         else:
-            query = 'SELECT qitem FROM '+languagecode+'wiki WHERE '+content_type[1]+' IS NOT NULL'
-
-
+            query = 'SELECT qitem FROM '+languagecode+'wiki WHERE '+content_type[1]+' IS NOT NULL;'
 
         topic_selected=set()
         print (query)
@@ -533,10 +555,21 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
     if relevance_sense=='negative': # cles for deletion (no one cares)
         ascending=True
 
+
+    ccc_df = ccc_df.fillna(0)
+    
+    # print(ccc_df.head(10))
+    # print (ccc_df.num_edits)
+    # print(ccc_df.dtypes)
+
+    ccc_df["num_edits"] = ccc_df["num_edits"].astype(int)
+
+
     relevance_measures = ['num_inlinks', 'num_outlinks', 'num_bytes', 'num_references', 'num_edits','num_edits_last_month', 'num_editors', 'num_pageviews', 'num_wdproperty', 'num_interwiki', 'num_discussions', 'num_images', 'featured_article', 'num_inlinks_from_CCC', 'num_retrieval_strategies', 'interwiki_relationship', 'wikirank']
     rank_dict = {}
     for parameter in relevance_rank.keys():
         if parameter in relevance_measures:
+            print (parameter)
             coefficient=relevance_rank[parameter]
             ccc_ranked=ccc_df[parameter].sort_values(ascending=ascending).index.tolist()
             print ('parameter of relevance: '+parameter+ ' with coefficient: '+str(coefficient))
@@ -631,8 +664,8 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
 #        representativity_coefficients[category]=1
 
     representativity_coefficients_sorted = sorted(representativity_coefficients, key=representativity_coefficients.get, reverse=False)
-    print (representativity_coefficients)
-    print (representativity_coefficients_sorted)
+    # print (representativity_coefficients)
+    # print (representativity_coefficients_sorted)
     sum = 0
     for x,y in representativity_coefficients.items(): sum = sum + y
     print (sum)
@@ -696,16 +729,22 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
                     if main_territory != 0 and main_territory in qitems_territories_names: territory = qitems_territories_names[main_territory]
                     else: territory = 'None'
 
-                    print (i,"("+str(y)+")",ccc_df.loc[qitem]['page_title'],qitem,'\t\t\t\t\t'+str(list(relevance_rank.keys())[0])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[0]]),
+                    # print (i,"("+str(y)+")",ccc_df.loc[qitem]['page_title'],qitem,'\t\t\t\t\t'+str(list(relevance_rank.keys())[0])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[0]]),
 
-                    '\t\t'+str('images')+':'+str(ccc_df.loc[qitem]['num_images']),
-                    '\t\t'+str('interwiki')+':'+str(ccc_df.loc[qitem]['num_interwiki']),
-                    '\t\t'+str('editors')+':'+str(ccc_df.loc[qitem]['num_editors']),
+                    # '\t\t'+str('interwiki')+':'+str(ccc_df.loc[qitem]['num_interwiki']),
+                    # '\t\t'+str('editors')+':'+str(ccc_df.loc[qitem]['num_editors']),
+
+                    # '\t\t'+str(ctype)+':'+str(ccc_df.loc[qitem][ctype]),
+
 
 #                    print (i,"("+str(y)+")",ccc_df.loc[qitem]['page_title'],qitem,'\t\t\t\t\t'+str(list(relevance_rank.keys())[0])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[0]]),
 #                    '\t'+str(list(relevance_rank.keys())[1])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[1]]),
 #                    '\t'+str(list(relevance_rank.keys())[2])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[2]]),
-                    qitem,territory,main_territory,x); #input('')
+
+
+                    # );
+
+                    # qitem,territory,main_territory,x); #input('')
 
                     prioritized_list.append(qitem)
                     todelete.append(qitem)
@@ -800,7 +839,7 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
 
 def update_top_ccc_diversity_articles_features():
     function_name = 'update_top_ccc_diversity_articles_features'
-#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -821,17 +860,17 @@ def update_top_ccc_diversity_articles_features():
         print ('There is this number of qitems in '+languagecode+'wiki_top_articles_lists: '+str(len(lists_qitems)))
 
         page_asstring = ','.join( ['?'] * len( lists_qitems ) )
-        query = 'SELECT num_inlinks, num_outlinks, num_bytes, num_references, num_edits, num_editors, num_discussions, num_pageviews, num_wdproperty, num_interwiki, featured_article, num_inlinks_from_CCC, wikirank, num_images, date_created, qitem FROM '+languagecode+'wiki WHERE qitem IN (%s)' % page_asstring
+        query = 'SELECT num_inlinks, num_outlinks, num_bytes, num_references, num_edits, num_editors, num_discussions, num_pageviews, num_wdproperty, num_interwiki, featured_article, sexual_orientation, ethnic_group, religious_group, num_inlinks_from_CCC, wikirank, num_images, date_created, qitem FROM '+languagecode+'wiki WHERE qitem IN (%s)' % page_asstring
 
         parameters = []
         for row in cursor.execute(query, list(lists_qitems)):
             featured_article = row[10]
             if featured_article != 1: featured_article = 0
-            parameters.append((row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],featured_article,row[11],row[12],row[13],row[14],row[15],measurement_date))
+            parameters.append((row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],featured_article,row[11],row[12],row[13],row[14],row[15],row[16],row[17],row[18],measurement_date))
 
         print ('Number of articles updated with features: '+str(len(parameters)))
 
-        query = 'UPDATE '+languagecode+'wiki_top_articles_features SET num_inlinks = ?, num_outlinks = ?, num_bytes = ?, num_references = ?, num_edits = ?, num_editors = ?, num_discussions = ?, num_pageviews = ?, num_wdproperty = ?, num_interwiki = ?, featured_article = ?, num_inlinks_from_CCC = ?, wikirank = ?, num_images = ?, date_created = ? WHERE qitem = ? AND measurement_date = ?'
+        query = 'UPDATE '+languagecode+'wiki_top_articles_features SET num_inlinks = ?, num_outlinks = ?, num_bytes = ?, num_references = ?, num_edits = ?, num_editors = ?, num_discussions = ?, num_pageviews = ?, num_wdproperty = ?, num_interwiki = ?, featured_article = ?, sexual_orientation = ?, ethnic_group = ?, religious_group = ?, num_inlinks_from_CCC = ?, wikirank = ?, num_images = ?, date_created = ? WHERE qitem = ? AND measurement_date = ?;'
         cursor2.executemany(query,parameters)
         conn2.commit()
 
@@ -845,7 +884,7 @@ def update_top_ccc_diversity_articles_features():
 
 def update_top_ccc_diversity_articles_titles(type):
     function_name = 'update_top_ccc_diversity_articles_titles '+type
-#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn4 = sqlite3.connect(databases_path + top_diversity_db); cursor4 = conn4.cursor()
@@ -936,7 +975,7 @@ def update_top_ccc_diversity_articles_titles(type):
 
             # INSERT INTERSECTIONS
             if len(intersections) > 500000 or wikilanguagecodes.index(languagecode_1) == len(wikilanguagecodes)-1:
-                query = 'INSERT OR IGNORE INTO wcdo_intersections (set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, measurement_date) VALUES (?,?,?,?,?,?,?)'
+                query = 'INSERT OR IGNORE INTO wdo_intersections (set1, set1descriptor, set2, set2descriptor, abs_value, rel_value, measurement_date) VALUES (?,?,?,?,?,?,?)'
                 cursor4.executemany(query,intersections); 
                 conn4.commit() # to stats.db
                 print (str(len(intersections))+' intersections inserted.')
@@ -1012,24 +1051,30 @@ def update_top_ccc_diversity_articles_titles(type):
 
     if (type=='old translations'): # JUST USED ONCE. IT DOES NOT NEED TO BE USED CONSTANTLY. IN FACT, NOT NEEDED ANYMORE.
 
-        conn3 = sqlite3.connect(databases_path + 'top_diversity_articles.db'); cursor3 = conn3.cursor()
+        conn3 = sqlite3.connect(databases_path + top_diversity_db); cursor3 = conn3.cursor()
         for languagecode in wikilanguagecodes:
             print (languagecode)
             parameters = []
-            query = 'SELECT page_title_target, qitem FROM ccc_'+languagecode+'wiki_top_articles_page_titles WHERE generation_method = "translation";'
-            for row in cursor3.execute(query):
-                title = row[0]
-                if '@' in title or '#' in title: continue
-                parameters.append((measurement_date,title,row[1]))
-            print (len(parameters))
+            try:
+                query = 'SELECT page_title_target, qitem FROM '+languagecode+'wiki_top_articles_page_titles WHERE generation_method = "translation";'
+                for row in cursor3.execute(query):
+                    title = row[0]
+                    if '@' in title or '#' in title: continue
+                    parameters.append((measurement_date,title,row[1]))
+                print (len(parameters))
 
-            # input('')
+                # input('')
 
-            query = 'INSERT OR IGNORE INTO '+languagecode+'wiki_top_articles_page_titles (measurement_date, page_title_target, qitem, generation_method) values (?,?,?, "translation")'
-#            query = 'UPDATE '+languagecode+'wiki_top_articles_page_titles SET measurement_date = ?, page_title_target = ?, generation_method = "translation" WHERE qitem = ? AND generation_method IS NULL;'
+                query = 'INSERT OR IGNORE INTO '+languagecode+'wiki_top_articles_page_titles (measurement_date, page_title_target, qitem, generation_method) values (?,?,?, "translation")'
+    #            query = 'UPDATE '+languagecode+'wiki_top_articles_page_titles SET measurement_date = ?, page_title_target = ?, generation_method = "translation" WHERE qitem = ? AND generation_method IS NULL;'
 
-            cursor4.executemany(query, parameters)
-            conn4.commit()
+                cursor4.executemany(query, parameters)
+                conn4.commit()
+    
+            except:
+                pass
+
+
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
         wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
@@ -1047,7 +1092,7 @@ def update_top_ccc_diversity_articles_titles(type):
     """
 
 
-    if (type=='translations'): # JUST BE CHECKED. THIS CODE MAY NOT WORK PROPERLY.
+    if (type=='translations'): # TO BE CHECKED. THIS CODE MAY NOT WORK PROPERLY.
         languagecode_translated_from = wikilanguages_utils.load_language_pairs_apertium(wikilanguagecodes)     
         with open('top_diversity_selection.txt', 'a') as f: f.write(','.join(map(str, list(languagecode_translated_from.keys())))+'\n')
 
@@ -1090,7 +1135,8 @@ def update_top_ccc_diversity_articles_titles(type):
                             r = requests.post("https://cxserver.wikimedia.org/v2/translate/"+langcode_original+"/"+langcode_target+"/Apertium", data={'html': '<div>'+title+'</div>'}, timeout=0.3)
                             tryit=0 # https://cxserver.wikimedia.org/v2/?doc  https://codepen.io/santhoshtr/pen/zjMMrG
                         except:
-                            print ('timeout.')
+                            pass
+                            # print ('timeout.')
 
                     if r!=None and r.text!='Provider not supported':
                         page_title_target = str(r.text).split('<div>')[1].split('</div>')[0].replace(' ','_')
@@ -1134,7 +1180,7 @@ def update_top_ccc_diversity_articles_titles(type):
                     page_asstring = ','.join( ['?'] * len(sample) )
 
                     page_titles_language_origin = {}
-                    query = 'SELECT qitem, page_title_target FROM ccc_'+language_origin+'wiki_top_articles_page_titles WHERE measurement_date = "'+measurement_date+'" AND qitem IN (%s)' % page_asstring
+                    query = 'SELECT qitem, page_title_target FROM '+language_origin+'wiki_top_articles_page_titles WHERE measurement_date = "'+measurement_date+'" AND qitem IN (%s)' % page_asstring
                     for row in cursor4.execute(query, sample):
                         page_titles_language_origin[row[0]]=row[1]
 
@@ -1182,7 +1228,8 @@ def update_top_ccc_diversity_articles_titles(type):
 
 def update_top_diversity_articles_interwiki():
 
-    conn = sqlite3.connect(databases_path + top_diversity_production_db); cursor = conn.cursor()
+    functionstartTime = time.time()
+    conn = sqlite3.connect(databases_path + top_diversity_db); cursor = conn.cursor()
     print ('* update_top_diversity_articles_interwiki')
 
     for languagecode in wikilanguagecodes:       
@@ -1265,14 +1312,17 @@ def update_top_diversity_articles_interwiki():
         except:
             pass
 
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    print ('total function duration: '+duration)
 
 
 
 def update_top_diversity_articles_intersections():
 
-    conn4 = sqlite3.connect(databases_path + top_diversity_production_db); cursor4 = conn4.cursor()
+    functionstartTime = time.time()
+    conn4 = sqlite3.connect(databases_path + top_diversity_db); cursor4 = conn4.cursor()
 
-    for x in ['mnw', 'nqo', 'ban', 'gcr', 'szy']: wikilanguagecodes.remove(x)
+    # for x in ['mnw', 'nqo', 'ban', 'gcr', 'szy']: wikilanguagecodes.remove(x)
 
     for languagecode_1 in wikilanguagecodes:
         print ('\n* '+languagecode_1)
@@ -1280,12 +1330,12 @@ def update_top_diversity_articles_intersections():
         intersections = list()
 
         qitems_page_titles = {}
-        query = 'SELECT qitem, page_title_target FROM '+languagecode_1+'wiki_top_articles_page_titles WHERE generation_method ="sitelinks";'
+        query = 'SELECT qitem, page_title_target FROM '+languagecode_1+'wiki_top_articles_page_titles WHERE generation_method = "sitelinks";'
         for row in cursor4.execute(query):
             qitem = row[0]
             page_title_target = row[1]
             qitems_page_titles[qitem]=page_title_target
-        print ('This language has '+str(len(qitems_page_titles))+' articles.')
+        print ('This language has '+str(len(qitems_page_titles))+' articles of other Top CCC.')
 
         lang_art = set(qitems_page_titles.keys())
 
@@ -1294,6 +1344,12 @@ def update_top_diversity_articles_intersections():
         count_intersections = 0
         for languagecode_2 in wikilanguagecodes:
             languagecode_2_qitems = {}
+
+            cursor4.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='"+languagecode_2+"wiki_top_articles_lists';")
+            if cursor4.fetchone()[0]==0: 
+                print ('This language has no table: '+languagecode_2)
+                continue
+
             query = 'SELECT qitem, country, list_name, position FROM '+languagecode_2+'wiki_top_articles_lists WHERE position <= 100 ORDER BY country, list_name, position ASC'
 
             count = 0
@@ -1303,11 +1359,15 @@ def update_top_diversity_articles_intersections():
 
             country_language_qitems = set()
 
+            qitems_unique = set()
+
             for row in cursor4.execute(query): 
                 qitem = row[0]
                 cur_country = row[1]
                 cur_list_name = row[2]
                 cur_position = row[3]
+
+                qitems_unique.add(row[0])
 
 
                 # INTERSECTIONS
@@ -1335,7 +1395,8 @@ def update_top_diversity_articles_intersections():
 
                     if len(country_language_qitems) == 0: rel_value = 0
                     else: rel_value = 100*coincident_qitems_all_qitems/len(country_language_qitems)
-                    intersections.append((coincident_qitems_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode,'wp'))
+                    intersections.append((coincident_qitems_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode_1,'wp'))
+
                     country_language_qitems = set()
 
                 country_language_qitems.add(qitem)
@@ -1379,14 +1440,27 @@ def update_top_diversity_articles_intersections():
             coincident_qitems_all_qitems = len(country_language_qitems.intersection(lang_art))
             if len(country_language_qitems) == 0: rel_value = 0
             else: rel_value = 100*coincident_qitems_all_qitems/len(country_language_qitems)
-            intersections.append((coincident_qitems_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode,'wp'))
+            intersections.append((coincident_qitems_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode_1,'wp'))
+
+
+            # covered articles
+            coincident_language_all_qitems = len(qitems_unique.intersection(lang_art))
+            if len(qitems_unique) == 0: rel_value = 0
+            else: rel_value = 100*coincident_language_all_qitems/len(qitems_unique)
+            list_origin = languagecode_2
+            intersections.append((coincident_language_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode_1,'wp'))
+            # print ((coincident_language_all_qitems,rel_value, measurement_date,list_origin,'all_top_ccc_articles',languagecode_1,'wp'))
+
 
         # INSERT INTERSECTIONS FOR THE LANGUAGE
         # if len(intersections) > 500000 or wikilanguagecodes.index(languagecode_1) == len(wikilanguagecodes)-1:
-        query = 'INSERT OR IGNORE INTO wcdo_intersections (abs_value, rel_value, measurement_date, set1, set1descriptor, set2, set2descriptor) VALUES (?,?,?,?,?,?,?)'
+
+        # print (intersections)
+
+        query = 'INSERT OR IGNORE INTO wdo_intersections (abs_value, rel_value, measurement_date, set1, set1descriptor, set2, set2descriptor) VALUES (?,?,?,?,?,?,?)'
         cursor4.executemany(query,intersections);
 
-        query = 'UPDATE wcdo_intersections SET abs_value = ?, rel_value = ?, measurement_date = ? WHERE set1 = ? AND set1descriptor = ? AND set2 = ? AND set2descriptor = ?;'
+        query = 'UPDATE wdo_intersections SET abs_value = ?, rel_value = ?, measurement_date = ? WHERE set1 = ? AND set1descriptor = ? AND set2 = ? AND set2descriptor = ?;'
         cursor4.executemany(query,intersections);
         conn4.commit() 
         count_intersections += len(intersections)
@@ -1396,6 +1470,10 @@ def update_top_diversity_articles_intersections():
 
         print (str(count_intersections)+' intersections inserted for this language: '+languagecode_1)
         print (str(datetime.timedelta(seconds=time.time() - langTime)))
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    print ('total function duration: '+duration)
+
 
 
 def top_diversity_db_transfer():
@@ -1472,6 +1550,8 @@ if __name__ == '__main__':
 
 
     cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
+    cycle_year_month = '2020-07'
+
 #    check_time_for_script_run(script_name, cycle_year_month)
     startTime = time.time()
 
@@ -1480,8 +1560,6 @@ if __name__ == '__main__':
     measurement_date = time.strftime('%Y%m%d', time.gmtime(os.path.getmtime('/srv/wcdo/databases/wikipedia_diversity.db')))
 #    measurement_date = '20180926'
 
-
-    periods_monthly,periods_accum = wikilanguages_utils.get_months_queries()
 
     # Import the language-territories mappings
     territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
@@ -1499,7 +1577,7 @@ if __name__ == '__main__':
     for languagecode in wikilanguagecodes:
         if languagecode not in wikipedialanguage_currentnumberarticles: wikilanguagecodes.remove(languagecode)
 
-    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
+    languageswithoutterritory=list(set(languages.index.tolist()) - set(list(territories.index.tolist())))
     # Only those with a geographical context
     wikilanguagecodes_real = wikilanguagecodes.copy()
     for languagecode in languageswithoutterritory: wikilanguagecodes_real.remove(languagecode)
@@ -1511,7 +1589,7 @@ if __name__ == '__main__':
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    duration = str(datetime.timedelta(seconds=time.time() - startTime))
     wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
     wikilanguages_utils.finish_email(startTime,'top_diversity_selection.out','Top Diversity lists created')

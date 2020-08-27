@@ -48,14 +48,246 @@ import gc
 def main():
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+def extend_editors_retention_metrics(languagecode,page_titles_qitems, page_titles_page_ids):
+
+    functionstartTime = time.time()
+    function_name = 'extend_articles_history_features '+languagecode
+
+    last_month_date = datetime.date.today() - relativedelta.relativedelta(months=1)
+    first_day = int(last_month_date.replace(day = 1).strftime('%Y%m%d%H%M%S'))
+    last_day = int(last_month_date.replace(day = calendar.monthrange(last_month_date.year, last_month_date.month)[1]).strftime('%Y%m%d%H%M%S'))
+
+    conn2 = sqlite3.connect(databases_path + 'editors_pages.db'); cursor2 = conn2.cursor()
+    try:
+        os.remove(databases_path+'editors_pages.db')
+    except:
+        pass
+
+    try:
+        query = 'CREATE TABLE editors (page_id integer, editor integer, PRIMARY KEY (page_id, editor));'
+        cursor2.execute(query)
+        conn2.commit()
+    except:
+        pass
+
+    article_completed = {}
+
+    first_edit_timestamp = {}
+    last_edit_timestamp = {}
+    last_discussion_timestamp = {}
+
+    num_edits = {}
+    num_edits_last_month = {}
+
+    num_discussions = {}
+    for page_title in page_titles_qitems.keys():
+        num_edits[page_title]=0
+        num_edits_last_month[page_title]=0
+        num_discussions[page_title]=0
+
+        first_edit_timestamp[page_title]=0
+        last_edit_timestamp[page_title]=0
+        last_discussion_timestamp[page_title]=0
+
+    d_paths = []
+
+    cym = cycle_year_month
+    print ('/public/dumps/public/other/mediawiki_history/'+cym)
+    if os.path.isdir('/public/dumps/public/other/mediawiki_history/'+cym)==False:
+        cym = datetime.datetime.strptime(cym,'%Y-%m')-dateutil.relativedelta.relativedelta(months=1)
+        cym = cym.strftime('%Y-%m')
+        print ('/public/dumps/public/other/mediawiki_history/'+cym)
+
+    dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.all-time.tsv.bz2'
+    if os.path.isfile(dumps_path):
+        print ('one all-time file.')
+        d_paths.append(dumps_path)
+
+    else:
+        print ('multiple files.')
+        for year in range (2025, 1999, -1):
+            dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'.tsv.bz2'
+            if os.path.isfile(dumps_path): 
+                d_paths.append(dumps_path)
+
+        if len(d_paths) == 0:
+            for year in range(2025, 1999, -1): # months
+                for month in range(13, 0, -1):
+                    if month > 9:
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-'+str(month)+'.tsv.bz2'
+                    else:
+                        dumps_path = '/public/dumps/public/other/mediawiki_history/'+cym+'/'+languagecode+'wiki/'+languagecode+'wiki.'+str(year)+'-0'+str(month)+'.tsv.bz2'
+
+                    if os.path.isfile(dumps_path) == True:
+                        d_paths.append(dumps_path)
+
+    print(len(d_paths))
+    print (d_paths)
+    print ('Total number of articles: '+str(len(num_edits)))
+
+    if (len(d_paths)==0):
+        print ('dump error at script '+script_name)
+        send_email_toolaccount('dump error at script '+script_name, dumps_path)
+        quit()
+
+    for dump_path in d_paths:
+
+        print(dump_path)
+        iterTime = time.time()
+
+        dump_in = bz2.open(dump_path, 'r')
+        line = dump_in.readline()
+        line = line.rstrip().decode('utf-8')[:-1]
+        values=line.split(' ')
+
+        parameters = []
+        editors_params = []
+        iter = 0
+        while line != '':
+            # iter += 1
+            # if iter % 1000000 == 0: print (str(iter/1000000)+' million lines.')
+            line = dump_in.readline()
+            line = line.rstrip().decode('utf-8')[:-1]
+            values=line.split('\t')
+
+            if len(values)==1: continue
+
+            # page_title_historical = values[24]
+            page_id = values[23]
+            page_title = values[25]
+            if page_title not in first_edit_timestamp: continue
+
+            try:
+                page_namespace = int(values[28])
+            except:
+                continue
+
+            edit_count = values[34]
+            # seconds_last_edit = values[35]
+
+            last_timestamp = values[3]
+            if last_timestamp != 'null': last_timestamp = int(datetime.datetime.strptime(last_timestamp[:len(last_timestamp)-2],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S'))
+            else: last_timestamp = 0
+
+            if page_namespace == 0:
+                if last_edit_timestamp[page_title] < last_timestamp:
+                    last_edit_timestamp[page_title] = last_timestamp
+                    num_edits[page_title]=edit_count
+
+                first_timestamp = values[33]
+                if first_timestamp != 'null': first_timestamp = int(datetime.datetime.strptime(first_timestamp[:len(first_timestamp)-2],'%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S'))
+                else: first_timestamp = 0
+
+                if last_timestamp == first_timestamp:
+                    article_completed[page_title] = None
+                    first_edit_timestamp[page_title]=first_timestamp
+
+                user_anon = values[5]
+                # user_text = values[38]
+                if user_anon != "null":
+                    try:
+                        editors_params.append((user_anon,page_id))
+                        # num_editors[page_title].add(int(user_anon))
+                    except:
+                        pass
+
+                if last_timestamp > first_day and last_timestamp < last_day:
+                    # print (page_title, first_day, last_day, last_edit_timestamp)
+                    try:
+                        num_edits_last_month[page_title]+=1
+                    except:
+                        pass
+
+            if page_namespace == 1:
+                if last_discussion_timestamp[page_title] < last_timestamp:
+                    last_discussion_timestamp[page_title] = last_timestamp
+                    num_discussions[page_title] = edit_count
+
+
+        query = 'INSERT OR IGNORE INTO editors (editor, page_id) VALUES (?,?);'
+        cursor2.executemany(query,editors_params)
+        conn2.commit()
+        editors_params = []
+
+        for page_title in article_completed.keys():
+
+            try:
+                parameters.append((num_edits[page_title], num_discussions[page_title], num_edits_last_month[page_title], first_edit_timestamp[page_title], last_edit_timestamp[page_title], last_discussion_timestamp[page_title], page_titles_page_ids[page_title], page_titles_qitems[page_title], page_title))
+
+                # del num_editors[page_title]
+                del num_edits[page_title]
+                del num_discussions[page_title]
+                del num_edits_last_month[page_title]
+                del first_edit_timestamp[page_title]
+                del last_edit_timestamp[page_title]
+                del last_discussion_timestamp[page_title]
+
+            except:
+                pass
+        article_completed = {}
+
+        conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+        query = 'UPDATE '+languagecode+'wiki SET (num_edits, num_discussions, num_edits_last_month, date_created, date_last_edit, date_last_discussion)=(?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title = ?;'
+        cursor.executemany(query,parameters)
+        conn.commit()
+        print ('Articles introduced: '+str(len(parameters))+'. Articles left for next files or not in the database: '+str(len(num_edits))+'.')
+        print ('This file took: '+str(datetime.timedelta(seconds=time.time() - iterTime)))
+        parameters = []
+
+    parameters = []
+    
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + 'editors_pages.db'); cursor2 = conn2.cursor()
+    query = 'SELECT count(*), page_id FROM editors GROUP BY page_id ORDER BY page_id;'
+    for row in cursor2.execute(query):
+        page_id = row[1]
+        try:
+            parameters.append((row[0],page_id,page_ids_qitems[page_id]))
+        except:
+            pass
+
+    query = 'UPDATE '+languagecode+'wiki SET num_editors = ? WHERE page_id = ? AND qitem = ?;'
+    cursor.executemany(query, parameters)
+    conn.commit()
+    os.remove(databases_path+'editors_pages.db')
+
+    print(languagecode+' history parsed and stored')
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def old_main():
+
+
     # editors
     create_editor_diversity_db('create')
     insert_editors_flags()
     for languagecode in wikilanguagecodes:
         insert_editors_edits(languagecode)
         insert_editors_multilingualism(languagecode)
-
-
 
     for languagecode in wikilanguagecodes:
         store_all_history_table(languagecode)

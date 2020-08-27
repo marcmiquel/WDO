@@ -44,21 +44,217 @@ ccc_all_dict = {'CCC':'ccc','Geolocated':'ccc_geolocated','Men':'men','Women':'w
 query_type_dict = {'Wikipedia Article Search':'search', 'Wikidata SPARQL Query':'sparql', 'List of articles':'alist', "List of categories' articles":'clist'}
 
 
-text_default = '''In this page you can search for articles in a Wikipedia language edition and see their availability in other language editions. First, you need to select the *Source Language* where you want to retrieve the content from. Then you can choose the *Type of query*: Wikipedia Article Search, Wikidata SPARQL Query, List of articles, and List of categories articles. 
+text_default = '''In this page you can search for articles in a Wikipedia language edition and see their availability in other language editions.'''
+
+
+type_query = '''You must choose the *Type of query*: Wikipedia Article Search, Wikidata SPARQL Query, List of articles, and List of categories articles. 
 
     * The *Wikipedia Article Search* allows you to introduce a query to the same search engine of Wikipedia has (CirrusSearch) and retrieve some articles. For example, if you introduce the Source Language English and the query "Japanese Cuisine", you will obtain the articles from English Wikipedia along with their main stats on relevance features (number of editors, edits, discussion edits, pageviews, etc.). When using the search option, you can introduce the *Language of the query* and specify which language you are using to query (e.g. You can query "cuisine du Japon" if you are using French).
     * The *Wikidata SPARQL Query* allows you to introduce a query in the textbox and retrieve the articles related to the Qitems that appear in them (if the query does not contain any Qitem and only labels, there will be no results).
     * The *List of articles* query simply allows you to introduce a list of articles (their titles or their URLs separated by a comma, semicolon or a line break) in the textbox in order to see the main stats and their availability in the *Target Languages*. 
-    * The *List of categories' articles* allows you to introduce a list of categories and retrieve the articles contained in them. 
+    * The *List of categories' articles* allows you to introduce a list of categories and retrieve the articles contained in them. '''
 
-    All the queries return a table with the articles in the source language and its main stats and its availability in the *Target Languages*. The table will also show the title of the article in the first target language as long as it is available. For this it is recommended to select the first target language as English, since the article may already exists, and the second target language as the one you are currently working on (probably your home-wiki). You can also filter the results with the parameter *Topic* which allows you to show only articles from certain topics (CCC, Geolocated, Men and Women). The parameter *Order by feature* sorts the results by a specific feature, and the parameter *Limit the results* limits the search results to a specific number.
-
-    This tool is in Alpha version - you may find bugs. In this case, please e-mail us at tools.wcdo@tools.wmflabs.org.
-'''
 
 text_results = '''
 The following table shows the results from the query. The columns present the title in the source language, a set of features (number of inlinks, number of inlinks from the source language CCC, number of Outlinks, number of Bytes, number of References, number of Images, number of Editors, number of Edits, number of Discussions, number of Pageviews, numer of Interwiki links and number of Wikidata properties) from the article in the source language, the title in the first target language (in case it exists), and the languages in which it is available from the target languages.
 '''
+
+
+
+
+
+interface_row1 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [   
+            "Source ",
+            html.Span(
+                "Wikipedia",
+                id="tooltip-target-wp",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select the Source Wikipedia language edition where you want to retrieve the content from.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-wp",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Type of ",
+            html.Span(
+                "query",
+                id="tooltip-target-query",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    ],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+    dbc.Tooltip(
+        html.Div(
+            dcc.Markdown(type_query.replace('  ', '')),
+        style={"width": 870, 'font-size': 12, 'text-align':'left','backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-query",
+        placement="top",
+        style={'color':'black','backgroundColor':'transparent'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Language of the ",
+            html.Span(
+                "query",
+                id="tooltip-target-langq",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select the language in which you are making the query for a better performance (optional).",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-langq",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+])
+
+
+interface_row2 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                html.H5('Target Wikipedias'),
+                id="tooltip-target-tlangq",
+                style={"cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "All the queries return a table with the articles in the source language and its main stats and its availability in the *Target Languages*. The table will also show the title of the article in the first target language as long as it is available. For this it is recommended to select the first target language as English, since the article may already exists, and the second target language as the one you are currently working on (probably your home-wiki).",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-tlangq",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    ])
+
+
+
+
+
+
+interface_row4 = html.Div([
+
+    html.Div(
+    [
+    html.P(
+        [
+            html.Span(
+                "Topic",
+                id="tooltip-target-topic",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a topic to filter the results to show only articles about certain topics (CCC, Geolocated, Men and Women)..",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-topic",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Order by ",
+            html.Span(
+                "feature",
+                id="tooltip-target-feat",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Select a feature to sort the results.",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-feat",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    ),
+
+
+
+    html.Div(
+    [
+    html.P(
+        [
+            "Limit the ",
+            html.Span(
+                "number of articles",
+                id="tooltip-target-limit",
+                style={"textDecoration": "underline", "cursor": "pointer"},
+            ),
+        ]
+    ),
+    dbc.Tooltip(
+        html.P(
+            "Choose a number of results (by default 100)",
+        style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
+        ),
+        target="tooltip-target-limit",
+        placement="bottom",
+        style={'color':'black', 'backgroundColor':'transparent'},
+    )],
+    style={'display': 'inline-block','width': '200px'},
+    )
+
+])
 
 
 # ['source_lang','query_lang','query_type','textbox','target_langs','topic','order_by','limit']
@@ -233,20 +429,9 @@ def dash_app23_build_layout(params):
                 html.Br(),
                 html.H5('Select the source'),
 
-                html.Div(
-                html.P('Source Wikipedia'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Type of query'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Language of the query'),
-                style={'display': 'inline-block','width': '200px'}),
+                interface_row1, 
 
 
-                html.Br(),
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='source_lang',
@@ -290,7 +475,7 @@ def dash_app23_build_layout(params):
 
                 html.Br(),
 
-                html.H5('Target Wikipedias'),
+                interface_row2,
 
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -305,19 +490,8 @@ def dash_app23_build_layout(params):
 
                 html.H5('Filter by content'),
 
-                html.Div(
-                html.P('Topic'),
-                style={'display': 'inline-block','width': '200px'}),
+                interface_row4,
 
-                html.Div(
-                html.P('Order by feature'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Div(
-                html.P('Limit the results'),
-                style={'display': 'inline-block','width': '200px'}),
-
-                html.Br(),
                 html.Div(
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='topic',
@@ -537,20 +711,7 @@ def dash_app23_build_layout(params):
             # HERE GOES THE INTERFACE
             html.H5('Select the source'),
 
-            html.Div(
-            html.P('Source Wikipedia'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Type of query'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Language of the query'),
-            style={'display': 'inline-block','width': '200px'}),
-
-
-            html.Br(),
+            interface_row1,
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_lang',
@@ -594,7 +755,7 @@ def dash_app23_build_layout(params):
 
             html.Br(),
 
-            html.H5('Target Wikipedias'),
+            interface_row2,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -609,19 +770,8 @@ def dash_app23_build_layout(params):
 
             html.H5('Filter by content'),
 
-            html.Div(
-            html.P('Topic'),
-            style={'display': 'inline-block','width': '200px'}),
+            interface_row4,
 
-            html.Div(
-            html.P('Order by feature'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit the results'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='topic',
@@ -691,20 +841,8 @@ def dash_app23_build_layout(params):
 
             html.H5('Select the source'),
 
-            html.Div(
-            html.P('Source Wikipedia'),
-            style={'display': 'inline-block','width': '200px'}),
+            interface_row1,
 
-            html.Div(
-            html.P('Type of query'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Language of the query'),
-            style={'display': 'inline-block','width': '200px'}),
-
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='source_lang',
@@ -748,7 +886,7 @@ def dash_app23_build_layout(params):
 
             html.Br(),
 
-            html.H5('Target Wikipedias'),
+            interface_row2,
 
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
@@ -763,19 +901,8 @@ def dash_app23_build_layout(params):
 
             html.H5('Filter by content'),
 
-            html.Div(
-            html.P('Topic'),
-            style={'display': 'inline-block','width': '200px'}),
+            interface_row4,
 
-            html.Div(
-            html.P('Order by feature'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Div(
-            html.P('Limit the results'),
-            style={'display': 'inline-block','width': '200px'}),
-
-            html.Br(),
             html.Div(
             dash_apps.apply_default_value(params)(dcc.Dropdown)(
                 id='topic',

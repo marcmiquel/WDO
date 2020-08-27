@@ -65,6 +65,8 @@ def execution_block_diversity_groups_features():
         label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles_qitems)
         label_start_and_end_time_wd(languagecode, page_titles_page_ids, page_titles_qitems)
 
+
+    wikilanguages_utils.store_group_identities_labels(wikilanguagecodes)
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
@@ -191,7 +193,7 @@ def label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles
 
     functionstartTime = time.time()
     function_name = 'label_ethnic_supra_ethnic_wd '+languagecode
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
@@ -204,9 +206,7 @@ def label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles
     for row in cursor3.execute(query):
         supra_ethnic_group_qitems[row[0]]=row[1]
 
-
     query = "SELECT ethnic_group_properties.qitem, ethnic_group_properties.qitem2 FROM ethnic_group_properties INNER JOIN sitelinks ON sitelinks.qitem = ethnic_group_properties.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki';"
-
 
     cursor2.execute('UPDATE '+languagecode+'wiki SET ethnic_group = null, supra_ethnic_group = null;')
     conn2.commit()
@@ -226,8 +226,6 @@ def label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles
 
             try:
                 page_id=qitems_page_ids[old_qitem]
-                # print (ethnic_groups, supra_ethnic_groups, page_id, old_qitem)
-                # print ((";".join(ethnic_groups), ";".join(supra_ethnic_groups), page_id, old_qitem))
                 params.append((";".join(ethnic_groups), ";".join(supra_ethnic_groups), page_id, old_qitem))
             except:
                 pass
@@ -236,18 +234,10 @@ def label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles
             ethnic_groups = set()
 
         ethnic_group = row[1]
+        ethnic_groups.add(ethnic_group)
 
-        try:
+        if ethnic_group in supra_ethnic_group_qitems:
             supra_ethnic_group = supra_ethnic_group_qitems[ethnic_group]
-            ethnic_group_is = 1
-        except:
-            supra_ethnic_group = ''
-            ethnic_group_is = 0
-
-        if ethnic_group_is == 1:
-            ethnic_groups.add(ethnic_group)
-
-        if supra_ethnic_group != '': 
             supra_ethnic_groups.add(supra_ethnic_group)
 
         old_qitem = qitem
@@ -258,7 +248,7 @@ def label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles
     conn2.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+    # wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -414,8 +404,6 @@ def label_start_and_end_time_wd(languagecode, page_titles_page_ids, page_titles_
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-
-
 
 
 
@@ -1344,8 +1332,6 @@ if __name__ == '__main__':
     print (wikilanguagecodes)
     print (len(wikilanguagecodes))
 
-    languageswithoutterritory=['eo','got','ia','ie','io','jbo','lfn','nov','vo']
-
     # Get the number of Articles for each Wikipedia language edition
     wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')
 #    print (wikilanguagecodes)
@@ -1353,7 +1339,7 @@ if __name__ == '__main__':
     wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=True)]
     biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
 
-    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+#    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
 
 
     main()

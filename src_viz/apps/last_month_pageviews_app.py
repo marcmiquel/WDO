@@ -14,10 +14,10 @@ def params_to_df(langs, content_type):
     lass = ','.join( ['?'] * len(langs) )
 
     if content_type == 'ccc':
-        query = "SELECT set2 as Covered_Language, rel_value as Extent_Pageviews, abs_value as Pageviews FROM wcdo_intersections_monthly WHERE set1 IN ("+lass+") AND content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND period = '"+last_period+"';"
+        query = "SELECT set2 as Covered_Language, rel_value as Extent_Pageviews, abs_value as Pageviews FROM wdo_intersections_monthly WHERE set1 IN ("+lass+") AND content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND period = '"+last_period+"';"
         df_ccc_pv = pd.read_sql_query(query, conn, params = langs).round(1)
 
-        query = "SELECT set2 as Covered_Language, rel_value Extent_Articles, abs_value as Articles FROM wcdo_intersections_accumulated WHERE content='articles' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1 IN ("+lass+") AND period = '"+last_period+"';"
+        query = "SELECT set2 as Covered_Language, rel_value Extent_Articles, abs_value as Articles FROM wdo_intersections_accumulated WHERE content='articles' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1 IN ("+lass+") AND period = '"+last_period+"';"
         df_ccc_articles = pd.read_sql_query(query, conn, params = langs).round(1)
 
         df_ccc_final = df_ccc_articles.merge(df_ccc_pv, on='Covered_Language', how='outer')
@@ -34,10 +34,10 @@ def params_to_df(langs, content_type):
 
     if content_type == 'gender':
 
-        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Gender, abs_value as Pageviews, rel_value as Extent_Pageviews, content FROM wcdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'gender' AND Gender IN ('male','female') AND period = '"+last_period+"' AND content = 'pageviews'"
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Gender, abs_value as Pageviews, rel_value as Extent_Pageviews, content FROM wdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'gender' AND Gender IN ('male','female') AND period = '"+last_period+"' AND content = 'pageviews'"
         df_gender_pageviews = pd.read_sql_query(query, conn, params = langs)
 
-        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Gender, abs_value as Articles, rel_value as Extent_Articles FROM wcdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND content = 'articles'  AND set1descriptor = 'wp' AND Gender IN ('male','female') AND set2 = 'wikidata_article_qitems' AND period = '"+last_period+"';"
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Gender, abs_value as Articles, rel_value as Extent_Articles FROM wdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND content = 'articles'  AND set1descriptor = 'wp' AND Gender IN ('male','female') AND set2 = 'wikidata_article_qitems' AND period = '"+last_period+"';"
         df_gender_articles = pd.read_sql_query(query, conn, params = langs)
 
 
@@ -54,7 +54,7 @@ def params_to_df(langs, content_type):
 
     if content_type == 'country':
 
-        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor, abs_value as Pageviews, rel_value as Extent_Pageviews FROM wcdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'country' AND period = '"+last_period+"' AND content = 'pageviews';"
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor, abs_value as Pageviews, rel_value as Extent_Pageviews FROM wdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'country' AND period = '"+last_period+"' AND content = 'pageviews';"
         df_country_pageviews = pd.read_sql_query(query, conn, params = langs)
         df_country_pageviews = df_country_pageviews.rename(columns={'set2descriptor':'ISO 3166','Extent_Pageviews':'Extent Pageviews (%)'})
         df_country_pageviews['Country'] = df_country_pageviews['ISO 3166'].map(country_names)
@@ -63,7 +63,7 @@ def params_to_df(langs, content_type):
         df_country_pageviews = df_country_pageviews
 
         # articles geolocated
-        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor, abs_value as Articles, rel_value FROM wcdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND set2 = 'countries' AND set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor, abs_value as Articles, rel_value FROM wdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND set2 = 'countries' AND set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
         df_country_articles = pd.read_sql_query(query, conn, params = langs)
         df_country_articles = df_country_articles.rename(columns={'rel_value':'Extent Articles (%)','set2descriptor':'ISO 3166'})
 
@@ -74,12 +74,12 @@ def params_to_df(langs, content_type):
 
     if content_type == 'region':
 
-        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Region, abs_value as Pageviews, rel_value as Extent_Pageviews FROM wcdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'region' AND period = '"+last_period+"' AND content = 'pageviews';"
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Region, abs_value as Pageviews, rel_value as Extent_Pageviews FROM wdo_intersections_monthly WHERE Wiki IN ("+lass+") AND set1descriptor = 'wp' AND set2 = 'region' AND period = '"+last_period+"' AND content = 'pageviews';"
         df_region_pageviews = pd.read_sql_query(query, conn, params = langs)
         df_region_pageviews = df_region_pageviews.rename(columns={'Extent_Pageviews':'Extent Pageviews (%)'})
 
 
-        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Region, abs_value as Articles, rel_value FROM wcdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND set2 = 'regions' AND set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
+        query = "SELECT set1 || ':' || set2descriptor as id, set1 as Wiki, set2descriptor as Region, abs_value as Articles, rel_value FROM wdo_intersections_accumulated WHERE Wiki IN ("+lass+") AND set2 = 'regions' AND set1descriptor = 'geolocated' AND content = 'articles' AND period = '"+last_period+"' ORDER BY abs_value DESC;"
         df_region_articles = pd.read_sql_query(query, conn, params = langs)
         df_region_articles = df_region_articles.rename(columns={'rel_value':'Extent Articles (%)'})
 
@@ -99,7 +99,7 @@ conn = sqlite3.connect(databases_path + 'stats_production.db'); cursor = conn.cu
 
 #### CCC PAGEVIEWS TABLE
 ccc_percent_wp = {}
-query = 'SELECT set1, rel_value FROM wcdo_intersections_accumulated WHERE content="articles" AND period = "'+last_period+'" AND set1 = set2 AND set1descriptor="wp" AND set2descriptor = "ccc";'
+query = 'SELECT set1, rel_value FROM wdo_intersections_accumulated WHERE content="articles" AND period = "'+last_period+'" AND set1 = set2 AND set1descriptor="wp" AND set2descriptor = "ccc";'
 for row in cursor.execute(query):
     value = row[1]
     if value == None: value = 0
@@ -108,7 +108,7 @@ for row in cursor.execute(query):
 
 pageviews = {}
 ccc_pageviews_percent = {}
-query = "SELECT set1, rel_value, abs_value FROM wcdo_intersections_monthly WHERE content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1=set2 ORDER BY set1, rel_value DESC;"
+query = "SELECT set1, rel_value, abs_value FROM wdo_intersections_monthly WHERE content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1=set2 ORDER BY set1, rel_value DESC;"
 # quant pesen els pageviews del ccc propi en el total de lang1?
 for row in cursor.execute(query):
     try:
@@ -119,7 +119,7 @@ for row in cursor.execute(query):
 
 own_ccc_top_pageviews = {}
 own_ccc_top_pageviews_abs = {}
-query = "SELECT set1, rel_value, abs_value, period FROM wcdo_intersections_monthly WHERE period = '"+last_period+"' AND content='pageviews' AND set1descriptor='ccc' AND set2='top_articles_lists' AND set2descriptor='pageviews' ORDER BY set1, rel_value DESC;"
+query = "SELECT set1, rel_value, abs_value, period FROM wdo_intersections_monthly WHERE period = '"+last_period+"' AND content='pageviews' AND set1descriptor='ccc' AND set2='top_articles_lists' AND set2descriptor='pageviews' ORDER BY set1, rel_value DESC;"
 for row in cursor.execute(query):
     own_ccc_top_pageviews[row[0]]=round(row[1],1)
     own_ccc_top_pageviews_abs[row[0]]=row[2]
@@ -139,7 +139,7 @@ df_own_top_ccc = df_own_top_ccc.loc[(df_own_top_ccc['Region']!='')]
 
 
 language_dict={}
-query = "SELECT set1, set2, rel_value, abs_value FROM wcdo_intersections_monthly WHERE content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1!=set2 AND set2 != 'simple' ORDER BY set1, abs_value DESC;"
+query = "SELECT set1, set2, rel_value, abs_value FROM wdo_intersections_monthly WHERE content='pageviews' AND set1descriptor='wp' AND set2descriptor='ccc' AND set1!=set2 AND set2 != 'simple' ORDER BY set1, abs_value DESC;"
 # quant pesen els pageviews dl ccc d'altres?
 
 
@@ -234,12 +234,14 @@ dash_app6.layout = html.Div([
     html.H3(title, style={'textAlign':'center'}),
     dcc.Markdown('''
         This page shows statistics and graphs that explain the distribution of pageviews in each Wikipedia language edition and for each type of articles. Different kinds of gaps also appear in the pageviews. 
-        The graphs answer the following questions:
-        * What is the extent of pageviews dedicated to each country and world region in each Wikipedia language edition?
-        * What is the extent of pageviews dedicated to each language CCC in each Wikipedia language edition?
-        * What is the extent of pageviews dedicated to each language edition Top CCC lists in relation to their language CCC?
-        * What is the gender gap in pageviews in biographies in each Wikipedia language edition? 
        '''),
+    # dcc.Markdown('''
+    #     The graphs answer the following questions:
+    #     * What is the extent of pageviews dedicated to each country and world region in each Wikipedia language edition?
+    #     * What is the extent of pageviews dedicated to each language CCC in each Wikipedia language edition?
+    #     * What is the extent of pageviews dedicated to each language edition Top CCC lists in relation to their language CCC?
+    #     * What is the gender gap in pageviews in biographies in each Wikipedia language edition? 
+    #    '''),
     html.Br(),
 #    #html.Hr(),
 
@@ -248,15 +250,14 @@ dash_app6.layout = html.Div([
         dcc.Tab(label='Extent of Geolocated Entities in Pageviews (Treemap)', children=[
             html.Br(),
 
-            html.H5('Extent of Geolocated Entities (Countries and Regions) in Pageviews Treemap'),
+            # html.H5('Extent of Geolocated Entities (Countries and Regions) in Pageviews'),
             dcc.Markdown('''* **What is the extent of pageviews dedicated to each country and world region in each Wikipedia language edition?**
-
-                The following treemap graphs show for a selected Wikipedia language edition the extent of geographical entities (countries, subregions and world regions) in their geolocated articles. This can either be in terms of the number of articles or the pageviews they receive. The size of the tiles is according to the extent of the geographical entities take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
              '''.replace('  ', '')),
+
             html.Br(),
             html.Div(
             html.P('Select a Wikipedia and a type of geographical entity'),
-            style={'display': 'inline-block','width': '200px'}),
+            style={'display': 'inline-block','width': '400px'}),
             html.Br(),
 
             html.Div(
@@ -275,16 +276,20 @@ dash_app6.layout = html.Div([
              ),
             dcc.Graph(id = 'geolocated_treemap'),
 
+
+            dcc.Markdown('''The treemap graphs show for a selected Wikipedia language edition the extent of geographical entities (countries, subregions and world regions) in their geolocated articles. This can either be in terms of the number of articles or the pageviews they receive. The size of the tiles is according to the extent of the geographical entities take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
+             '''.replace('  ', '')),
+
+
         ]),
 
-        dcc.Tab(label="Extent of Languages' CCC in Pageviews (Treemap)", children=[
+        dcc.Tab(label="Extent of Languages' CCC in Pageviews", children=[
             html.Br(),
 
-            html.H5("Extent of Languages' CCC in Pageviews Treemap"),
+#            html.H5("Extent of Languages' CCC in Pageviews"),
             dcc.Markdown('''* **What is the extent of pageviews dedicated to each language CCC in each Wikipedia language edition?**
-
-                The following treemap graphs shows for a selected Wikipedia language edition the extent each language CCC take in the sum of articles and pageviews dedicated and received by all languages CCC. The size of the tiles is according to the extent the language CCC take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
              '''.replace('  ', '')),
+
             html.Br(),
             html.Div(
             html.P('Select a Wikipedia'),
@@ -301,6 +306,8 @@ dash_app6.layout = html.Div([
 
             dcc.Graph(id = 'language_ccc_treemap'),
             #html.Hr(),
+            dcc.Markdown('''The treemap graphs show for a selected Wikipedia language edition the extent each language CCC take in the sum of articles and pageviews dedicated and received by all languages CCC. The size of the tiles is according to the extent the language CCC take and the color simply represent the diversity of entities. When you hover on a tile you can compare both articles and pageviews extent in relative (percentage) and absolute (articles and pageviews).
+             '''.replace('  ', '')),
 
         ]),
 
@@ -309,13 +316,8 @@ dash_app6.layout = html.Div([
         dcc.Tab(label="Extent of Languages' CCC in Pageviews (Table)", children=[
             html.Br(),
 
-            html.H5("Last Month Pageviews in CCC by Wikipedia language edition"),
-            dcc.Markdown('''The following table shows for each language edition the relative popularity 
-                of the own CCC articles as well as that from the CCC articles originary from other language editions.
-
-                Languages are sorted in alphabetic order by their name, and the columns present the following 
-                statistics: the number of articles in the Wikipedia language edition (**Articles**), the percentage of CCC articles (**CCC art %**), the number of pageviews (**Pageviews**), the percentage of pageviews dedicated to CCC articles (**CCC %**), the percentage of pageviews dedicated to the language edition Top CCC articles (**Top CCC %**) (taking into account the first hundred articles from each list), the percentage of pageviews dedicated to all the Top CCC articles from all language editions (**All Top%**) including the own, and the percentage of pageviews dedicated to the **first five other language CCC**. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
-
+            # html.H5("Last Month Pageviews in CCC by Wikipedia language edition"),
+            dcc.Markdown('''The table shows for each language edition the relative popularity of the own CCC articles as well as that from the CCC articles originary from other language editions.'''.replace('  ', '')),
 
             dash_table.DataTable(
                 id='datatable-cccpageviews',
@@ -345,7 +347,15 @@ dash_app6.layout = html.Div([
             ),
             html.Br(),
             html.Br(),
+            html.Br(),
+            html.Br(),
 
+
+            dcc.Markdown('''Languages are sorted in alphabetic order by their name, and the columns present the statistics: the number of articles in the Wikipedia language edition (**Articles**), the percentage of CCC articles (**CCC art %**), the number of pageviews (**Pageviews**), the percentage of pageviews dedicated to CCC articles (**CCC %**), the percentage of pageviews dedicated to the language edition Top CCC articles (**Top CCC %**) (taking into account the first hundred articles from each list), the percentage of pageviews dedicated to all the Top CCC articles from all language editions (**All Top%**) including the own, and the percentage of pageviews dedicated to the **first five other language CCC**. Finally, **Region** (continent) and **Subregion** are introduced in order to contextualize the results.'''.replace('  ', '')),
+
+            html.Br(),
+            html.Br(),
+            
             html.Div(id='datatable-cccpageviews-container'),
 
         ]),
@@ -354,17 +364,19 @@ dash_app6.layout = html.Div([
         dcc.Tab(label="Extent of Languages' Top CCC in Pageviews (Scatterplot)", children=[
             html.Br(),
 
-            html.H5("Extent of Languages' Top CCC in Pageviews Scatterplot"),
+            # html.H5("Extent of Languages' Top CCC in Pageviews"),
             dcc.Markdown('''
                 * **What is the extent of pageviews dedicated to each language edition Top CCC lists in relation to their language CCC?**
-
-                The following scatterplot shows for each language edition Top CCC lists articles, the number of pageviews they receive (y-axis in logscale) and the percentage of pageviews they take from all the pageviews received by the language CCC (x-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name in the legend to see only the Wikipedia languages editions of a single region.
-
-                The Top CCC articles present the most rellevant articles in terms of different metrics (e.g. number of editors or pageviews) and specific content types (e.g. geolocated articles or women) from a language cultural context content. Since these articles are the most valuable part of CCC, they also collect a considerable amount of pageviews. When a Wikipedia language edition is small, often the Top CCC lists encompass most of their language CCC.
              '''.replace('  ', '')),
+
             html.Br(),
             html.Div(id='none',children=[],style={'display': 'none'}),    
             dcc.Graph(id = 'language_topccc_scatterplot'),
+
+            dcc.Markdown('''The scatterplot graph shows for each language edition Top CCC lists articles, the number of pageviews they receive (y-axis in logscale) and the percentage of pageviews they take from all the pageviews received by the language CCC (x-axis). Wikipedia language editions are colored according to the world region (continent) where the language is spoken. You can double-click the region name in the legend to see only the Wikipedia languages editions of a single region.
+
+                The Top CCC articles present the most rellevant articles in terms of different metrics (e.g. number of editors or pageviews) and specific content types (e.g. geolocated articles or women) from a language cultural context content. Since these articles are the most valuable part of CCC, they also collect a considerable amount of pageviews. When a Wikipedia language edition is small, often the Top CCC lists encompass most of their language CCC.
+             '''.replace('  ', '')),
 
         ]),
 
@@ -373,11 +385,10 @@ dash_app6.layout = html.Div([
         dcc.Tab(label='Gender Gap in Pageviews (Barchart)', children=[
             html.Br(),
 
-            html.H5('Gender Gap in Pageviews Barchart'),
+            # html.H5('Gender Gap in Pageviews'),
             dcc.Markdown('''
-                * **What is the gender gap in pageviews in biographies in each Wikipedia language edition?**
+                * **What is the gender gap in pageviews in biographies in each Wikipedia language edition?**'''.replace('  ', '')),
 
-                The following barchart shows for a group of selected Wikipedia language editions the gender gap in terms of articles (red for women and blue for men) and in terms of pageviews these articles receive (orange for women and pink for men). By hovering on each of the bars you can compare the percentages and the absolute number of articles and pageviews.     '''.replace('  ', '')),
             html.Br(),
 
             html.Div(
@@ -403,6 +414,10 @@ dash_app6.layout = html.Div([
 
             html.Br(),
             dcc.Graph(id = 'language_gendergap_barchart'),
+
+
+            dcc.Markdown('''
+                The barchart shows for a group of selected Wikipedia language editions the gender gap in terms of articles (red for women and blue for men) and in terms of pageviews these articles receive (orange for women and pink for men). By hovering on each of the bars you can compare the percentages and the absolute number of articles and pageviews.     '''.replace('  ', '')),
 
         ])
 
@@ -742,7 +757,8 @@ def update_graphs(rows, derived_virtual_selected_rows):
                     },
                     "height": 400,
                     "margin": {"t": 60, "l": 10, "r": 10, "b": 130},
-                    "title": title[column],
+                    "title": {"text": title[column],
+                             "font": {"size": 12}},
                 },
             },
         )

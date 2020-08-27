@@ -27,6 +27,7 @@ dumps_path = '/srv/wcdo/dumps/'
 wikidata_db = 'wikidata.db'
 
 diversity_groups_db = 'diversity_groups.db'
+diversity_groups_production_db  = 'diversity_groups_production.db'
 diversity_observatory_log = 'diversity_observatory_log.db'
 wikipedia_diversity_db = 'wikipedia_diversity.db'
 
@@ -34,12 +35,13 @@ stats_db = 'stats.db'
 stats_production_db = 'stats_production.db'
 
 top_diversity_db = 'top_diversity_articles.db'
-top_diversity_production_db = 'top_ccc_articles_production.db'
+top_diversity_production_db = 'top_diversity_articles_production.db'
 
 missing_ccc_db = 'missing_ccc.db'
-group_identities_db = 'group_identities.db'
+group_identities_db = 'group_identities_articles.db'
 
-editor_diversity_db = 'editor_diversity.db'
+editor_engagement_db = 'editor_engagement.db'
+
 revision_db = 'revision.db'
 imageslinks_db = 'imagelinks.db'
 
@@ -50,7 +52,7 @@ images_production_db = 'images_production.db'
 # Loads language_territories_mapping.csv file
 def load_wikipedia_languages_territories_mapping():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_groups_production_db); cursor = conn.cursor();  
 
     query = 'SELECT WikimediaLanguagecode, languagenameEnglishethnologue, territoryname, territorynameNative, QitemTerritory, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, officialnationalorregional, region, subregion, intermediateregion FROM wikipedia_languages_territories_mapping;'
 
@@ -74,7 +76,7 @@ def load_wikipedia_languages_territories_mapping():
 def load_wiki_projects_information():
     # in case of extending the project to other WMF sister projects, it would be necessary to revise these columns and create a new file where a column would specify whether it is a language edition, a wikictionary, etc.
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_production_db); cursor = conn.cursor();
 
     query = 'SELECT languagename, Qitem, WikimediaLanguagecode, Wikipedia, WikipedialanguagearticleEnglish, languageISO, languageISO3, languageISO5, nativeLabel, region, subregion, intermediateregion FROM wiki_projects;'
 
@@ -87,7 +89,7 @@ def load_wiki_projects_information():
 
 def load_language_pairs_territory_status():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_groups_production_db); cursor = conn.cursor();
 
     query = 'SELECT qitem,territoryname_english, territoryname_higher, ISO3166, ISO3166_2, language_lower_name, language_higher_name, wikimedia_lower, wikimedia_higher, type_overlap, status_lower, status_higher, equal_status, indigenous_lower, indigenous_higher FROM wikipedia_language_pairs_territory_status WHERE equal_status=0;'
 
@@ -720,8 +722,6 @@ def get_langs_group(all_groups, topX, region, subregion, wikipedialanguage_numbe
 
 
 
-
-
 # It returns a list of languages based on the region preference introduced.
 def obtain_region_wikipedia_language_list(languages, region, subregion, intermediateregion):
 # use as: wikilanguagecodes = wikilanguages_utils.obtain_region_wikipedia_language_list('Asia', '', '').index.tolist()
@@ -741,6 +741,74 @@ def obtain_region_wikipedia_language_list(languages, region, subregion, intermed
     return languages_region
 
 
+
+def store_group_identities_labels(wikilanguagecodes):
+
+    functionstartTime = time.time()
+    conn3 = sqlite3.connect(databases_path + diversity_groups_production_db); cursor3 = conn3.cursor()
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+
+    cursor3.execute("DROP TABLE IF EXISTS groups_labels;")
+    conn3.commit()
+    cursor3.execute("CREATE TABLE IF NOT EXISTS groups_labels (qitem text, label integer, lang text, group_label text, PRIMARY KEY (qitem, label, lang, group_label));")
+    conn3.commit()
+
+    group_labels = ['ethnic_group', 'sexual_orientation', 'religious_group']
+
+    for languagecode in wikilanguagecodes:
+        (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(0,languagecode)
+        qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+
+        for group_label in group_labels:
+            query = 'SELECT DISTINCT '+group_label+' FROM '+languagecode+'wiki WHERE ethnic_group IS NOT NULL;'
+            parameters = []
+            unique_qs = set()
+            for row in cursor2.execute(query):
+                value = row[0]
+
+                if value != None:
+                    qs = value.split(';')
+                else: continue
+                for x in qs:
+                    try:
+                        page_title = qitems_page_titles[x]
+                        if x not in unique_qs:
+                            parameters.append((x,page_title,languagecode,group_label))
+                        unique_qs.add(x)
+                    except:
+                        continue
+                
+            # print (parameters)
+            query = 'INSERT OR IGNORE INTO groups_labels (qitem, label, lang, group_label) values (?,?,?,?)'
+            cursor3.executemany(query, parameters)
+            conn3.commit()
+
+        print (languagecode)
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    print (duration)
+
+
+
+def get_group_identities_labels():
+
+    conn3 = sqlite3.connect(databases_path + diversity_groups_production_db); cursor3 = conn3.cursor()
+    query = 'SELECT qitem, label, lang, group_label FROM groups_labels;'
+    df = pd.read_sql_query(query, conn3)
+
+    # qitems = df.loc[(df["lang"].isin([langcode,'en'])) & (df["group_label"] == group_label)][['qitem','label','lang']]
+    # qitems['label'] = qitems['label'].str.replace('_',' ')
+    # qitems = qitems.set_index('qitem')
+
+
+    # qitem_df = qitems.loc['Q576065']
+    # try:
+    #     a = qitem_df.loc[qitem_df["lang"]==langcode]
+    # except:
+    #     a = qitem_df.loc[qitem_df["lang"]=="en"]
+    # label = qitems.loc['Q576065']["label"].values[0]
+
+    return df
 
 
 
@@ -1129,7 +1197,7 @@ def get_current_cycle_year_month():
 
 def get_last_accumulated_period_year_month():
 
-    query = 'SELECT MAX(period) FROM wcdo_intersections_accumulated;'
+    query = 'SELECT MAX(period) FROM wdo_intersections_accumulated;'
     conn = sqlite3.connect(databases_path + stats_production_db); cursor = conn.cursor()
 
     cursor.execute(query)
