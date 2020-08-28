@@ -6,8 +6,8 @@ The [__Wikipedia Diversity Obsevatory (WDO)__](https://meta.wikimedia.org/wiki/W
 You can learn more about the project in this [video](https://www.youtube.com/watch?v=PdqDZ9vRQEw).
 
 
-## Data: Wikipedia Diversity Datasets and Stats
-We created a dataset for each Wikipedia language edition in which each article is characterized according to features that can determine whether it belongs to a relevant category for diversity (culture, gender, place, etc.). Categories like gender, sexual orientation, religion or ethnic origin are straightforward, as they can be traced to Wikidata semantic relations structured as properties and items. 
+## Data: Wikipedia Diversity and Stats Databases
+We created a dataset/database table for each Wikipedia language edition in which each article is characterized according to features that can determine whether it belongs to a relevant category for diversity (culture, gender, place, etc.). Categories like gender, sexual orientation, religion or ethnic origin are straightforward, as they can be traced to Wikidata semantic relations structured as properties and items. 
 
 Instead, the relationship from an article as belonging to the language’s related topics requires a more sophisticated method. In this case, we use a variety of features based on the article title, category and links graph structure, among others, to label each article according to the possible relationship with territories where the language is spoken and to the peoples that inhabit them. Then, we introduce all of them into a machine learning classifier to obtain the final selection of articles belonging to a language cultural and geographical context. This collection of articles is called Cultural Context Content (CCC) adn it is the group of articles in a Wikipedia language edition that relates to the editors' geographical and cultural context (places, traditions, language, politics, agriculture, biographies, events, etcetera.).
 
@@ -16,7 +16,7 @@ The method is build with:
 - [Sqlite 3](https://www.sqlite.org/) - To store the data.
 - [Scikit-learn](https://scikit-learn.org) - To process the data.
 
-The datasets/databases are generated on a monthly basis at wcdo.wmflabs.org in CSV and SQLite3. You can download the last version in [datasets](http://wcdo.wmflabs.org/datasets/) or [databases](http://wcdo.wmflabs.org/databases/).
+The datasets/database tables are generated on a monthly basis at wcdo.wmflabs.org in CSV and SQLite3. You can download the last version in [datasets](http://wcdo.wmflabs.org/datasets/) or [databases](http://wcdo.wmflabs.org/databases/).
 
 To generate the database [wikipedia_diversity.db](https://wcdo.wmflabs.org/databases/wikipedia_diversity.db) we created the following scripts:  are `wikipedia_diversity.py`, `content_retrieval.py` and `content_selection.py`.
 
