@@ -14,13 +14,13 @@ The method is build with:
 - [Sqlite 3](https://www.sqlite.org/) - To store the data.
 - [Scikit-learn](https://scikit-learn.org) - To process the data.
 
-The most important scripts to generate the content diversity database (Wikipedia_Diversity.db)[https://wcdo.wmflabs.org/databases/wikipedia_diversity.db] are `wikipedia_diversity.py`, `content_retrieval.py` and `content_selection.py`.
+The most important scripts to generate the content diversity database [wikipedia_diversity.db](https://wcdo.wmflabs.org/databases/wikipedia_diversity.db) are `wikipedia_diversity.py`, `content_retrieval.py` and `content_selection.py`.
 
 The datasets/databases are generated on a monthly basis at wcdo.wmflabs.org in CSV and SQLite3. You can download the last version in [datasets](http://wcdo.wmflabs.org/datasets/) or [databases](http://wcdo.wmflabs.org/databases/).
 
 In order to be able to answer questions on Wikipedia content diversity, it is necessary to compute several statistics based on CCC and other groups of articles.
 
-* `stats_generation.py` computes these statistics and ranks the articles in order to create valuable lists of articles for each Wikipedia language edition. It stores the results in `stats.db` on a monthly basis so it can be used to create tables and graphs.
+* `stats_generation.py` computes these statistics and ranks the articles in order to create valuable lists of articles for each Wikipedia language edition. It stores the results in [`stats.db`](https://wcdo.wmflabs.org/databases/stats_production.db) on a monthly basis so it can be used to create tables and graphs.
 
 
 ## Site(s): Meta page (WDO home) and external website (WDO visualizations)
