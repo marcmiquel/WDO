@@ -3,6 +3,8 @@
 
 The [__Wikipedia Diversity Obsevatory (WDO)__](https://meta.wikimedia.org/wiki/Wikipedia_Diversity_Observatory) is a research project whose purpose is to raise awareness on Wikipedia’s current state of content diversity, __(1) providing datasets__, __(2) sites with visualizations and statistics__, and __(3) pointing out solutions to improve__ knowledge coverage and __knowledge inequalities__ among languages and categories relevant to overall diversity (e.g. culture, gender, geography, ethnic groups, sexual orientation, etc.).
 
+You can learn more about the project in this [video](https://www.youtube.com/watch?v=PdqDZ9vRQEw).
+
 
 ## Data: Wikipedia Diversity Datasets and Stats
 We created a dataset for each Wikipedia language edition in which each article is characterized according to features that can determine whether it belongs to a relevant category for diversity (culture, gender, place, etc.). Categories like gender, sexual orientation, religion or ethnic origin are straightforward, as they can be traced to Wikidata semantic relations structured as properties and items. 
@@ -14,22 +16,23 @@ The method is build with:
 - [Sqlite 3](https://www.sqlite.org/) - To store the data.
 - [Scikit-learn](https://scikit-learn.org) - To process the data.
 
-The most important scripts to generate the content diversity database [wikipedia_diversity.db](https://wcdo.wmflabs.org/databases/wikipedia_diversity.db) are `wikipedia_diversity.py`, `content_retrieval.py` and `content_selection.py`.
-
 The datasets/databases are generated on a monthly basis at wcdo.wmflabs.org in CSV and SQLite3. You can download the last version in [datasets](http://wcdo.wmflabs.org/datasets/) or [databases](http://wcdo.wmflabs.org/databases/).
 
-In order to be able to answer questions on Wikipedia content diversity, it is necessary to compute several statistics based on CCC and other groups of articles.
+To generate the database [wikipedia_diversity.db](https://wcdo.wmflabs.org/databases/wikipedia_diversity.db) we created the following scripts:  are `wikipedia_diversity.py`, `content_retrieval.py` and `content_selection.py`.
+
+To answer questions on Wikipedia content diversity, it is necessary to compute several statistics based on CCC and other groups of articles. This is the script we used to calculate them:
 
 * `stats_generation.py` computes these statistics and ranks the articles in order to create valuable lists of articles for each Wikipedia language edition. It stores the results in [`stats.db`](https://wcdo.wmflabs.org/databases/stats_production.db) on a monthly basis so it can be used to create tables and graphs.
+The list of all the diversity categories and groups of articles is in this Excel file [sets_intersections.xls](https://github.com/marcmiquel/WCDO/blob/wcdo/docs/sets_intersections.xlsx)
 
-
-## Site(s): Meta page (WDO home) and external website (WDO visualizations)
-These are the scripts that create the tables and visualizations for the WDO, both the meta page and the external website visualizations.
-
-* `meta_updates.py` presents most of the results through tables in the (WDO meta pages)[https://meta.wikimedia.org/wiki/Wikipedia_Diversity_Observatory], with results for all languages and for each individually. This is done using [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot) - To post and update mediawiki pages.
+## Site(s): Observatory website (WDO) and Meta page (WDO home)
+These are the scripts that create the tables and visualizations for the WDO, both the website visualizations and tools and the meta page.
 
 * `dash_apps.py` creates all the tables and visualizations which are available at (wcdo.wmflabs.org)[http://wcdo.wmflabs.org].
 It uses [Dash and Plotly](https://dash.plotly.com/).
+
+* `meta_updates.py` presents most of the results through tables in the (WDO meta pages)[https://meta.wikimedia.org/wiki/Wikipedia_Diversity_Observatory], with results for all languages and for each individually. This is done using [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot) - To post and update mediawiki pages.
+
 
 ## Research: Main papers and presentations
 Several papers and talks have been published to explain the usefulness of the Diversity Observatory and the importance of exchanging content across languaeg editions in order to reduce the knowledge inequalities.
