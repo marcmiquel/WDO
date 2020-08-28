@@ -3,7 +3,7 @@
 
 The [__Wikipedia Diversity Obsevatory (WDO)__](https://meta.wikimedia.org/wiki/Wikipedia_Diversity_Observatory) is a research project whose purpose is to raise awareness on Wikipedia’s current state of content diversity, __(1) providing datasets__, __(2) sites with visualizations and statistics__, and __(3) pointing out solutions to improve__ knowledge coverage and __knowledge inequalities__ among languages and categories relevant to overall diversity (e.g. culture, gender, geography, ethnic groups, sexual orientation, etc.).
 
-You can learn more about the project in this [video](https://www.youtube.com/watch?v=PdqDZ9vRQEw).
+You can learn more about the project in this [video](https://www.youtube.com/watch?v=PdqDZ9vRQEw) or by visiting the [website](http://wcdo.wmflabs.org/) with visualizations and tools.
 
 
 ## Data: Wikipedia Diversity and Stats Databases
