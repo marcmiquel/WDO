@@ -18,7 +18,7 @@ The method is build with:
 
 The datasets/database tables are generated on a monthly basis at wcdo.wmflabs.org in CSV and SQLite3. You can download the last version in [datasets](http://wcdo.wmflabs.org/datasets/) or [databases](http://wcdo.wmflabs.org/databases/).
 
-To generate the database [wikipedia_diversity.db](https://wcdo.wmflabs.org/databases/wikipedia_diversity.db) we created the following scripts:  
+These are the scripts that generate the database [wikipedia_diversity.db](https://wcdo.wmflabs.org/databases/wikipedia_diversity.db) we created the following scripts:  
 
 * `wikipedia_diversity.py`, `content_retrieval.py` and `content_selection.py`. they retrieve the data from Wikimedia dumps and databases, process them according to some criteria, and introduce them into the database.
 
