@@ -101,7 +101,6 @@ def execution_block_classifying_ccc():
 
 
 
-
 ################################################################
 
 # DIVERSITY FEATURES
@@ -183,13 +182,31 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
                 category_links_cat_cat[cat_title]=set()
                 category_links_cat_art[cat_title]=set()
 
-                for k in keywords:
-                    if unidecode.unidecode(k) in unidecode.unidecode(cat_title.lower().replace('_',' ')):
-                        keyword_category[k].add(cat_title)
-                        # print ('* ', k, cat_title, 'PREMI!')
-
         if iter % 10000 == 0:
             print (str(iter)+' categories loaded.')
+
+
+    for k in keywords:
+        k_normalized = unidecode.unidecode(k)
+        cat_title_normalized = unidecode.unidecode(cat_title.lower().replace('_',' '))
+
+        kw_compiled = re.compile(r'\b({0})\b'.format(k_normalized), flags=re.IGNORECASE).search
+
+        for cat_title in category_page_ids_page_titles.values():
+
+            cat_title_normalized = unidecode.unidecode(cat_title.lower().replace('_',' '))
+
+            if kw_compiled(cat_title_normalized) == None: continue
+
+            # if k_unicode not in cat_title_normalized:
+            #     continue
+            # if unidecode.unidecode(k) in unidecode.unidecode(cat_title.lower().replace('_',' ')):
+
+            keyword_category[k.lower()].add(cat_title)
+            # print ('* ', k, cat_title, 'PREMI!')
+
+
+
 
 
     # for x,y in keyword_category.items():
@@ -226,7 +243,7 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
 
                 try:
                     page_id = int(row[0])
-                    cat_title = str(row[1])
+                    cat_title = str(row[1].strip("'"))
                 except:
                     continue
 
@@ -367,12 +384,12 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
     function_name = 'label_potential_ccc_articles_with_links '+languagecode
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
-    dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-pagelinks.sql.gz'
-#    dumps_path = 'gnwiki-20190720-pagelinks.sql.gz' # read_dump = '/public/dumps/public/wikidatawiki/latest-all.json.gz'
-    wikilanguages_utils.check_dump(dumps_path, script_name)
-    dump_in = gzip.open(dumps_path, 'r')
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+    try: cursor.execute('SELECT 1 FROM '+languagecode+'wiki;')
+    except: return
+
     content_selection_page_title = {}
     content_selection_page_id = {}
     query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE ccc_binary=1;'
@@ -449,6 +466,18 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         num_outlinks_lgbt[page_id]=0
 
 
+
+#    dumps_path = 'gnwiki-20190720-pagelinks.sql.gz' # read_dump = '/public/dumps/public/wikidatawiki/latest-all.json.gz'
+
+    dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-pagelinks.sql.gz'
+    wikilanguages_utils.check_dump(dumps_path, script_name)
+    try:
+        dump_in = gzip.open(dumps_path, 'r')
+    except:
+        print ('error. the file pagelinks is not working.')
+
+    w = 0
+    iteratingstartTime = time.time()
     print ('Iterating the dump.')
     while True:
         line = dump_in.readline()
@@ -467,6 +496,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
             if wikilanguages_utils.values_sanity_check(values): rows = wikilanguages_utils.parse_values(values)
 
             for row in rows:
+                w+=1
 #                print(row)
                 pl_from = int(row[0])
                 pl_from_namespace = row[1]
@@ -535,8 +565,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                 # INLINKS
 
                 try:
-                    page_id = page_titles_page_ids[pl_title]
-                    num_of_inlinks[page_id] = num_of_inlinks[page_id] + 1
+                    num_of_inlinks[pl_title_page_id] = num_of_inlinks[pl_title_page_id] + 1
                 except:
                     pass
 
@@ -575,6 +604,15 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                     num_inlinks_lgbt[pl_title_page_id] = num_inlinks_lgbt[pl_title_page_id] + 1
                 except:
                     pass
+
+
+                if w % 1000000 == 0: # 10 million
+                    print (w)
+                    print ('current time: ' + str(time.time() - iteratingstartTime)+ ' '+languagecode)
+                    print ('number of lines per second: '+str(round(((w/(time.time() - iteratingstartTime))/1000),2))+ ' thousand.')
+
+                    # print (num_of_inlinks_from_ethnic_groups);
+                    # print (num_of_outlinks_to_ethnic_group);
 
 
 #    input('')
@@ -617,6 +655,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
 
 
         num_outlinks = num_of_outlinks[page_id]
+
         num_outlinks_to_CCC = num_outlinks_ccc[page_id]
         if num_outlinks!= 0: percent_outlinks_to_CCC = float(num_outlinks_to_CCC)/float(num_outlinks)
         else: percent_outlinks_to_CCC = 0
@@ -640,6 +679,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
 
 
         num_inlinks = num_of_inlinks[page_id]
+
         num_inlinks_from_CCC = num_inlinks_ccc[page_id]
         if num_inlinks!= 0: percent_inlinks_from_CCC = float(num_inlinks_from_CCC)/float(num_inlinks)
         else: percent_inlinks_from_CCC = 0
@@ -663,26 +703,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
 
         parameters.append((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt,page_id,qitem,page_title))
 
-
-#        print((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,page_id,qitem,page_title))
-
-        if num_outlinks != 0: n_outlinks=n_outlinks+1
-        if num_outlinks_to_CCC != 0: n_outlinks_ccc =n_outlinks_ccc+1
-        if num_outlinks_to_geolocated_abroad != 0: n_outlinks_other_ccc =n_outlinks_other_ccc+1
-        if num_outlinks_to_women != 0: n_outlinks_women =n_outlinks_women+1
-        if num_outlinks_to_men != 0: n_outlinks_men =n_outlinks_men+1
-        if num_outlinks_to_lgbt != 0: n_outlinks_lgbt =n_outlinks_lgbt+1
-
-
-        if num_inlinks != 0: n_inlinks =n_inlinks+1
-        if num_inlinks_from_CCC != 0: n_inlinks_ccc =n_inlinks_ccc+1
-        if num_inlinks_from_geolocated_abroad != 0: n_inlinks_other_ccc =n_inlinks_other_ccc+1
-        if num_inlinks_from_women != 0: n_inlinks_women =n_inlinks_women+1
-        if num_inlinks_from_men != 0: n_inlinks_men =n_inlinks_men+1
-        if num_inlinks_from_lgbt != 0: n_inlinks_lgbt =n_inlinks_lgbt+1
-
-    # print ((n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc))
-    # print ('(n_outlinks,n_outlinks_ccc ,n_outlinks_other_ccc , n_inlinks ,n_inlinks_ccc ,n_inlinks_other_ccc)')
+        # print ((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt,page_id,qitem,page_title))
 
 
     query = 'UPDATE '+languagecode+'wiki SET (num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt)=(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
@@ -692,8 +713,6 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-    print(duration)
-
 
 
 # Obtain the Articles with a "weak" language property that is associated the language. This is considered potential CCC.
@@ -1954,7 +1973,7 @@ if __name__ == '__main__':
     biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
 
 
-    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+    # if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()

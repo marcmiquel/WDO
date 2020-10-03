@@ -47,11 +47,13 @@ import gc
 # MAIN
 def main():
 
+
     wd_dump_iterator()
     wd_geolocated_update_db()
     wd_instance_of_subclass_of_property_crawling()
     create_wikipedia_diversity_db()
     insert_page_ids_page_titles_qitems_wikipedia_diversity_db()
+
     store_ethnic_groups_wd_diversity_groups_db()
     store_religious_groups_wd_diversity_groups_db()
 
@@ -94,6 +96,7 @@ def create_wikipedia_diversity_db():
         'date_created integer, '+
         'date_last_edit integer, '+
         'date_last_discussion integer, '+
+        'first_timestamp_lang text,'+ # language of the oldest timestamp for the article
 
         # GEOGRAPHY DIVERSITY
         # set as geography diversity features:
@@ -132,6 +135,8 @@ def create_wikipedia_diversity_db():
         # CULTURAL CONTEXT DIVERSITY TOPICS
         # calculations:
         'ccc_binary integer, '+
+        'ccc text, '+
+        'missing_ccc text, '+
         'main_territory text, '+ # Q from the main territory with which is associated.
         'num_retrieval_strategies integer, '+ # this is a number
 
@@ -173,6 +178,7 @@ def create_wikipedia_diversity_db():
         'percent_outlinks_to_geolocated_abroad real, '+
 
 
+
         # GENERAL TOPICS DIVERSITY
         # topics: people, organizations, things and places
         'folk text, '+
@@ -189,8 +195,11 @@ def create_wikipedia_diversity_db():
         'religion text, '+ # as a topic
         'time_interval text, '+
         'start_time integer, '+
-        'end_time integer, '+
+        'end_time text, '+
 
+        # other diversity topics
+        'ethnic_group_topic text, '+
+        'lgbt_topic integer, '+
 
         # characteristics of article relevance
         'num_inlinks integer, '+
@@ -206,9 +215,9 @@ def create_wikipedia_diversity_db():
         'num_interwiki integer, '+
         'num_images integer, '+
 
+        # quality
         'featured_article integer, '+
         'wikirank real, '+
-        'first_timestamp_lang text,'+
 
 
         'PRIMARY KEY (qitem,page_id));')
@@ -343,7 +352,7 @@ def wd_properties():
 
 def wd_dump_iterator():
     function_name = 'wd_dump_iterator'
-    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -562,9 +571,8 @@ def wd_dump_iterator():
 
         if iter % 850000 == 0:
             # insert
-            cursor.executemany("INSERT INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",sitelinks_values)                   
+            cursor.executemany("INSERT INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",sitelinks_values)
             cursor.executemany("INSERT INTO labels (qitem, langcode, label) VALUES (?,?,?)",labels_values)
-
             cursor.executemany("INSERT OR IGNORE INTO metadata (qitem, properties, sitelinks) VALUES (?,?,?)", metadata_list)
             cursor.executemany("INSERT OR IGNORE INTO geolocated_property (qitem, property, coordinates) VALUES (?,?,?)",geolocated_property_list)
             cursor.executemany("INSERT OR IGNORE INTO time_properties (qitem, property, value) VALUES (?,?,?)",time_properties_list)
@@ -597,9 +605,8 @@ def wd_dump_iterator():
 
     # last round 
     # insert
-    cursor.executemany("INSERT OR IGNORE INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",sitelinks_values)                   
+    cursor.executemany("INSERT OR IGNORE INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",sitelinks_values)  
     cursor.executemany("INSERT OR IGNORE INTO labels (qitem, langcode, label) VALUES (?,?,?)",labels_values)
-
     cursor.executemany("INSERT OR IGNORE INTO metadata (qitem, properties, sitelinks) VALUES (?,?,?)", metadata_list)
     cursor.executemany("INSERT OR IGNORE INTO geolocated_property (qitem, property, coordinates) VALUES (?,?,?)",geolocated_property_list)
     cursor.executemany("INSERT OR IGNORE INTO time_properties (qitem, property, value) VALUES (?,?,?)",time_properties_list)
@@ -626,6 +633,8 @@ def wd_dump_iterator():
 
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', str(datetime.timedelta(seconds=time.time() - functionstartTime)))
     wikilanguages_utils.store_lines_per_second((time.time() - functionstartTime), iter, function_name, read_dump, cycle_year_month)
+
+
 
 # Runs the reverse geocoder and update the database. It needs 5000m.
 def wd_geolocated_update_db():
@@ -668,8 +677,6 @@ def wd_geolocated_update_db():
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
-
-
 
 
 
@@ -820,7 +827,7 @@ def wd_instance_of_subclass_of_property_crawling():
 def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
 
     function_name = 'insert_page_ids_page_titles_qitems_wikipedia_diversity_db'
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
@@ -1069,7 +1076,6 @@ def store_ethnic_groups_wd_diversity_groups_db():
 
     df['end_time'] = df['qitem'].map(end_time)
 
-
     query = 'SELECT DISTINCT all_languages_wikidata.qitem FROM language_countries_mapping INNER JOIN all_languages_wikidata ON all_languages_wikidata.languageISO3 = language_countries_mapping.language_code_ISO639_3 WHERE language_countries_mapping.language_code_ISO639_3 NOT IN (SELECT language_code_ISO639_3 FROM language_countries_mapping WHERE language_status_code IN ("1","2"));'
     minoritized_languages = {}
     for row in cursor2.execute(query):
@@ -1197,11 +1203,11 @@ if __name__ == '__main__':
     cycle_year_month = wikilanguages_utils.get_new_cycle_year_month() 
 #    check_time_for_script_run(script_name, cycle_year_month)
 
+    # Verify whether there is a new language or not
+    wikilanguages_utils.extract_check_new_wiki_projects();
+
     territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
     languages = wikilanguages_utils.load_wiki_projects_information();
-
-    # Verify there is a new language
-    wikilanguages_utils.extract_check_new_wiki_projects();
     wikilanguagecodes = sorted(languages.index.tolist())
 
     print ('checking languages Replicas databases and deleting those without one...')
@@ -1215,18 +1221,9 @@ if __name__ == '__main__':
     wikilanguagecodeswiki = []
     for a in wikilanguagecodes: wikilanguagecodeswiki.append(a+'wiki')
 
-    # Get the number of Articles for each Wikipedia language edition
-    wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')
-#    print (wikilanguagecodes)
-    
-    # wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=True)]
-    # biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
-
     allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties = wd_properties()
 
-
-
-    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+    # if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()

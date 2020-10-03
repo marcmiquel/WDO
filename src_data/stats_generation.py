@@ -67,13 +67,11 @@ def main():
     generate_religious_groups_interesections ('accumulated monthly')
     generate_sexual_orientation_intersections('accumulated monthly')
     generate_supra_ethnic_groups_intersections('accumulated monthly')
+    generate_time_intersections('accumulated monthly') # not finished yet
 
-#    generate_time_intersections('accumulated monthly') # not finished yet
 
     # monthly created (C)
     generate_monthly_articles_intersections('monthly created')
-
-
 
     # RECURRING
     # last accumulated (B)
@@ -91,7 +89,6 @@ def main():
     generate_sexual_orientation_intersections('last accumulated')
     generate_supra_ethnic_groups_intersections('last accumulated')
 
-#    generate_time_intersections('last accumulated') # not finished yet
 
 
 #    generate_top_ccc_articles_lists_intersections() # after the 2020 first Top CCC data.
@@ -1366,6 +1363,9 @@ def generate_sexual_orientation_intersections(time_range):
             row = cursor.fetchone()
             wpnumberofarticles=row[0]
 
+            cursor.execute('SELECT count(*) FROM '+languagecode+' WHERE lgbt_topic_binary=1 AND '+query_part)
+            row = cursor.fetchone()
+            lgbtofarticles=row[0]
 
             query = 'SELECT qitem, sexual_orientation, gender, ccc_binary FROM '+languagecode+'wiki WHERE '+query_part+' AND (gender IS NOT NULL OR sexual_orientation IS NOT NULL);'
 
@@ -1376,6 +1376,9 @@ def generate_sexual_orientation_intersections(time_range):
 
             # languagecode  wp  wikidata_articles_qitems    sexual_orientation
             insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','sexual_orientation', sexual_orientation_count,wpnumberofarticles,period)
+
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','lgbt_topics', lgbtofarticles, wpnumberofarticles, period)
 
             sexual_orientation_types_count = df.sexual_orientation.value_counts().to_dict()
 
@@ -1392,8 +1395,12 @@ def generate_sexual_orientation_intersections(time_range):
                 insert_intersections_values(time_range,cursor2,'articles',languagecode,'ccc_people','sexual_orientation',ccc_sex_type, ccc_sex_type_count,ccc_people_count,period)
 
 
+            print ('languagecode, wp, wikidata_article_qitems, lgbt_topics,'+period)
+
             print ('languagecode, wp, wikidata_article_qitems, sexual_orientation,'+period)
+
             print ('languagecode, people, sexual_orientation, sexual_orientation_name,'+period)
+
             print ('languagecode, ccc_people, wikidata_article_qitems, sexual_orientation_name,'+period)
 
 
@@ -1430,11 +1437,16 @@ def generate_sexual_orientation_intersections(time_range):
         for_time_range(time_range,periods_accum[period],period)
 
 
-
         people_set = set()
         wikidata_article_qitems_sex_or_dict = {}
         language_sexual_orientation_dict = {}
         for languagecode in wikilanguagecodes:
+
+            query = 'SELECT COUNT(*) FROM '+languagecode+'wiki;'
+            cursor.execute(query)
+            row = cursor.fetchone()
+            wpnumberofarticles=row[0]
+
 
             query = 'SELECT qitem, sexual_orientation, gender FROM '+languagecode+'wiki WHERE (gender IS NOT NULL OR sexual_orientation IS NOT NULL);'
             df = pd.read_sql_query(query, conn)#, parameters)
@@ -1449,7 +1461,20 @@ def generate_sexual_orientation_intersections(time_range):
 
             dict_sexor = df.loc[df['sexual_orientation'].notnull()][['qitem','sexual_orientation']].set_index('qitem').to_dict('dict')['sexual_orientation']
 
-            wikidata_article_qitems_sex_or_dict.update(dict_sexor)
+            for sex_orientation_type, sex_orientation_type_count in dict_sexor.items():
+
+                try:
+                    wikidata_article_qitems_sex_or_dict[sex_orientation_type]+= sex_orientation_type_count
+                except:
+                    wikidata_article_qitems_sex_or_dict[sex_orientation_type]= sex_orientation_type_count
+
+            cursor.execute('SELECT count(*) FROM '+languagecode+' WHERE lgbt_topic_binary=1')
+            row = cursor.fetchone()
+            lgbtofarticles=row[0]
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','lgbt', lgbtofarticles, wpnumberofarticles, period)
+
+
 
         wikidata_df = pd.DataFrame(wikidata_article_qitems_sex_or_dict.items(),columns=['Qitem','sexual_orientation'])
         wikidata_article_qitems_count_dict = wikidata_df.value_counts().to_dict()
@@ -1470,8 +1495,11 @@ def generate_sexual_orientation_intersections(time_range):
 
 
         print ('languagecode, people, wikidata_articles_qitems, sexual_orientation, ' +period)
+
         print ('wikidata_articles_qitems, sex_orientation_type, languagecode, wp, ' +period)
+
         print ('wikidata_articles_qitems, people, sexual_orientation, sex_orientation_type, ' +period)
+
         print ('wikidata_articles_qitems, people, wikidata_articles_qitems, sexual_orientation, ' +period)
 
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
@@ -1650,23 +1678,34 @@ def generate_ethnic_groups_intersections(time_range):
             # languagecode  wp  wikidata_articles_qitems    ethnic_group
             insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','ethnic_group', ethnic_group_count,wpnumberofarticles,period)
 
-            ethnic_group_types_count = ethnic_group_dict_fix(df.ethnic_group.value_counts().to_dict())
+            ethnic_group_types_count = group_dict_fix(df.ethnic_group.value_counts().to_dict())
 
             # languagecode  people  ethnic_group  ethnic_group_name
-            for sex_type, sex_type_count in ethnic_group_types_count.items():
-                insert_intersections_values(time_range,cursor2,'articles',languagecode,'people','ethnic_group',sex_type, sex_type_count,people_count,period)
+            for ethnic_group_type, ethnic_group_type_count in ethnic_group_types_count.items():
+                insert_intersections_values(time_range,cursor2,'articles',languagecode,'people','ethnic_group',ethnic_group_type, ethnic_group_type_count,people_count,period)
+
 
             ccc_people = df.loc[df['ccc_binary'] == 1]
             ccc_people_count = len(ccc_people)
-            ccc_people_ethnic_group_types_count = ethnic_group_dict_fix(ccc_people.ethnic_group.value_counts().to_dict())
+            ccc_people_ethnic_group_types_count = group_dict_fix(ccc_people.ethnic_group.value_counts().to_dict())
 
             # languagecode  people  ethnic_group  ethnic_group_name
             for ccc_ethnic_group_type, ccc_ethnic_group_type_count in ccc_people_ethnic_group_types_count.items():
                 insert_intersections_values(time_range,cursor2,'articles',languagecode,'ccc_people','ethnic_group',ccc_ethnic_group_type, ccc_ethnic_group_type_count, ccc_people_count, period)
 
-            print ('languagecode, wp, wikidata_article_qitems, ethnic_group,'+period)
-            print ('languagecode, people, ethnic_group, ethnic_group_name,'+period)
-            print ('languagecode, ccc_people, wikidata_article_qitems, ethnic_group_name,'+period)
+
+            query = 'SELECT ethnic_group_topic FROM '+languagecode+'wiki WHERE '+query_part
+            df = pd.read_sql_query(query, conn)#, parameters)
+            ethnic_group_types_count = group_dict_fix(df.ethnic_group.value_counts().to_dict())
+            # languagecode  people  ethnic_group  ethnic_group_name
+            for ethnic_group_type, ethnic_group_type_count in ethnic_group_types_count.items():
+                insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','ethnic_group_topic',ethnic_group_type, ethnic_group_type_count,wpnumberofarticles,period)
+
+
+
+        print ('languagecode, wp, wikidata_article_qitems, ethnic_group,'+period)
+        print ('languagecode, people, ethnic_group, ethnic_group_name,'+period)
+        print ('languagecode, ccc_people, wikidata_article_qitems, ethnic_group_name,'+period)
 
 
     if time_range == 'accumulated monthly':
@@ -1703,6 +1742,8 @@ def generate_ethnic_groups_intersections(time_range):
 
         people_set = set()
         wikidata_article_qitems_ethnic_group_dict = {}
+        wikidata_article_qitems_ethnic_group_topic_dict = {}
+
         language_ethnic_group_dict = {}
         for languagecode in wikilanguagecodes:
 
@@ -1715,20 +1756,49 @@ def generate_ethnic_groups_intersections(time_range):
             people_count = len(ppl_lang)
             insert_intersections_values(time_range,cursor2,'articles',languagecode,'people','wikidata_articles_qitems','ethnic_group', ethnic_group_count,people_count,period)
 
-            language_ethnic_group_dict[languagecode] = ethnic_group_dict_fix(df.ethnic_group.value_counts().to_dict())
+            language_ethnic_group_dict[languagecode] = group_dict_fix(df.ethnic_group.value_counts().to_dict())
+
+
 
             dict_eth_group = df.loc[df['ethnic_group'].notnull()][['qitem','ethnic_group']].set_index('qitem').to_dict('dict')['ethnic_group']
 
-            wikidata_article_qitems_ethnic_group_dict.update(dict_eth_group)
+            for ethnic_group_type, ethnic_group_type_count in dict_eth_group.items():
+                try:
+                    wikidata_article_qitems_ethnic_group_dict[ethnic_group_type]+= ethnic_group_type_count
+                except:
+                    wikidata_article_qitems_ethnic_group_dict[ethnic_group_type]= ethnic_group_type_count
+
+
+
+            query = 'SELECT qitem, ethnic_group_topic FROM '+languagecode+'wiki WHERE ethnic_group_topic IS NOT NULL;'
+            df = pd.read_sql_query(query, conn)#, parameters)
+
+            dict_eth_group = df.loc[df['ethnic_group'].notnull()][['qitem','ethnic_group']].set_index('qitem').to_dict('dict')['ethnic_group']
+
+            for ethnic_group_type, ethnic_group_type_count in dict_eth_group.items():
+                try:
+                    wikidata_article_qitems_ethnic_group_topic_dict[ethnic_group_type]+= ethnic_group_type_count
+                except:
+                    wikidata_article_qitems_ethnic_group_topic_dict[ethnic_group_type]= ethnic_group_type_count
+
 
         wikidata_df = pd.DataFrame(wikidata_article_qitems_ethnic_group_dict.items(),columns=['Qitem','ethnic_group'])
         wikidata_article_qitems_count_dict = wikidata_df.value_counts().to_dict()
 
+        for languagecode, ethnic_group_types_dict in language_ethnic_group_dict.items():
+            for ethnic_group_type, ethnic_group_type_count in ethnic_group_types_dict.items():
+
+                insert_intersections_values(time_range,cursor2,'articles','wikidata_articles_ethnic_group',ethnic_group_type,languagecode,'wp', ethnic_group_type_count,wikidata_article_qitems_count_dict[ethnic_group_type],period)
+
+
+        wikidata_df = pd.DataFrame(wikidata_article_qitems_ethnic_group_topic_dict.items(),columns=['Qitem','ethnic_group'])
+        wikidata_article_qitems_count_dict = wikidata_df.value_counts().to_dict()
 
         for languagecode, ethnic_group_types_dict in language_ethnic_group_dict.items():
             for ethnic_group_type, ethnic_group_type_count in ethnic_group_types_dict.items():
 
-                insert_intersections_values(time_range,cursor2,'articles','wikidata_articles_qitems',ethnic_group_type,languagecode,'wp', ethnic_group_type_count,wikidata_article_qitems_count_dict[ethnic_group_type],period)
+                insert_intersections_values(time_range,cursor2,'articles','wikidata_articles_ethnic_group_topic',ethnic_group_type,languagecode,'wp', ethnic_group_type_count,wikidata_article_qitems_count_dict[ethnic_group_type],period)
+
 
         ethnic_group_sum = 0
         for ethnic_group_type, ethnic_group_type_count in wikidata_article_qitems_count_dict.items():
@@ -1740,8 +1810,10 @@ def generate_ethnic_groups_intersections(time_range):
 
 
         print ('languagecode, people, wikidata_articles_qitems, ethnic_group, ' +period)
-        print ('wikidata_articles_qitems, ethnic_group_type, languagecode, wp, ' +period)
-        print ('wikidata_articles_qitems, people, ethnic_group, ethnic_group_type, ' +period)
+        print ('wikidata_articles_qitems_ethnic_group, ethnic_group_name, languagecode, wp, ' +period)
+        print ('wikidata_articles_qitems_ethnic_group_topic, ethnic_group_name, languagecode, wp, ' +period)
+
+        print ('wikidata_articles_qitems, people, ethnic_group, ethnic_group_name, ' +period)
         print ('wikidata_articles_qitems, people, wikidata_articles_qitems, ethnic_group, ' +period)
 
         duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
@@ -1775,7 +1847,7 @@ def generate_supra_ethnic_groups_intersections(time_range):
             # languagecode  wp  wikidata_articles_qitems    supra_ethnic_group
             insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','supra_ethnic_group', supra_ethnic_group_count,wpnumberofarticles,period)
 
-            supra_ethnic_group_types_count = supra_ethnic_group_dict_fix(df.supra_ethnic_group.value_counts().to_dict())
+            supra_ethnic_group_types_count = group_dict_fix(df.supra_ethnic_group.value_counts().to_dict())
 
             # languagecode  people  supra_ethnic_group  supra_ethnic_group_name
             for sex_type, sex_type_count in supra_ethnic_group_types_count.items():
@@ -1828,11 +1900,16 @@ def generate_supra_ethnic_groups_intersections(time_range):
             ppl_lang = set(df.qitem.unique())
             people_set = people_set.union(ppl_lang)
 
-            language_supra_ethnic_group_dict[languagecode] = supra_ethnic_group_dict_fix(df.supra_ethnic_group.value_counts().to_dict())
+            language_supra_ethnic_group_dict[languagecode] = group_dict_fix(df.supra_ethnic_group.value_counts().to_dict())
 
             dict_eth_group = df.loc[df['supra_ethnic_group'].notnull()][['qitem','supra_ethnic_group']].set_index('qitem').to_dict('dict')['supra_ethnic_group']
 
-            wikidata_article_qitems_supra_ethnic_group_dict.update(dict_eth_group)
+            for supra_ethnic_group_type, supra_ethnic_group_type_count in dict_eth_group.items():
+                try:
+                    wikidata_article_qitems_supra_ethnic_group_dict[supra_ethnic_group_type]+= ethnic_group_type_count
+                except:
+                    wikidata_article_qitems_supra_ethnic_group_dict[supra_ethnic_group_type]= supra_ethnic_group_type_count
+
 
         wikidata_df = pd.DataFrame(wikidata_article_qitems_supra_ethnic_group_dict.items(),columns=['Qitem','supra_ethnic_group'])
         wikidata_article_qitems_count_dict = wikidata_df.value_counts().to_dict()
@@ -2020,27 +2097,6 @@ def generate_monthly_articles_intersections(time_range):
             insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp', languagecode, 'people', last_month_peoplecount,created_articles_count,period)
 
 
-            # # PEOPLE accumulated articles
-            # # male
-            # query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+ query_part + ' AND gender = "Q6581097"'
-            # cursor.execute(query)
-            # month_articles_male_count = cursor.fetchone()[0]
-
-            # insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp', languagecode, 'male', month_articles_male_count,created_articles_count,period)
-
-            # # female
-            # query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+ query_part + ' AND gender = "Q6581072"'
-            # cursor.execute(query)
-            # last_month_female_count = cursor.fetchone()[0]
-
-            # insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp', languagecode, 'female', last_month_female_count,created_articles_count,period)
-
-            # # people
-            # last_month_peoplecount=month_articles_male_count+last_month_female_count
-            # insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp', languagecode, 'people', last_month_peoplecount,created_articles_count,period)
-
-
-
             # sexual orientation
             query = 'SELECT count(*), sexual_orientation FROM '+languagecode+'wiki WHERE '+ query_part+' GROUP BY 2'
             for row in cursor.execute(query):
@@ -2067,13 +2123,40 @@ def generate_monthly_articles_intersections(time_range):
                 ethnic_group_count = row[0]
                 ethnic_group_dict[ethnic_group] = ethnic_group_count
 
-            ethnic_group_dict = ethnic_group_dict_fix(ethnic_group_dict)
+            ethnic_group_dict = group_dict_fix(ethnic_group_dict)
 
             for ethnic_group, ethnic_group_count in ethnic_group_dict.items():
                 insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp', 'ethnic_group', ethnic_group, ethnic_group_count, created_articles_count, period)                
 
 
+            # ethnic group topic
+            ethnic_group_dict = {}
+            query = 'SELECT count(*), ethnic_group_topic FROM '+languagecode+'wiki WHERE '+ query_part+' GROUP BY 2'
+            for row in cursor.execute(query):
+                ethnic_group = row[1]
+                ethnic_group_count = row[0]
+                ethnic_group_dict[ethnic_group] = ethnic_group_count
 
+            ethnic_group_dict = group_dict_fix(ethnic_group_dict)
+
+            for ethnic_group, ethnic_group_count in ethnic_group_dict.items():
+                insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp', 'ethnic_group_topic', ethnic_group, ethnic_group_count, created_articles_count, period)                
+
+            # LGBT binary created during the month
+            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+ query_part + ' AND lgbt_topic_binary=1'
+            cursor.execute(query)
+            lgbt_articles_created_count = cursor.fetchone()[0]
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp',languagecode, 'lgbt_topics', lgbt_articles_created_count, created_articles_count, period)
+
+
+
+            # Time-related article created during the month
+            query = 'SELECT count(*) FROM '+languagecode+'wiki WHERE '+ query_part + ' AND (start_time IS NOT NULL OR end_time IS NOT NULL OR time_interval IS NOT NULL);'
+            cursor.execute(query)
+            time_articles_created_count = cursor.fetchone()[0]
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode, 'wp',languagecode, 'time', time_articles_created_count, created_articles_count, period)
 
 
             # CCC created during the month
@@ -2176,6 +2259,14 @@ def generate_monthly_articles_intersections(time_range):
         print ('languagecode, wp, languagecode, female,'+period)
         print ('languagecode, wp, languagecode, people,'+period)
 
+
+        print ('languagecode, wp, ethnic_group_topic, ethnic_group_name,'+period)  
+        print ('languagecode, wp, ethnic_group, ethnic_group_name,'+period)  
+        print ('languagecode, wp, religious_group, religious_group_name,'+period)  
+        print ('languagecode, wp, sexual_orientation, sexual_orientation_name,'+period)  
+
+        print ('languagecode, wp, languagecode, lgbt_topics,'+period)   
+
         print ('languagecode, wp, languagecode, ccc,'+period)   
         print ('languagecode, wp, languagecode, ccc_geolocated,'+period)
         
@@ -2257,10 +2348,253 @@ def generate_monthly_articles_intersections(time_range):
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
     
 
+
 def generate_time_intersections(time_range):
 
     def for_time_range(time_range,query_part,period):
-        # languages
+
+        all_wikidata_items = set()
+        all_wikidata_time_items = set()
+        all_wikidata_start_time_items = set()
+
+        language_time_qitems = {}
+
+        for languagecode in wikilanguagecodes:
+            print (languagecode +'\t'+ str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+            query = 'SELECT qitem, page_title, geocoordinates, gender, ccc_binary, start_time, end_time FROM '+languagecode+'wiki WHERE '+query_part
+
+            df = pd.read_sql_query(query, conn)#, parameters)
+
+
+            all_wikidata_items = all_wikidata_items.union(set(df.qitem.unique()))
+            time_related_items = df.loc[(df['time_interval'].notnull()) or (df['start_time'].notnull()) or (df['end_time'].notnull())]
+            time_related_qs = set(time_related_items.qitem.unique())
+            language_time_qitems[languagecode] = len(time_related_qs)
+            all_wikidata_time_items = all_wikidata_time_items.union(time_related_qs)
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','time', len(time_related_qs), len(df), period)
+
+            all_start_times = df.loc[(df['start_time'].notnull())][['qitem','start_time']]
+            all_start_time_lang = set(all_start_times.qitem.unique())
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','start_time', len(all_start_time_lang), len(df), period)
+
+
+            geolocated_items = df.loc[(df['geocoordinates'].notnull())].qitem.unique()
+            geolocated_start_time = df.loc[(df['geocoordinates'].notnull()) & (df['start_time'].notnull())].qitem.unique()
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'geolocated','time','start_time', len(geolocated_start_time), len(geolocated_items), period)
+
+
+            geolocated_items = df.loc[(df['gender'].notnull())].qitem.unique()
+            geolocated_start_time = df.loc[(df['gender'].notnull()) & (df['start_time'].notnull())].qitem.unique()
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'people','time','start_time', len(geolocated_start_time), len(geolocated_items), period)
+
+            geolocated_items = df.loc[(df['gender'] == 'Q6581097')].qitem.unique() # male
+            geolocated_start_time = df.loc[(df['gender'] == 'Q6581097') & (df['start_time'].notnull())].qitem.unique()
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'male','time','start_time', len(geolocated_start_time), len(geolocated_items), period)
+
+
+            geolocated_items = df.loc[(df['gender'] == 'Q6581072')].qitem.unique() # female
+            geolocated_start_time = df.loc[(df['gender'] == 'Q6581072') & (df['start_time'].notnull())].qitem.unique()
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'female','time','start_time', len(geolocated_start_time), len(geolocated_items), period)
+
+
+            geolocated_items = df.loc[(df['ccc_binary'] == 1)].qitem.unique()
+            geolocated_start_time = df.loc[(df['ccc_binary'] == 1) & (df['start_time'].notnull())].qitem.unique()
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'geolocated','time','start_time', len(geolocated_start_time), len(geolocated_items), period)
+
+
+        all_wikidata_time_items_count = len(all_wikidata_time_items)
+        insert_intersections_values(time_range,cursor2,'articles','wikidata_article_qitems', None,'time','time', all_wikidata_time_items_count, len(all_wikidata_items), period)
+
+        for languagecode in wikilanguagecodes:
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','time', language_time_qitems[languagecode], all_wikidata_time_items_count, period)
+
+
+        print ('wikidata_article_qitems, time, languagecode, wp'+period)
+        print ('wikidata_article_qitems, , time, time,'+period)
+
+        print ('languagecode, wp, wikidata_article_qitems, time,'+period)
+        print ('languagecode, wp, wikidata_article_qitems, start_time,'+period)
+
+        print ('languagecode, geolocated, time, start_time,'+period)
+        print ('languagecode, people, time, start_time,'+period)
+        print ('languagecode, male, time, start_time,'+period)
+        print ('languagecode, female, time, start_time,'+period)
+        print ('languagecode, ccc, time, start_time,'+period)
+
+
+
+    if time_range == 'accumulated monthly': # this is A in the spreadsheet
+
+        function_name = 'generate_time_intersections '+time_range
+        if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+
+        functionstartTime = time.time()
+
+        conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+        conn2 = sqlite3.connect(databases_path + stats_db); cursor2 = conn2.cursor()
+
+        for period in sorted(periods_accum.keys()):
+            print (time_range,period,'\t',periods_accum[period])
+            for_time_range(time_range,periods_accum[period],period)
+        conn2.commit()
+
+        duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+        wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+
+    if time_range == 'last accumulated': # this is B in the spreadsheet
+
+        function_name = 'generate_time_intersections '+time_range
+        if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+
+        conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+        conn2 = sqlite3.connect(databases_path + stats_db); cursor2 = conn2.cursor()
+
+
+        all_wikidata_items = set()
+        all_wikidata_time_items = set()
+        all_wikidata_start_time_items = set()
+
+        all_wikidata_people_items = set()
+        all_wikidata_people_time_items = set()
+
+        all_wikidata_people_items = set()
+        all_wikidata_people_time_items = set()
+
+        all_wikidata_starts_century_dict = {}
+        language_time_qitems = {}
+
+        for languagecode in wikilanguagecodes:
+
+            query = 'SELECT qitem, start_time, end_time, time_interval, gender, geocoordinates, ccc_binary FROM '+languagecode+'wiki;'
+            df = pd.read_sql_query(query, conn)#, parameters)
+
+
+            ###
+            all_wikidata_items = all_wikidata_items.union(set(df.qitem.unique()))
+            time_related_items = df.loc[(df['time_interval'].notnull()) or (df['start_time'].notnull()) or (df['end_time'].notnull())]
+            time_related_qs = set(time_related_items.qitem.unique())
+            language_time_qitems[languagecode] = len(time_related_qs)
+            all_wikidata_time_items = all_wikidata_time_items.union(time_related_qs)
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','time', len(time_related_qs), len(df), period)
+            ###
+
+
+            ###
+            people_items = df.loc[(df['gender'].notnull())].qitem.unique()
+            all_wikidata_people_items = all_wikidata_people_items.union(people_items)
+
+            people_start_time = df.loc[(df['gender'].notnull()) & (df['start_time'].notnull())].qitem.unique()
+            all_wikidata_people_time_items = all_wikidata_people_time_items.union(people_start_time)
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'people','time','start_time', len(people_start_time), len(people_items), period)
+            ###
+
+
+
+            ###
+            geolocated_items = df.loc[(df['geocoordinates'].notnull())].qitem.unique()
+            all_wikidata_geolocated_items = all_wikidata_geolocated_items.union(geolocated_items)
+
+            geolocated_start_time = df.loc[(df['geocoordinates'].notnull()) & (df['start_time'].notnull())].qitem.unique()
+            all_wikidata_geolocated_time_items = all_wikidata_people_time_items.union(geolocated_start_time)
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'geolocated','time','start_time', len(geolocated_start_time), len(geolocated_items), period)
+            ###
+
+
+            ###
+            all_start_times = df.loc[(df['start_time'].notnull())][['qitem','start_time']]
+            all_start_time_lang = set(all_start_times.qitem.unique())
+
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','start_time', len(all_start_time_lang), len(df), period)
+
+            all_wikidata_start_time_items = all_wikidata_start_time_items.union(all_start_time_lang)
+            all_start_time_count = len(all_start_times)
+            all_starts = all_start_times.start_time.value_counts().to_dict()
+            starts_century_dict = {}
+            for year, count in all_starts.items():
+
+                if year > 0:
+                    century = (year - 1) // 100 + 1 
+                if year < 0:
+                    century = (year - 1) // 100
+                elif year == 0:
+                    century = 1
+
+                try:
+                    all_wikidata_starts_century_dict[century]+=count
+                except:
+                    all_wikidata_starts_century_dict[century]=count
+
+                try:
+                    starts_century_dict[century]+=count
+                except:
+                    starts_century_dict[century]=count
+
+            for century, count in starts_century_dict.items():
+                insert_intersections_values(time_range,cursor2,'articles',languagecode,'time','century',century, count, all_start_time_count, period)
+            ###
+
+            ###
+            ccc_start_time = df.loc[(df['ccc_binary'] == 1) & (df['start_time'].notnull())]
+            ccc_start_time_count = len(ccc_start_time)
+            all_starts_ccc = ccc_start_time.start_time.value_counts().to_dict()
+            ccc_starts_century_dict = {}
+            for year, count in all_starts_ccc.items():
+
+                if year > 0:
+                    century = (year - 1) // 100 + 1 
+                if year < 0:
+                    century = (year - 1) // 100
+                elif year == 0:
+                    century = 1
+
+                try:
+                    ccc_starts_century_dict[century]+=count
+                except:
+                    ccc_starts_century_dict[century]=count
+
+            for century, count in ccc_starts_century_dict.items():
+                insert_intersections_values(time_range,cursor2,'articles',languagecode,'ccc_time','century',century, count, ccc_start_time_count, period)
+            ###
+        
+
+        for century, count in all_wikidata_starts_century_dict.items():
+            insert_intersections_values(time_range,cursor2,'articles','wikidata_article_qitems','time','century',century, count, len(all_wikidata_start_time_items), period)
+
+        insert_intersections_values(time_range,cursor2,'articles','wikidata_article_qitems','people','time','start_time', len(all_wikidata_people_time_items), len(all_wikidata_people_items), period)
+
+        all_wikidata_time_items_count = len(all_wikidata_time_items)
+        insert_intersections_values(time_range,cursor2,'articles','wikidata_article_qitems', None,'time','time', all_wikidata_time_items_count, len(all_wikidata_items), period)
+
+        for languagecode in wikilanguagecodes:
+            insert_intersections_values(time_range,cursor2,'articles',languagecode,'wp','wikidata_article_qitems','time', language_time_qitems[languagecode], all_wikidata_time_items_count, period)
+
+
+        print ('wikidata_article_qitems, , time, time, '+period)
+        print ('wikidata_article_qitems, time, languagecode, wp, '+period)
+
+        print ('languagecode, wp, wikidata_article_qitems, time,'+period)
+        print ('languagecode, wp, wikidata_article_qitems, start_time,'+period)
+
+        print ('languagecode, people, time, start_time, '+period)
+        print ('wikidata_article_qitems, people, time, start_time, '+period)
+
+        print ('languagecode, geolocated, time, start_time, '+period)
+        print ('wikidata_article_qitems, geolocated, time, start_time, '+period)
+
+        print ('wikidata_article_qitems, time, century, century_name, '+period)
+        print ('languagecode, ccc_time, century, century_name, '+period)
+        print ('languagecode, time, century, century_name, '+period)
+
+
+        duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+        wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+
 
 
 def generate_pageviews_intersections():
@@ -2656,6 +2990,8 @@ def main_loop_retry():
             continue
 
 #######################################################################################
+
+
 
 class Logger_out(object): # this prints both the output to a file and to the terminal screen.
     def __init__(self):

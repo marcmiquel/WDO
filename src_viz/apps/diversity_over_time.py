@@ -348,7 +348,7 @@ dash_app13.layout = html.Div([
 
 
 
-            dcc.Tab(label='One Wikipedia At A Given Time', children=[
+            dcc.Tab(label='One Wikipedia At A Given Time (Treemap)', children=[
 
                 # 1 SPECIFIC MONTH TREEMAP
                 html.Br(),

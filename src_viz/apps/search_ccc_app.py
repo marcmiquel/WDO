@@ -1,4 +1,5 @@
 import sys
+import dash_apps
 sys.path.insert(0, '/srv/wcdo/src_viz')
 from dash_apps import *
 
@@ -266,6 +267,7 @@ def dash_app23_build_layout(params):
 
         if 'source_lang' in params:
             source_lang = params['source_lang']
+            print (source_lang)
             if source_lang != 'none': source_language = languages.loc[source_lang]['languagename']
         else:
             source_lang = 'none'
@@ -308,6 +310,9 @@ def dash_app23_build_layout(params):
 
         columns_dict = {'position':'Nº','apage_title':source_language+' Title', 'bpage_title': target_language+' Title','target_langs':'Target Langs.'}
         columns_dict.update(features_dict_inv)
+
+        columns_dict_abbr = {'References':'Refs.', 'Pageviews':'PV', 'Editors':'Edtrs','num_inlinks':'Inlinks','Wikidata Properties':'WD.P.','Interwiki Links':'IW.L.','Featured Article':'F.A.','Creation Date':'Created','Inlinks from CCC':'IL CCC','Related Languages':'Rel. Lang.','Ethnic Group':'Ethnia','Religious Group':'Religion'}
+
 
         conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cur = conn.cursor()
 
@@ -496,7 +501,7 @@ def dash_app23_build_layout(params):
                 dash_apps.apply_default_value(params)(dcc.Dropdown)(
                     id='topic',
                     options=[{'label': i, 'value': ccc_all_dict[i]} for i in sorted(ccc_all_dict, reverse=False)],
-                    value='',
+                    value='CCC',
                     placeholder="Set topic (optional)",
                     style={'width': '190px'}
                  ), style={'display': 'inline-block','width': '200px'}),
@@ -570,10 +575,12 @@ def dash_app23_build_layout(params):
         # print (len(columns))
         # print (df.head(100))
 #        print (len(df))
+        df_list_wt = list()
 
         k = 0
         for index, rows in df.iterrows():
             df_row = list()
+            df_row_wt = list()
 
             for col in columns:
                 title = rows[source_language+' Title']
@@ -583,12 +590,14 @@ def dash_app23_build_layout(params):
                 if col == 'Nº':
                     k+=1
                     df_row.append(str(k))
+                    df_row_wt.append(str(k))
 
                 elif col == source_language+' Title':
                     title = rows[source_language+' Title']
                     if not isinstance(title, str):
                         title = title.iloc[0]
                     df_row.append(html.A(title.replace('_',' '), href='https://'+source_lang+'.wikipedia.org/wiki/'+title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':'+title+'|'+title.replace('_',' ')+']]')
 
                 elif col == target_language+' Title':
 
@@ -602,6 +611,7 @@ def dash_app23_build_layout(params):
 
                     if isinstance(t_title, str):  
                         df_row.append(html.A(t_title.replace('_',' '), href='https://'+target_langs[0]+'.wikipedia.org/wiki/'+t_title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                        df_row_wt.append('[[:'+target_langs[0]+':'+t_title+'|'+t_title.replace('_',' ')+']]')
 
 
                 elif col == 'Interwiki':
@@ -609,45 +619,54 @@ def dash_app23_build_layout(params):
                     # print (rows['Interwiki'])
                     # print (rows)
                     df_row.append(html.A( rows['Interwiki'], href='https://www.wikidata.org/wiki/'+rows['qitem'], target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[wikidata:'+rows['qitem']+'|'+str(rows['Interwiki'])+']]')
 
                 elif col == 'Bytes':
                     value = round(float(int(rows[col])/1000),1)
                     df_row.append(str(value)+'k')
+                    df_row_wt.append('[[:'+source_lang+':'+rows[source_language+' Title'].replace(' ','_')+'|'+str(value)+'k]]')
 
                 elif col == 'Outlinks' or col == 'References' or col == 'Images':
                     title = rows[source_language+' Title']
-                    df_row.append(html.A( rows[col], href='https://'+target_langs[0]+'.wikipedia.org/wiki/'+title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    df_row.append(html.A( rows[col], href='https://'+source_lang+'.wikipedia.org/wiki/'+title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':'+rows[source_language+' Title'].replace(' ','_')+'|'+str(rows[col])+']]')
 
                 elif col == 'Inlinks':
                     df_row.append(html.A( rows['Inlinks'], href='https://'+source_lang+'.wikipedia.org/wiki/Special:WhatLinksHere/'+rows[source_language+' Title'].replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':Special:WhatLinksHere/'+rows[source_language+' Title'].replace(' ','_')+'|'+str(rows['Inlinks'])+']]')
 
                 elif col == 'Inlinks from CCC':
                     df_row.append(html.A( rows['Inlinks from CCC'], href='https://'+source_lang+'.wikipedia.org/wiki/Special:WhatLinksHere/'+rows[source_language+' Title'].replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':Special:WhatLinksHere/'+rows[source_language+' Title'].replace(' ','_')+'|'+str(rows['Inlinks from CCC'])+']]')
 
                 elif col == 'Outlinks from CCC':
                     df_row.append(html.A( rows['Outlinks from CCC'], href='https://'+source_lang+'.wikipedia.org/wiki/'+rows[source_language+' Title'].replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':'+rows[source_language+' Title'].replace(' ','_')+'|'+str(rows[col])+']]')
 
                 elif col == 'Editors':
                     df_row.append(html.A( rows['Editors'], href='https://'+source_lang+'.wikipedia.org/w/index.php?title='+rows[source_language+' Title'].replace(' ','_')+'&action=history', target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':'+rows[source_language+' Title'].replace(' ','_')+'|'+str(rows['Editors'])+']]')
 
                 elif col == 'Edits':
                     df_row.append(html.A( rows['Edits'], href='https://'+source_lang+'.wikipedia.org/w/index.php?title='+rows[source_language+' Title'].replace(' ','_')+'&action=history', target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':'+rows[source_language+' Title'].replace(' ','_')+'|'+str(rows['Edits'])+']]')
 
                 elif col == 'Discussions':
                     df_row.append(html.A( rows['Discussions'], href='https://'+source_lang+'.wikipedia.org/wiki/Talk:'+rows[source_language+' Title'].replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[:'+source_lang+':'+rows[source_language+' Title'].replace(' ','_')+'|'+str(rows['Discussions'])+']]')
 
                 elif col == 'Wikirank':
                     df_row.append(html.A( rows['Wikirank'], href='https://wikirank.net/'+source_lang+'/'+rows[source_language+' Title'], target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append(str(rows['Wikirank']))
 
                 elif col == 'Pageviews':
                     df_row.append(html.A( rows['Pageviews'], href='https://tools.wmflabs.org/pageviews/?project='+source_lang+'.wikipedia.org&platform=all-access&agent=user&range=latest-20&pages='+rows[source_language+' Title'].replace(' ','_')+'&action=history', target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append(str( int(rows['Pageviews'])))
 
                 elif col == 'Wikidata Properties':
                     df_row.append(html.A( rows['Wikidata Properties'], href='https://www.wikidata.org/wiki/'+rows['qitem'], target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[wikidata:'+rows['qitem']+'|'+str(rows['Wikidata Properties'])+']]')
 
-                elif col == 'Discussions':
-                    title = rows[source_language+' Title']
-                    df_row.append(html.A(str(rows[col]), href='https://'+source_lang+'.wikipedia.org/wiki/'+title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
 
                 elif col == 'Target Langs.':
                     target_langs_titles = []
@@ -662,6 +681,7 @@ def dash_app23_build_layout(params):
                     for i in range(1,len(target_langs)):
                         target_langs_titles.append(rows['c' + str(i) + 'page_title'])
                     text = ''
+                    text_wt = ''
 
                     for x in range(0,len(target_langs)):
                         cur_title = target_langs_titles[x]
@@ -669,13 +689,19 @@ def dash_app23_build_layout(params):
                             if text!='': text+=', '
 
                             text+= '['+target_langs[x]+']'+'('+'http://'+target_langs[x]+'.wikipedia.org/wiki/'+ cur_title.replace(' ','_')+')'
+                            text_wt+= '[[:'+target_langs[x]+':'+cur_title.replace(' ','_')+'|'+target_langs[x]+']]'
+
  #                    print (target_langs_titles)
                     df_row.append(dcc.Markdown(text))
+                    df_row_wt.append(text_wt)
 
                 elif col == 'Qitem':
                     df_row.append(html.A( rows['Qitem'], href='https://www.wikidata.org/wiki/'+rows['Qitem'], target="_blank", style={'text-decoration':'none'}))
+                    df_row_wt.append('[[wikidata:'+rows['Qitem']+'|'+str(rows['Qitem'])+']]')
+
                 else:
                     df_row.append(rows[col])
+                    df_row_wt.append(rows[col])
 
             # print (rows)
             # print (len(rows))
@@ -683,15 +709,61 @@ def dash_app23_build_layout(params):
             
             if k <= limit:
                 df_list.append(df_row)
+                df_list_wt.append(df_row_wt)
 
-#        print(str(datetime.timedelta(seconds=time.time() - functionstartTime))+' after htmls')
-#        print (df.head())
 
-        # print (df.columns)
-        # print (columns)
 
-        # print (len(df.columns))
-        # print (len(columns))
+            df1 = pd.DataFrame(df_list_wt)
+            df1.columns = columns
+            todelete = ['Nº','IL CCC']
+            if 'Wikidata Properties' in columns: todelete.append('WD.P.')
+            df1=df1.rename(columns=columns_dict_abbr)
+            df1=df1.drop(columns=todelete)
+
+
+            # CREATING THE WIKITEXT TABLE
+            # WIKITEXT
+            df_columns_list = df1.columns.values.tolist()
+            df_rows = df1.values.tolist()
+
+            class_header_string = '{| border="1" cellpadding="2" cellspacing="0" style="width:90px"; background: #f9f9f9; border: 1px solid #aaaaaa; border-collapse: collapse; white-space: nowrap; text-align: right" class="sortable";\n'
+
+            dict_data_type = {}
+            header_string = '!'
+            for x in range(0,len(df_columns_list)):
+                if x == len(df_columns_list)-1: add = ''
+                else: add = '!!'
+                data_type = ''
+                if df_columns_list[x] in dict_data_type: data_type = ' '+dict_data_type[df_columns_list[x]]
+                header_string = header_string + data_type + df_columns_list[x] + add
+
+            header_string = header_string + '\n'
+
+            rows = ''
+            for row in df_rows:
+                midline = '|-\n'
+                row_string = '|'
+                for x in range(0,len(row)):
+                    if x == len(row)-1: add = ''
+                    else: add = '||'
+                    value = row[x]
+                    row_string = row_string + str(value) + add # here is the value
+
+                    # here we might add colors.
+                row_string = midline + row_string + '\n'
+                rows = rows + row_string
+            closer_string = '|}'
+
+            wikitext = '* '+'Diversity Observatory table: Search Results. Generated at '+datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S')+'\n'
+            wikitext += 'Legend: Edtrs (number of editors), PV (number of page views), Bytes (number of Bytes), Refs. (number of References), IW.L. (number of interwiki links), Created (date of the first edit) and Rel. Lang. (interwiki link to relevant related languages).\n\n'
+
+            wiki_table_string = class_header_string + header_string + rows + closer_string
+            wikitext += wiki_table_string
+
+            f = open('/srv/wcdo/src_viz/downloads/top_ccc_lists/search_results.txt','w')
+            f.write(str(wikitext))
+            f.close()
+
 
         title = 'Search CCC Articles'
         df1 = pd.DataFrame(df_list)
@@ -809,6 +881,21 @@ def dash_app23_build_layout(params):
             html.Hr(),
             html.H5('Results'),
             dcc.Markdown(text_results.replace('  ', '')),
+
+            html.Br(),
+
+            html.Div(
+            html.P([
+            html.P('Download Table ', style= {'font-weight':'bold'}),
+
+            html.A('Wikitext',
+                id='download-link-txt',
+                download="search_results.txt",
+                href='/downloads/top_ccc_lists/search_results.txt',
+                target="_blank"),                
+
+            ]), style={'display': 'inline-block', 'float': 'right', 'text-align':'right','width': '300px'}),
+
             html.Br(),
 
             html.Table(

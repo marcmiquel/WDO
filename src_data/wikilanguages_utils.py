@@ -28,8 +28,11 @@ wikidata_db = 'wikidata.db'
 
 diversity_groups_db = 'diversity_groups.db'
 diversity_groups_production_db  = 'diversity_groups_production.db'
+
 diversity_observatory_log = 'diversity_observatory_log.db'
+
 wikipedia_diversity_db = 'wikipedia_diversity.db'
+wikipedia_diversity_production_db = 'wikipedia_diversity_production.db'
 
 stats_db = 'stats.db'
 stats_production_db = 'stats_production.db'
@@ -38,7 +41,8 @@ top_diversity_db = 'top_diversity_articles.db'
 top_diversity_production_db = 'top_diversity_articles_production.db'
 
 missing_ccc_db = 'missing_ccc.db'
-group_identities_db = 'group_identities_articles.db'
+ethnic_groups_content_db = 'ethnic_groups_content.db'
+lgbt_content_db = 'lgbt_content.db'
 
 editor_engagement_db = 'editor_engagement.db'
 
@@ -144,8 +148,9 @@ def load_dicts_page_ids_qitems(printme, languagecode):
     page_titles_qitems = {}
     page_titles_page_ids = {}
 
+    # conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    
+
     a='1'
     try:
         query = 'SELECT 1 FROM '+languagecode+'wiki;'
@@ -810,6 +815,47 @@ def get_group_identities_labels():
 
     return df
 
+
+
+def store_lgbt_label(store_get):
+    functionstartTime = time.time()
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+
+    function_name = 'store_lgbt_label'
+    functionstartTime = time.time()
+
+    if store_get == 'store':
+        query = 'CREATE TABLE IF NOT EXISTS LGBT_label_languages (label, lang, PRIMARY KEY (label, lang));'
+        cursor2.execute(query);
+        conn2.commit()
+
+        param = []
+        for languagecode in wikilanguagecodes:
+            try:
+                query = 'SELECT page_title FROM '+languagecode+'wiki WHERE qitem = "Q17884";'
+                cursor.execute(query);
+                label = cursor.fetchone()[0]
+                print ((label, languagecode))
+                param.append((label, languagecode))
+            except:
+                pass
+
+        query = 'INSERT OR IGNORE INTO LGBT_label_languages (label, lang) VALUES (?, ?)'
+        cursor2.executemany(query, param)
+        conn2.commit()
+
+    else:
+
+        langs_LGBT_label = {}
+        query = 'SELECT lang, label FROM LGBT_label_languages;'
+        for row in cursor2.execute(query):
+            langs_LGBT_label[row[0]]=row[1]
+
+        return langs_LGBT_label
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    print (duration)
 
 
 

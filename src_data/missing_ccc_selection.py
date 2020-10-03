@@ -99,6 +99,10 @@ def main():
     #     (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
     #     extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_titles_qitems)
 
+
+    update_push_missing_ccc_wikipedia_diversity()
+
+    
     wikilanguages_utils.copy_db_for_production(missing_ccc_db, 'missing_ccc_selection.py', databases_path)
 
 
@@ -1711,6 +1715,52 @@ def extend_links_from_to_original_ccc(languagecode,page_titles_page_ids,page_tit
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
+
+
+
+
+def update_push_missing_ccc_wikipedia_diversity():
+
+    function_name = 'update_push_missing_ccc_wikipedia_diversity'
+    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    functionstartTime = time.time()
+
+    for languagecode in wikilanguagecodes:
+
+
+        conn3 = sqlite3.connect(databases_path + ethnic_groups_content_db); cursor3 = conn3.cursor()
+
+        qitem_ethnic_groups = {}
+        query = 'SELECT qitem, qitem_ethnic_group FROM ethnic_group_articles WHERE primary_lang = "'+languagecode+'" AND ethnic_group_binary = 1 ORDER BY qitem;'
+
+        for row in cursor.execute(query):
+
+            qitem = row[0]
+            qitem_ethnic_group = row[1]
+
+            try:
+                qitem_ethnic_groups[qitem]=qitem_ethnic_groups[qitem]+';'+qitem_ethnic_group
+            except:
+                qitem_ethnic_groups[qitem]=qitem_ethnic_group
+
+
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+        qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+
+        conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+        params = []
+        for q, ethnic_groups in qitem_ethnic_groups.items():
+            page_title = qitems_page_titles[q]
+            page_id = page_titles_page_ids[page_title]
+            params.append((ethnic_groups, q, page_title, page_id))
+
+        query = 'UPDATE '+languagecode+'wiki SET ethnic_group_topic = NULL;'
+        cursor.execute(query)
+
+        query = 'UPDATE '+languagecode+'wiki SET ethnic_group_topic = ? WHERE qitem = ? AND page_title = ? AND page_id = ?;'
+        cursor.executemany(query,params)
+        conn.commit()
 
 
 

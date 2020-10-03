@@ -40,7 +40,6 @@ class Logger(object): # this prints both the output to a file and to the termina
 def main():
 
     create_top_diversity_lists_db()
-    generate_all_top_ccc_diversity_articles_lists()
     update_top_ccc_diversity_articles_features()
     update_top_ccc_diversity_articles_titles('sitelinks')
     update_top_ccc_diversity_articles_titles('labels')
@@ -147,7 +146,7 @@ def generate_all_top_ccc_diversity_articles_lists():
 
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_realname, 'check','')==1: return
 
-#    wikilanguagecodes_real = ['ca']
+    # wikilanguagecodes_real = ['ca']
 #    wikilanguagecodes_real=['it']
 #    wikilanguagecodes_real = ['ca','it','en','es','ro']
 #    wikilanguagecodes_real=['it', 'fr', 'ca', 'en', 'de', 'es', 'nl', 'uk', 'pt', 'pl']
@@ -197,6 +196,7 @@ def generate_all_top_ccc_diversity_articles_lists():
             function_name = 'generate_all_top_ccc_diversity_articles_lists '+languagecode+' '+country
             if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: continue
             functionstartTime = time.time()
+
 
 
             # (languagecode, content_type, category, percentage_filtered, time_frame, relevance_rank, relevance_sense, window, representativity, columns, page_titles_qitems, country, list_name)
@@ -565,7 +565,7 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
     ccc_df["num_edits"] = ccc_df["num_edits"].astype(int)
 
 
-    relevance_measures = ['num_inlinks', 'num_outlinks', 'num_bytes', 'num_references', 'num_edits','num_edits_last_month', 'num_editors', 'num_pageviews', 'num_wdproperty', 'num_interwiki', 'num_discussions', 'num_images', 'featured_article', 'num_inlinks_from_CCC', 'num_retrieval_strategies', 'interwiki_relationship', 'wikirank']
+    relevance_measures = ['num_inlinks', 'num_outlinks', 'num_bytes', 'num_references', 'num_edits','num_edits_last_month', 'num_editors', 'num_pageviews', 'num_wdproperty', 'num_interwiki', 'num_discussions', 'num_images', 'featured_article', 'num_inlinks_from_CCC', 'num_retrieval_strategies', 'interwiki_relationship', 'wikirank', 'num_outlinks_to_women', 'percent_outlinks_to_women', 'num_inlinks_from_women', 'num_outlinks_to_lgbt', 'num_inlinks_from_lgbt', 'percent_outlinks_to_lgbt']
     rank_dict = {}
     for parameter in relevance_rank.keys():
         if parameter in relevance_measures:
@@ -737,11 +737,14 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
                     # '\t\t'+str(ctype)+':'+str(ccc_df.loc[qitem][ctype]),
 
 
-#                    print (i,"("+str(y)+")",ccc_df.loc[qitem]['page_title'],qitem,'\t\t\t\t\t'+str(list(relevance_rank.keys())[0])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[0]]),
-#                    '\t'+str(list(relevance_rank.keys())[1])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[1]]),
-#                    '\t'+str(list(relevance_rank.keys())[2])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[2]]),
+                    # print (i,"("+str(y)+")",ccc_df.loc[qitem]['page_title'],qitem,'\t\t\t\t\t'+str(list(relevance_rank.keys())[0])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[0]]),
+                    # '\t'+str(list(relevance_rank.keys())[1])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[1]]))
 
 
+
+                    # print (i,"("+str(y)+")",ccc_df.loc[qitem]['page_title'],qitem,'\t\t\t\t\t'+str(list(relevance_rank.keys())[0])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[0]]),
+                    # '\t'+str(list(relevance_rank.keys())[1])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[1]]),
+                    # '\t'+str(list(relevance_rank.keys())[2])+':'+str(ccc_df.loc[qitem][list(relevance_rank.keys())[2]]),
                     # );
 
                     # qitem,territory,main_territory,x); #input('')
@@ -780,6 +783,9 @@ def make_top_ccc_diversity_articles_list(languagecode, content_type, category, p
 
     # print ('we stop here by now.')
     # return
+
+
+
 
     # INSERT ARTICLES
     measurement_date_dict={}
@@ -1550,7 +1556,7 @@ if __name__ == '__main__':
 
 
     cycle_year_month = wikilanguages_utils.get_current_cycle_year_month()
-    cycle_year_month = '2020-07'
+    # cycle_year_month = '2020-07'
 
 #    check_time_for_script_run(script_name, cycle_year_month)
     startTime = time.time()
@@ -1577,15 +1583,15 @@ if __name__ == '__main__':
     for languagecode in wikilanguagecodes:
         if languagecode not in wikipedialanguage_currentnumberarticles: wikilanguagecodes.remove(languagecode)
 
-    languageswithoutterritory=list(set(languages.index.tolist()) - set(list(territories.index.tolist())))
-    # Only those with a geographical context
-    wikilanguagecodes_real = wikilanguagecodes.copy()
-    for languagecode in languageswithoutterritory: wikilanguagecodes_real.remove(languagecode)
+    # languageswithoutterritory=list(set(languages.index.tolist()) - set(list(territories.index.tolist())))
+    # # Only those with a geographical context
+    # wikilanguagecodes_real = wikilanguagecodes.copy()
+    # for languagecode in languageswithoutterritory: wikilanguagecodes_real.remove(languagecode)
     # Final Wikipedia languages to process
     print (wikilanguagecodes)
 
 
-    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+    # if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
