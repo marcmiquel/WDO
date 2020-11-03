@@ -67,7 +67,7 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
     # os.remove(databases_path + lgbt_content_db); print (lgbt_content_db+' deleted.');
     
     conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
     conn3 = sqlite3.connect(databases_path + lgbt_content_db); cursor3 = conn3.cursor()
 
     # wikilanguages_utils.store_lgbt_label('store')
@@ -110,20 +110,19 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
 
     print (keyword)
 
+
+
     if keyword != None:
         # PRIMER: s’han d’haver agafat totes les categories. també les que contenen paraules clau.
         category_page_ids_page_titles = {}
-        category_links_cat_cat = {}
-        category_links_cat_art = {}
+        category_page_titles_page_ids = {}
 
         dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-page.sql.gz'
         wikilanguages_utils.check_dump(dumps_path, script_name)
         
         dump_in = gzip.open(dumps_path, 'r')
-        iter = 0
 
         while True:
-            iter+=1
             line = dump_in.readline()
             try: line = line.decode("utf-8")
             except UnicodeDecodeError: line = str(line)
@@ -144,19 +143,35 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
 
                     if page_namespace != 14: continue
                     category_page_ids_page_titles[page_id]=cat_title
+                    category_page_titles_page_ids[cat_title]=page_id
 
-                    category_links_cat_cat[cat_title]=set()
-                    category_links_cat_art[cat_title]=set()
-            if iter % 10000 == 0:
-                print (str(iter)+' categories loaded.')
 
         print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
         print (len(category_links_cat_cat))
         print ('all categories loaded')
 
-        # print (category_links_cat_cat['LGBT'])
-        # print (category_links_cat_art['LGBT'])
-        # input('')
+
+        storing_catlinks = False
+        if len(category_page_ids_page_titles) > 2000000: # if the language is over 2,000,000 categories
+
+            storing_catlinks = True
+            print ('storing category links.')
+
+            conn = sqlite3.connect(databases_path + languagecode + 'wiki_category_links_temp.db'); cursor = conn.cursor()
+            query = ('CREATE TABLE IF NOT EXISTS category_links_cat_art (category_title text, page_id integer, PRIMARY KEY (category_title, page_id));')
+            cursor.execute(query); conn.commit()
+            query = ('CREATE TABLE IF NOT EXISTS category_links_cat_cat (category_title text, subcategory_title text, PRIMARY KEY (category_title, subcategory_title));')
+            cursor.execute(query); conn.commit()
+
+            category_links_cat_cat = []
+            category_links_cat_art = []
+
+        else:
+            category_links_cat_cat_dict = {}
+            category_links_cat_art_dict = {}
+            for cat_title in category_page_titles_page_ids.keys():
+                category_links_cat_cat_dict[cat_title] = set()
+                category_links_cat_art_dict[cat_title] = set()
 
 
 
@@ -210,14 +225,21 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
                         continue
 
 
-                    if cat_title not in category_links_cat_cat:
-                        # print (row,'cat title does not exist.')
+                    if cat_title not in category_page_titles_page_ids:
                         continue
 
-                    if page_id in category_page_ids_page_titles: # is this a category
-                        category_links_cat_cat[cat_title].add(category_page_ids_page_titles[page_id])
-                    else: # this is an article
-                        category_links_cat_art[cat_title].add(page_id)
+                    if storing_catlinks:
+                        if page_id in category_page_ids_page_titles: # is this a category
+                            category_links_cat_cat.append((cat_title, category_page_ids_page_titles[page_id]))
+                        else: # this is an article
+                            category_links_cat_art.append((cat_title, page_id))
+
+                    else:
+                        if page_id in category_page_ids_page_titles: # is this a category
+                            category_links_cat_cat_dict[cat_title].add(category_page_ids_page_titles[page_id])
+                        else: # this is an article
+                            category_links_cat_art_dict[cat_title].add(page_id)
+
 
                     # if page_id == 375668:
                     #     print (row)
@@ -229,8 +251,26 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
                     #     print (category_links_cat_art['LGBT'])
 
 
-            if iter % 100000 == 0:
-                print (str(iter)+' categorylinks loaded.')
+            if storing_catlinks and iter % 5000 == 0:
+                print (str(iter)+' categorylinks lines read.')
+
+                cursor.executemany('INSERT OR IGNORE INTO category_links_cat_cat (category_title, subcategory_title) VALUES (?,?)', category_links_cat_cat);
+                conn.commit()
+                cursor.executemany('INSERT OR IGNORE INTO category_links_cat_art (category_title, page_id) VALUES (?,?)', category_links_cat_art);
+                conn.commit()
+
+                category_links_cat_cat = []
+                category_links_cat_art = []
+
+        if storing_catlinks:
+            cursor.executemany('INSERT OR IGNORE INTO category_links_cat_cat (category_title, subcategory_title) VALUES (?,?)', category_links_cat_cat);
+            conn.commit()
+            cursor.executemany('INSERT OR IGNORE INTO category_links_cat_art (category_title, page_id) VALUES (?,?)', category_links_cat_art);
+            conn.commit()
+
+            category_links_cat_cat = []
+            category_links_cat_art = []
+
 
         print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
         print (len(category_links_cat_art))
@@ -282,23 +322,48 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
                 # print (cat_title)           
                 # print (category_links_cat_cat[cat_title])
 
-                for cat_title2 in category_links_cat_cat[cat_title]:
-                    try:
-                        total_categories[cat_title2]
-                    except:
-                        newcategories[cat_title2] = None
+                if storing_catlinks:
+                    for row in cursor.execute('SELECT subcategory_title FROM category_links_cat_cat WHERE category_title = ?;', (cat_title,)):
+                        cat_title2 = row[0]
+                        try: total_categories[cat_title2]
+                        except: newcategories[cat_title2] = None
 
-                for page_id in category_links_cat_art[cat_title]:
+                else:
+                    for cat_title2 in category_links_cat_cat_dict[cat_title]:
+                        try: total_categories[cat_title2]
+                        except: newcategories[cat_title2] = None
 
-                    if page_id in selectedarticles_level:
-                        cur_level = selectedarticles_level[page_id]
-                        if cur_level > level:
+
+                if storing_catlinks:
+                    for row in cursor.execute('SELECT page_id FROM category_links_cat_art WHERE category_title = ?;', (cat_title,)):
+                        page_id = row[0]
+                        try:
+                            cur_level = selectedarticles_level[page_id]
+                            if cur_level > level: selectedarticles_level[page_id] = level
+                        except:
                             selectedarticles_level[page_id] = level
 
-                    else:
-                        selectedarticles_level[page_id] = level
+                        if page_id in selectedarticles:
+                            selectedarticles[page_id].add(kw)
+                        else:
+                            selectedarticles[page_id] = {kw}
 
-                    i += 1
+                        i += 1
+
+                else:
+                    for page_id in category_links_cat_art_dict[cat_title]:
+                        try:
+                            cur_level = selectedarticles_level[page_id]
+                            if cur_level > level: selectedarticles_level[page_id] = level
+                        except:
+                            selectedarticles_level[page_id] = level
+
+                        if page_id in selectedarticles:
+                            selectedarticles[page_id].add(kw)
+                        else:
+                            selectedarticles[page_id] = {kw}
+
+                        i += 1
 
             cattitles_total_level = dict()
             cattitles_total_level.update(newcategories)
@@ -367,6 +432,12 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
     conn3.commit()
     print (discarded)
     print (len(parameters))
+
+
+    try:
+        os.remove(databases_path + languagecode + 'wiki_category_links_temp.db'); print (languagecode + 'wiki_category_links_temp.db'+' deleted.');
+    except:
+        pass
 
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
@@ -656,6 +727,8 @@ def store_articles_lgbt_topic_binary_classifier(languagecode):
     # wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
+
+
 def update_push_lgbt_topics_wikipedia_diversity():
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
@@ -670,7 +743,6 @@ def update_push_lgbt_topics_wikipedia_diversity():
             except:
                 qitems[row[0]]=1
     print ('All in.')
-
 
     for languagecode in wikilanguagecodes:
         print (languagecode)

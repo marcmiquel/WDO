@@ -2266,6 +2266,7 @@ def generate_monthly_articles_intersections(time_range):
         print ('languagecode, wp, sexual_orientation, sexual_orientation_name,'+period)  
 
         print ('languagecode, wp, languagecode, lgbt_topics,'+period)   
+        print ('languagecode, wp, languagecode, time,'+period)   
 
         print ('languagecode, wp, languagecode, ccc,'+period)   
         print ('languagecode, wp, languagecode, ccc_geolocated,'+period)

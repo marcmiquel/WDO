@@ -48,16 +48,16 @@ def main():
     # print ('content retrieval aquí.')
     # input('')
 
-    execution_block_diversity_groups_features()
+    execution_block_diversity_categories_features()
     execution_block_ccc_features()
 
 
 ################################################################
 
-def execution_block_diversity_groups_features():
+def execution_block_diversity_categories_features():
     wikilanguages_utils.send_email_toolaccount('WDO - CONTENT RETRIEVAL', '# INTRODUCE THE WIKIDATA TOPICS FEATURES')
     functionstartTime = time.time()
-    function_name = 'execution_block_diversity_groups_features'
+    function_name = 'execution_block_diversity_categories_features'
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     label_geolocation_wd()
@@ -65,7 +65,7 @@ def execution_block_diversity_groups_features():
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
 
         for topic in ['gender', 'religious_group', 'religion', 'folk', 'monuments_and_buildings', 'earth', 'music_creations_and_organizations', 'sport_and_teams', 'food', 'paintings', 'glam', 'books', 'clothing_and_fashion','industry', 'time_interval']:
-            label_diversity_groups_related_topics_wd (topic, languagecode,page_titles_page_ids, page_titles_qitems)
+            label_diversity_categories_related_topics_wd (topic, languagecode,page_titles_page_ids, page_titles_qitems)
 
         label_sexual_orientation_wd(languagecode, page_titles_page_ids, page_titles_qitems)
         label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles_qitems)
@@ -73,9 +73,8 @@ def execution_block_diversity_groups_features():
 
 
     wikilanguages_utils.store_group_identities_labels(wikilanguagecodes)
-    label_previous_database_lgbt_topic_binary()
-    label_previous_database_ethnic_groups_topics()
-
+    # label_previous_database_lgbt_topic()
+    # label_previous_database_ethnic_groups_topics()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -154,10 +153,10 @@ def label_geolocation_wd():
 
 
 # Extends the Articles table with the topic (e.g. gender) from wikidata.
-def label_diversity_groups_related_topics_wd(topic, languagecode, page_titles_page_ids, page_titles_qitems):
+def label_diversity_categories_related_topics_wd(topic, languagecode, page_titles_page_ids, page_titles_qitems):
 
     functionstartTime = time.time()
-    function_name = 'label_diversity_groups_related_topics_wd '+languagecode+' '+topic
+    function_name = 'label_diversity_categories_related_topics_wd '+languagecode+' '+topic
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
@@ -207,7 +206,7 @@ def label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles
 
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-    conn3 = sqlite3.connect(databases_path + diversity_groups_db); cursor3 = conn3.cursor()
+    conn3 = sqlite3.connect(databases_path + diversity_categories_db); cursor3 = conn3.cursor()
 
     qitems_page_ids = {v: page_titles_page_ids[k] for k, v in page_titles_qitems.items()}
 
@@ -353,10 +352,10 @@ def label_start_and_end_time_wd(languagecode, page_titles_page_ids, page_titles_
 
     functionstartTime = time.time()
     function_name = 'label_start_and_end_time_wd '+languagecode
-    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
 
     qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
 
@@ -389,8 +388,6 @@ def label_start_and_end_time_wd(languagecode, page_titles_page_ids, page_titles_
 
             if len(qualifiers_end_time)>0: 
                 end_time = qualifiers_end_time[0]
-
-            if start_time != '' and end_time == '': end_time = '*'
 
             try:
                 page_id=page_titles_page_ids[qitems_page_titles[old_qitem]]
@@ -1276,21 +1273,21 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
 
 
 
-def label_previous_database_lgbt_topic_binary():
+def label_previous_database_lgbt_topic():
 
     functionstartTime = time.time()
-    function_name = 'label_previous_database_lgbt_topic_binary'
+    function_name = 'label_previous_database_lgbt_topic'
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
 
     for languagecode in wikilanguagecodes:
         params = []
         for row in cursor2.execute('SELECT lgbt_topic_binary, page_id, qitem FROM '+languagecode+'wiki;'):
             params.append((row[0],row[1],row[2]))
 
-        cursor.executemany('UPDATE '+languagecode+'wiki SET (lgbt_topic_binary) = (?) WHERE page_id = ? AND qitem = ?', params)
+        cursor.executemany('UPDATE '+languagecode+'wiki SET (lgbt_topic) = (?) WHERE page_id = ? AND qitem = ?', params)
         conn.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
@@ -1305,7 +1302,7 @@ def label_previous_database_ethnic_groups_topics():
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
 
     for languagecode in wikilanguagecodes:
         params = []
@@ -1397,6 +1394,14 @@ if __name__ == '__main__':
     # Get the number of Articles for each Wikipedia language edition
     wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')
 #    print (wikilanguagecodes)
+
+
+   # Only those with a geographical context
+    languageswithoutterritory=list(set(languages.index.tolist()) - set(list(territories.index.tolist())))
+    for languagecode in languageswithoutterritory:
+        try: wikilanguagecodes.remove(languagecode)
+        except: pass
+
     
     wikilanguagecodes_by_size = [k for k in sorted(wikipedialanguage_numberarticles, key=wikipedialanguage_numberarticles.get, reverse=True)]
     biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]

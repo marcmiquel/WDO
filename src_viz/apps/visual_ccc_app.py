@@ -277,7 +277,7 @@ def dash_app32_build_layout(params):
 
     #    lists = ['editors','featured','geolocated','keywords','women','men','created_first_three_years','created_last_year','pageviews','discussions']
 
-            conn = sqlite3.connect(databases_path + 'top_ccc_articles_production.db'); cur = conn.cursor()
+            conn = sqlite3.connect(databases_path + 'top_diversity_articles_production.db'); cur = conn.cursor()
 
             # COLUMNS
             query = 'SELECT r.qitem, f.page_title_original, f.num_images, f.num_interwiki '

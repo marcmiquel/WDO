@@ -4,7 +4,6 @@
 import flask
 from flask import Flask, request, render_template
 from flask import send_from_directory
-from flask_caching import Cache
 from dash import Dash
 import dash
 import dash_html_components as html
@@ -62,7 +61,7 @@ last_period = wikilanguages_utils.get_last_accumulated_period_year_month()
 territories = wikilanguages_utils.load_wikipedia_languages_territories_mapping()
 languages = wikilanguages_utils.load_wiki_projects_information();
 
-wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(wikilanguagecodes,'')
+wikipedialanguage_numberarticles = wikilanguages_utils.load_wikipedia_language_editions_numberofarticles(sorted(languages.index.tolist()),'production')
 wikilanguagecodes = list(wikipedialanguage_numberarticles.keys())
 
 for i in (set(languages.index.tolist()) - set(list(wikipedialanguage_numberarticles.keys()))):
@@ -90,7 +89,8 @@ lang_groups = list()
 lang_groups += ['Top 5','Top 10', 'Top 20', 'Top 30', 'Top 40']#, 'Top 50']
 lang_groups += territories['region'].unique().tolist()
 lang_groups += territories['subregion'].unique().tolist()
-lang_groups.remove('')
+try: lang_groups.remove(''); 
+except: pass
 
 closest_langs = wikilanguages_utils.obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, 4)
 
@@ -130,14 +130,14 @@ group_labels = wikilanguages_utils.get_group_identities_labels()
 ##### WEB RESOURCES #####
 
 title_addenda = ' - Wikipedia Diversity Observatory (WDO)'
-#external_stylesheets = ['https://wcdo.wmflabs.org/assets/bWLwgP.css'] 
+#external_stylesheets = ['https://wdo.wmcloud.org/assets/bWLwgP.css'] 
 external_stylesheets = [dbc.themes.BOOTSTRAP]
-external_scripts = ['https://wcdo.wmflabs.org/assets/gtag.js']
+external_scripts = ['https://wdo.wmcloud.org/assets/gtag.js']
 webtype = ''
 
 
 ##### NAVBAR #####
-#LOGO = "https://wcdo.wmflabs.org/assets/logo.png"
+#LOGO = "https://wdo.wmcloud.org/assets/logo.png"
 LOGO = "./assets/logo.png"
 LOGO_foot = "./assets/wikimedia-logo.png"
 # LOGO = app.get_asset_url('logo.png') # this would have worked. 
@@ -149,28 +149,28 @@ navbar = html.Div([
                 dbc.Nav(
                     [
                     dbc.DropdownMenu(
-                        [dbc.DropdownMenuItem("Top CCC Articles ", href="https://wcdo.wmflabs.org/top_ccc_articles/"),
-                        dbc.DropdownMenuItem("Missing CCC ", href="https://wcdo.wmflabs.org/missing_ccc_articles/"),
-                        dbc.DropdownMenuItem("Common CCC", href="https://wcdo.wmflabs.org/common_ccc_articles"),
-                        dbc.DropdownMenuItem("Incomplete CCC", href="https://wcdo.wmflabs.org/incomplete_ccc_articles/"),
-                        dbc.DropdownMenuItem("Search CCC ", href="https://wcdo.wmflabs.org/search_ccc_articles/"),
-                        dbc.DropdownMenuItem("Visual CCC ", href="https://wcdo.wmflabs.org/visual_ccc_articles/"),
+                        [dbc.DropdownMenuItem("Top CCC Articles ", href="https://wdo.wmcloud.org/top_ccc_articles/"),
+                        dbc.DropdownMenuItem("Missing CCC ", href="https://wdo.wmcloud.org/missing_ccc_articles/"),
+                        dbc.DropdownMenuItem("Common CCC", href="https://wdo.wmcloud.org/common_ccc_articles"),
+                        dbc.DropdownMenuItem("Incomplete CCC", href="https://wdo.wmcloud.org/incomplete_ccc_articles/"),
+                        dbc.DropdownMenuItem("Search CCC ", href="https://wdo.wmcloud.org/search_ccc_articles/"),
+                        dbc.DropdownMenuItem("Visual CCC ", href="https://wdo.wmcloud.org/visual_ccc_articles/"),
                         ],
                         label="Tools",
                         nav=True,
                     ),
                     dbc.DropdownMenu(
-                        [dbc.DropdownMenuItem("Local Content / CCC", href="https://wcdo.wmflabs.org/cultural_context_content/"),
-                        dbc.DropdownMenuItem("Cultural Gap (CCC Coverage)", href="https://wcdo.wmflabs.org/ccc_coverage/"),
-                        dbc.DropdownMenuItem("Cultural Gap (CCC Spread)", href="https://wcdo.wmflabs.org/ccc_spread/"),
-                        dbc.DropdownMenuItem("Geography Gap", href="https://wcdo.wmflabs.org/geography_gap/"),
-                        dbc.DropdownMenuItem("Gender Gap", href="http://wcdo.wmflabs.org/gender_gap/"),
-                        dbc.DropdownMenuItem("Topical Coverage", href="https://wcdo.wmflabs.org/topical_coverage/"),
-                        dbc.DropdownMenuItem("Last Month Pageviews", href="https://wcdo.wmflabs.org/last_month_pageviews/"),
-                        dbc.DropdownMenuItem("Diversity Over Time", href="https://wcdo.wmflabs.org/diversity_over_time/"),
-                        dbc.DropdownMenuItem("Languages Top CCC Articles Coverage", href="https://wcdo.wmflabs.org/languages_top_ccc_articles_coverage/"),
-                        dbc.DropdownMenuItem("Countries Top CCC Articles Coverage", href="https://wcdo.wmflabs.org/countries_top_ccc_articles_coverage/"),
-                        dbc.DropdownMenuItem("Languages Top CCC Articles Spread", href="https://wcdo.wmflabs.org/languages_top_ccc_articles_spread/")],
+                        [dbc.DropdownMenuItem("Local Content / CCC", href="https://wdo.wmcloud.org/cultural_context_content/"),
+                        dbc.DropdownMenuItem("Cultural Gap (CCC Coverage)", href="https://wdo.wmcloud.org/ccc_coverage/"),
+                        dbc.DropdownMenuItem("Cultural Gap (CCC Spread)", href="https://wdo.wmcloud.org/ccc_spread/"),
+                        dbc.DropdownMenuItem("Geography Gap", href="https://wdo.wmcloud.org/geography_gap/"),
+                        dbc.DropdownMenuItem("Gender Gap", href="http://wdo.wmcloud.org/gender_gap/"),
+                        dbc.DropdownMenuItem("Topical Coverage", href="https://wdo.wmcloud.org/topical_coverage/"),
+                        dbc.DropdownMenuItem("Last Month Pageviews", href="https://wdo.wmcloud.org/last_month_pageviews/"),
+                        dbc.DropdownMenuItem("Diversity Over Time", href="https://wdo.wmcloud.org/diversity_over_time/"),
+                        dbc.DropdownMenuItem("Languages Top CCC Articles Coverage", href="https://wdo.wmcloud.org/languages_top_ccc_articles_coverage/"),
+                        dbc.DropdownMenuItem("Countries Top CCC Articles Coverage", href="https://wdo.wmcloud.org/countries_top_ccc_articles_coverage/"),
+                        dbc.DropdownMenuItem("Languages Top CCC Articles Spread", href="https://wdo.wmcloud.org/languages_top_ccc_articles_spread/")],
                         label="Visualizations",
                         nav=True,
                     ),
@@ -245,11 +245,11 @@ if __name__ == '__main__':
 
 @app.route('/list_of_language_territories_by_cultural_context_content')
 def ccc_territories():
-    return flask.redirect('https://wcdo.wmflabs.org/cultural_context_content')
+    return flask.redirect('https://wdo.wmcloud.org/cultural_context_content')
 
 @app.route('/list_of_wikipedias_by_cultural_context_content')
 def ccc():
-    return flask.redirect('https://wcdo.wmflabs.org/cultural_context_content')
+    return flask.redirect('https://wdo.wmcloud.org/cultural_context_content')
 
 @app.errorhandler(404)
 def handling_page_not_found(e):
@@ -284,8 +284,6 @@ from apps.incomplete_ccc_app import *
 # others
 from apps.home_app import *
 from apps.data_status_app import *
-from apps.stubs_app import *
-
 
 
 
@@ -315,7 +313,7 @@ def apply_default_value(params):
 ##### EXECUTING FUNCTIONS #####
 
 print ('* dash_apps loaded after: '+str(datetime.timedelta(seconds=time.time() - setting_up_time)))
-print ('\n\n\n*** START WCDO APP:'+str(datetime.datetime.now()))
+print ('\n\n\n*** START WDO APP:'+str(datetime.datetime.now()))
 
 
 

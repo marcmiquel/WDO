@@ -70,19 +70,30 @@ def extend_articles_pageviews():
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
-    increment = 31
-    lastMonth = datetime.date.today() - datetime.timedelta(days=increment)
-    month_day = lastMonth.strftime("%Y-%m")
-    filename = 'pagecounts-'+month_day+'-views-ge-5-totals.bz2'
-    read_dump = '/public/dumps/public/other/pagecounts-ez/merged/'+filename
-
-
     pageviews_dict = {}
-    dump_in = bz2.open(read_dump, 'r')
+
+    no_dump = True
+    increment = 31
+    while (no_dump):
+        lastMonth = datetime.date.today() - datetime.timedelta(days=increment)
+        month_day = lastMonth.strftime("%Y-%m")
+        filename = 'pagecounts-'+month_day+'-views-ge-5-totals.bz2'
+        read_dump = '/public/dumps/public/other/pagecounts-ez/merged/'+filename
+        print (read_dump)
+
+        try:
+            dump_in = bz2.open(read_dump, 'r')
+            no_dump = False
+        except:
+            print (filename+ ' does not exist. We try with the previous month.')
+            increment = increment + 30
+
+
     line = dump_in.readline()
     line = line.rstrip().decode('utf-8')[:-1]
     values=line.split(' ')
     last_language = values[0].split('.')[0]
+    print ('there we go.')
 
     iter = 0
     while line != '':
@@ -616,7 +627,7 @@ def extend_articles_history_features(languagecode,page_titles_qitems, page_title
 
     functionstartTime = time.time()
     function_name = 'extend_articles_history_features '+languagecode
-   if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     page_ids_qitems = {page_titles_page_ids[k]: v for k, v in page_titles_qitems.items()}
 

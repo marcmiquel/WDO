@@ -14,7 +14,7 @@ import json
 
 def get_language_names_codes_url_ethl():
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+'diversity_categories.db'); cursor = conn.cursor();
     
     cursor.execute('CREATE TABLE IF NOT EXISTS ethnologue_languages_names (language_code text, language_name text, PRIMARY KEY (language_code));')
     conn.commit()
@@ -60,7 +60,7 @@ def get_language_names_codes_url_ethl():
 def get_language_countries_mapping_ethl(): # extracting from ethnologue.com
   # create table language-territories mapping
 
-    conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+'diversity_categories.db'); cursor = conn.cursor();  
     query = 'SELECT language_code, language_name FROM ethnologue_languages_names;'
 
     all_languages = {}

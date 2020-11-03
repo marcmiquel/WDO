@@ -6,7 +6,7 @@ from wikilanguages_utils import *
 # time
 import time
 import datetime
-from dateutil import relativedelta
+import dateutil
 import calendar
 # system
 import os
@@ -43,7 +43,6 @@ import gc
 
 
 
-
 # this script collects content related to ethnic groups (and indigenous groups) and LGBT+ culture.
 # MAIN
 def main():
@@ -54,27 +53,30 @@ def main():
 
     create_ethnic_groups_content_db() # it creates the database.
 
-
     store_articles_biographies() # it retrieves from wikipedia_diversity.db the biographies from every language and their membership to an ethnic group.
-
 
     store_articles_keywords() # it stores the articles which contain an ethnic group name in the title in every language.
 
-
     store_articles_category_crawling() # it stores the articles about each ethnic group after crawling the category graph using the keywords to start off.
-
 
     store_articles_links() # it stores the articles whose inlinks and outlinks point to anarticle of an ethnic group.
 
-
     store_articles_ethnic_group_binary_classifier() # it generates the final collection of articles for each ethnic group.
 
-    print ('here')
-    input('')
+    print ('the end!')
+    return
+
+
+    # conn = sqlite3.connect(databases_path + ethnic_groups_content_db); cursor = conn.cursor()
+    # for languagecode in wikilanguagecodes:
+    #     for row in cursor.execute('select qitem_ethnic_group, name_primary_lang_ethnic_group, count(*), primary_lang from ethnic_group_articles where primary_lang = "'+languagecode+'" and ethnic_group_binary = 1 group by 1 order by 3 desc limit 100;'):
+    #         print (row)
+    #     print ('\n\n')
 
     
     update_push_ethnic_group_topic_wikipedia_diversity() # it updates the binary for every ethnic group in the languages tables in wikipedia_diversity.db
 
+    wikilanguages_utils.copy_db_for_production(ethnic_groups_content_db, 'ethnic_groups_content_selection.py', databases_path)
 
 
 
@@ -84,7 +86,7 @@ def main():
 def store_choosen_langs_for_ethnic_groups():
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
 
     function_name = 'store_choosen_langs_for_ethnic_groups'
     # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
@@ -282,7 +284,7 @@ def store_articles_keywords():
     print ('\n'+function_name)
 
 
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
     df = pd.read_sql_query('SELECT qitem, native_language FROM ethnic_groups WHERE native_language != "";', conn2).set_index('qitem')
     ethnic_group_to_native_language = df.to_dict('dict')['native_language']
 
@@ -335,7 +337,6 @@ def store_articles_keywords():
 
         unicode_kw = {}
         ethnic_group_keywords = {}
-
         # iterating ethnic groups
         for qitem_eg in qs_ethnic_group_choosen_lang: #['Q244504']: # qs_ethnic_group_choosen_lang
             keywords = set()
@@ -346,22 +347,21 @@ def store_articles_keywords():
                 if ';' in native_language_name:
                     for qt in native_language_name.split(';'):
 
-                        if qt in wikilanguages_qitems: continue
+                        if qt in wikilanguages_qitems: 
+                            continue
 
                         kwcur = qitems_page_titles[qt]
                         keyword = unidecode.unidecode(kwcur).lower().replace(' ','_')
                         unicode_kw[keyword]=kwcur
                         keywords.add(keyword)
 
-                else:
-                    if native_language_name in wikilanguages_qitems: continue
-                    kwcur = qitems_page_titles[native_language_name]
-                    keyword = unidecode.unidecode(kwcur).lower().replace(' ','_')
-                    unicode_kw[keyword]=kwcur
-                    keywords.add(keyword)
+                elif native_language_name not in wikilanguages_qitems: 
+                        kwcur = qitems_page_titles[native_language_name]
+                        keyword = unidecode.unidecode(kwcur).lower().replace(' ','_')
+                        unicode_kw[keyword]=kwcur
+                        keywords.add(keyword)
             except:
                 pass
-
 
             try:
                 ethnic_group_name = qitems_page_titles[qitem_eg]
@@ -377,11 +377,12 @@ def store_articles_keywords():
             ethnic_group_keywords[qitem_eg] = keywords
 
 
+
         print ('number of qitems with keywords: '+str(len(ethnic_group_keywords)))
         print (ethnic_group_keywords)
 
 
-        print ('number of articles: '+str(len(page_titles_qitems_unicode)))
+        print ('number of articles in this wikipedia: '+str(len(page_titles_qitems_unicode)))
         params = []
         i=0
         for qitem_eg, keywords in ethnic_group_keywords.items():
@@ -434,7 +435,7 @@ def store_articles_keywords():
 
         cursor3.executemany('UPDATE ethnic_group_articles SET (page_title, gender, keyword_title, ccc_binary,  name_primary_lang_ethnic_group) = (?,?,?,?,?) WHERE qitem = ? AND qitem_ethnic_group = ? AND primary_lang = ?', params);
         conn3.commit()
-        print (len(params))
+        print ('number of articles inserted: '+str(len(params)))
         print (str(datetime.timedelta(seconds=time.time() - languageTime)))
 
 
@@ -454,7 +455,7 @@ def store_articles_category_crawling():
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
 
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
     df = pd.read_sql_query('SELECT qitem, native_language FROM ethnic_groups WHERE native_language != "";', conn2).set_index('qitem')
     ethnic_group_to_native_language = df.to_dict('dict')['native_language']
 
@@ -484,13 +485,12 @@ def store_articles_category_crawling():
 
         qs_ethnic_group_choosen_lang = ethnic_groups_choosen_langs.loc[(ethnic_groups_choosen_langs["lang"] == languagecode+'wiki')].ethnic_group.unique()
         print (qs_ethnic_group_choosen_lang)
-
-        
+     
 
         unicode_kw = {}
         ethnic_group_keywords = {}
         # iterating ethnic groups
-        for qitem_eg in qs_ethnic_group_choosen_lang: #['Q244504']: # qs_ethnic_group_choosen_lang
+        for qitem_eg in qs_ethnic_group_choosen_lang: # qs_ethnic_group_choosen_lang
             keywords = set()
 
             try:
@@ -499,22 +499,21 @@ def store_articles_category_crawling():
                 if ';' in native_language_name:
                     for qt in native_language_name.split(';'):
 
-                        if qt in wikilanguages_qitems: continue
+                        if qt in wikilanguages_qitems: 
+                            continue
 
                         kwcur = qitems_page_titles[qt]
                         keyword = unidecode.unidecode(kwcur).lower().replace(' ','_')
                         unicode_kw[keyword]=kwcur
                         keywords.add(keyword)
 
-                else:
-                    if native_language_name in wikilanguages_qitems: continue
-                    kwcur = qitems_page_titles[native_language_name]
-                    keyword = unidecode.unidecode(kwcur).lower().replace(' ','_')
-                    unicode_kw[keyword]=kwcur
-                    keywords.add(keyword)
+                elif native_language_name not in wikilanguages_qitems: 
+                        kwcur = qitems_page_titles[native_language_name]
+                        keyword = unidecode.unidecode(kwcur).lower().replace(' ','_')
+                        unicode_kw[keyword]=kwcur
+                        keywords.add(keyword)
             except:
                 pass
-
 
             try:
                 ethnic_group_name = qitems_page_titles[qitem_eg]
@@ -529,23 +528,28 @@ def store_articles_category_crawling():
 
             ethnic_group_keywords[qitem_eg] = keywords
 
+        print (ethnic_group_keywords)
+
+
+
+
 
         # PRIMER: s’han d’haver agafat totes les categories. també les que contenen paraules clau.
         category_page_ids_page_titles = {}
-        category_links_cat_cat = {}
-        category_links_cat_art = {}
+        category_page_titles_page_ids = {}
 
         dumps_path = '/public/dumps/public/'+languagecode+'wiki/latest/'+languagecode+'wiki-latest-page.sql.gz'
         wikilanguages_utils.check_dump(dumps_path, script_name)
         
         dump_in = gzip.open(dumps_path, 'r')
-        iter = 0
 
         while True:
-            iter+=1
             line = dump_in.readline()
-            try: line = line.decode("utf-8")
-            except UnicodeDecodeError: line = str(line)
+
+            try: line = line.decode("utf-8", "ignore")
+            except UnicodeDecodeError: 
+                print ('error.')
+                line = str(line)
 
             if line == '':
                 i+=1
@@ -563,16 +567,34 @@ def store_articles_category_crawling():
 
                     if page_namespace != 14: continue
                     category_page_ids_page_titles[page_id]=cat_title
-
-                    category_links_cat_cat[cat_title]=set()
-                    category_links_cat_art[cat_title]=set()
-
-            if iter % 10000 == 0:
-                print (str(iter)+' categories loaded.')
+                    category_page_titles_page_ids[cat_title]=page_id
 
         print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-        print (len(category_links_cat_cat))
+        print (len(category_page_ids_page_titles))
         print ('all categories loaded')
+
+        storing_catlinks = False
+        if len(category_page_ids_page_titles) > 2000000: # if the language is over 2,000,000 categories
+
+            storing_catlinks = True
+            print ('storing category links.')
+
+            conn = sqlite3.connect(databases_path + languagecode + 'wiki_category_links_temp.db'); cursor = conn.cursor()
+            query = ('CREATE TABLE IF NOT EXISTS category_links_cat_art (category_title text, page_id integer, PRIMARY KEY (category_title, page_id));')
+            cursor.execute(query); conn.commit()
+            query = ('CREATE TABLE IF NOT EXISTS category_links_cat_cat (category_title text, subcategory_title text, PRIMARY KEY (category_title, subcategory_title));')
+            cursor.execute(query); conn.commit()
+
+            category_links_cat_cat = []
+            category_links_cat_art = []
+
+        else:
+            category_links_cat_cat_dict = {}
+            category_links_cat_art_dict = {}
+            for cat_title in category_page_titles_page_ids.keys():
+                category_links_cat_cat_dict[cat_title] = set()
+                category_links_cat_art_dict[cat_title] = set()
+
 
 
         # SEGON:
@@ -582,12 +604,17 @@ def store_articles_category_crawling():
         wikilanguages_utils.check_dump(dumps_path, script_name)
         dump_in = gzip.open(dumps_path, 'r')
 
+        a = 0
+        c = 0
         iter = 0
         while True:
             iter+=1
+
             line = dump_in.readline()
-            try: line = line.decode("utf-8")
-            except UnicodeDecodeError: line = str(line)
+            try: line = line.decode("utf-8", "ignore") # https://phabricator.wikimedia.org/T264850#6535424
+            except: 
+                print ('error.')
+                line = str(line)
 
             if line == '':
                 i+=1
@@ -606,29 +633,53 @@ def store_articles_category_crawling():
                     except:
                         continue
 
-                    if cat_title not in category_links_cat_cat:
-                        # print (row,'cat title does not exist.')
+                    if cat_title not in category_page_titles_page_ids:
                         continue
 
-                    if page_id in category_page_ids_page_titles: # is this a category
-                        category_links_cat_cat[cat_title].add(category_page_ids_page_titles[page_id])
-                    else: # this is an article
-                        category_links_cat_art[cat_title].add(page_id)
+                    if storing_catlinks:
+                        if page_id in category_page_ids_page_titles: # is this a category
+                            category_links_cat_cat.append((cat_title, category_page_ids_page_titles[page_id]))
+                        else: # this is an article
+                            category_links_cat_art.append((cat_title, page_id))
+
+                    else:
+                        if page_id in category_page_ids_page_titles: # is this a category
+                            category_links_cat_cat_dict[cat_title].add(category_page_ids_page_titles[page_id])
+                        else: # this is an article
+                            category_links_cat_art_dict[cat_title].add(page_id)
 
 
-            if iter % 100000 == 0:
-                print (str(iter)+' categorylinks loaded.')
+            if storing_catlinks and iter % 5000 == 0:
+                print (str(iter)+' categorylinks lines read.')
+
+                cursor.executemany('INSERT OR IGNORE INTO category_links_cat_cat (category_title, subcategory_title) VALUES (?,?)', category_links_cat_cat);
+                conn.commit()
+                cursor.executemany('INSERT OR IGNORE INTO category_links_cat_art (category_title, page_id) VALUES (?,?)', category_links_cat_art);
+                conn.commit()
+
+                category_links_cat_cat = []
+                category_links_cat_art = []
+
+        if storing_catlinks:
+            cursor.executemany('INSERT OR IGNORE INTO category_links_cat_cat (category_title, subcategory_title) VALUES (?,?)', category_links_cat_cat);
+            conn.commit()
+            cursor.executemany('INSERT OR IGNORE INTO category_links_cat_art (category_title, page_id) VALUES (?,?)', category_links_cat_art);
+            conn.commit()
+
+            category_links_cat_cat = []
+            category_links_cat_art = []
+
 
         print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-        print (len(category_links_cat_art))
         print ('all category links loaded')
-        # input('')
 
-        k = 0
-        print ('there is a total of '+str(len(ethnic_group_keywords))+' ethnic groups.')
+        print ('there is a total of '+str(len(ethnic_group_keywords))+' ethnic groups. Now we start the crawling.')
+
+
 
         # TERCER:
         # Iterar els nivells corresponents. crawling.
+        k = 0
         for qitem_eg, keywords in ethnic_group_keywords.items():
             k+=1
             print ('*\n')
@@ -658,11 +709,6 @@ def store_articles_category_crawling():
 
                     if kw_compiled(cat_title_normalized) == None: continue
 
-                    # if k_unicode not in cat_title_normalized:
-                    #     continue
-
-                    # print (cat_title)
-
                     keyword_category[ke.lower()].add(cat_title)
 
 
@@ -676,48 +722,68 @@ def store_articles_category_crawling():
                     cattitles_total_level[cat_title] = None
 
                 if len(cattitles_total_level) == 0: continue
-                # print (cattitles_total_level)
-                # input('')
 
 
                 # CATEGORIES FROM LEVELS
                 level = 1
-                num_levels = 25
-                if languagecode=='en': num_levels = 10     
+                num_levels = 5
+                if languagecode=='en': num_levels = 5
                 j = 0
                 total_categories = dict(); total_categories.update(cattitles_total_level)
                 print ('Number of categories to start: '+str(len(total_categories)))
+
+
+                # print (total_categories)
+                # input('')
 
                 while (level <= num_levels): # Here we choose the number of levels we prefer.
                     i = 0
 
                     newcategories = dict()
-                    for cat_title in cattitles_total_level.keys():           
-                        for cat_title2 in category_links_cat_cat[cat_title]:
-                            try:
-                                total_categories[cat_title2]
-                            except:
-                                newcategories[cat_title2] = None
+                    for cat_title in cattitles_total_level.keys():
 
-                        for page_id in category_links_cat_art[cat_title]:
+                        if storing_catlinks:
+                            for row in cursor.execute('SELECT subcategory_title FROM category_links_cat_cat WHERE category_title = ?;', (cat_title,)):
+                                cat_title2 = row[0]
+                                try: total_categories[cat_title2]
+                                except: newcategories[cat_title2] = None
 
-                            # try:
-                            #     print (page_ids_page_titles[page_id])
-                            # except:
-                            #     pass
+                        else:
+                            for cat_title2 in category_links_cat_cat_dict[cat_title]:
+                                try: total_categories[cat_title2]
+                                except: newcategories[cat_title2] = None
 
-                            try:
-                                cur_level = selectedarticles_level[page_id]
-                                if cur_level > level: selectedarticles_level[page_id] = level
-                            except:
-                                selectedarticles_level[page_id] = level
 
-                            if page_id in selectedarticles:
-                                selectedarticles[page_id].add(kw)
-                            else:
-                                selectedarticles[page_id] = {kw}
+                        if storing_catlinks:
+                            for row in cursor.execute('SELECT page_id FROM category_links_cat_art WHERE category_title = ?;', (cat_title,)):
+                                page_id = row[0]
+                                try:
+                                    cur_level = selectedarticles_level[page_id]
+                                    if cur_level > level: selectedarticles_level[page_id] = level
+                                except:
+                                    selectedarticles_level[page_id] = level
 
-                            i += 1
+                                if page_id in selectedarticles:
+                                    selectedarticles[page_id].add(kw)
+                                else:
+                                    selectedarticles[page_id] = {kw}
+
+                                i += 1
+
+                        else:
+                            for page_id in category_links_cat_art_dict[cat_title]:
+                                try:
+                                    cur_level = selectedarticles_level[page_id]
+                                    if cur_level > level: selectedarticles_level[page_id] = level
+                                except:
+                                    selectedarticles_level[page_id] = level
+
+                                if page_id in selectedarticles:
+                                    selectedarticles[page_id].add(kw)
+                                else:
+                                    selectedarticles[page_id] = {kw}
+
+                                i += 1
 
                     cattitles_total_level = dict()
                     cattitles_total_level.update(newcategories)
@@ -731,6 +797,7 @@ def store_articles_category_crawling():
                         break
 
 
+            ##### ------------------ #####
 
             # GETTING READY TO INSERT
             parameters = []
@@ -768,7 +835,7 @@ def store_articles_category_crawling():
                     name_primary_lang_ethnic_group = ''
 
                 try:
-                    page_title = qitems_page_titles[qitem]
+                    page_title = page_ids_page_titles[page_id]
                 except:
                     page_title = ''
 
@@ -782,7 +849,14 @@ def store_articles_category_crawling():
 
             cursor3.executemany('UPDATE ethnic_group_articles SET (page_title, gender, ccc_binary,  name_primary_lang_ethnic_group, category_crawling_absolute_level, category_crawling_relative_level) = (?,?,?,?,?,?) WHERE qitem = ? AND qitem_ethnic_group = ? AND primary_lang = ?', parameters);
             conn3.commit()
-            # print (len(parameters))
+            print ('Total number of articles collected: '+str(len(parameters)))
+
+
+        try:
+            os.remove(databases_path + languagecode + 'wiki_category_links_temp.db'); print (languagecode + 'wiki_category_links_temp.db'+' deleted.');
+        except:
+            pass
+
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     print ('category crawling stored.')
@@ -821,7 +895,7 @@ def store_articles_links():
             continue
 
         conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
-        conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+        conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
         conn3 = sqlite3.connect(databases_path + ethnic_groups_content_db); cursor3 = conn3.cursor()
 
 
@@ -1128,7 +1202,7 @@ def store_articles_ethnic_group_binary_classifier():
 
     ethnic_groups = group_labels.loc[(group_labels["group_label"] == 'ethnic_group')]
 
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
     ethnic_groups_choosen_langs = pd.read_sql_query('SELECT count, ethnic_group, lang, ccc, cycle_year_month, choosen_lang FROM ethnic_groups_choosen_langs WHERE ccc = "yes" AND count >= 1;', conn2)
 
 
@@ -1153,12 +1227,12 @@ def store_articles_ethnic_group_binary_classifier():
 
         print (label_primary_lang_ethnic_group)
         eg_groups_count = str(len(qs_ethnic_group_choosen_lang))
-        i = 0
+        k = 0
 
 
         # iterate ethnic groups
         for qitem_ethnic_group in qs_ethnic_group_choosen_lang: # qs_ethnic_group_choosen_lang # Q1131768 # Q244504
-            i+=1
+            k+=1
 
             try:
                 eg_name_en = ethnic_groups.loc[(ethnic_groups["lang"] == 'en') & (ethnic_groups["qitem"] == qitem_ethnic_group)]['label'].values[0]
@@ -1170,7 +1244,7 @@ def store_articles_ethnic_group_binary_classifier():
             except:
                 eg_name = ''
 
-            print ('\n### ' +languagecode+ ' '+languages.loc[languagecode]['languagename']+' / ethnic group: '+str(i)+'/'+str(eg_groups_count)+' '+qitem_ethnic_group+' ('+eg_name+ '). English name: '+eg_name_en)
+            print ('\n### ' +languagecode+ ' '+languages.loc[languagecode]['languagename']+' / ethnic group: '+str(k)+'/'+str(eg_groups_count)+' '+qitem_ethnic_group+' ('+eg_name+ '). English name: '+eg_name_en)
 
 
              # OBTAIN THE DATA TO FIT.
@@ -1315,8 +1389,8 @@ def store_articles_ethnic_group_binary_classifier():
             try:
                 category_crawling_absolute_level=potential_ethnic_df['category_crawling_absolute_level'].tolist()
                 maxlevel = max(category_crawling_absolute_level)
-                for n, i in enumerate(category_crawling_absolute_level):
-                    if i > 0:
+                for n, o in enumerate(category_crawling_absolute_level):
+                    if o > 0:
                         category_crawling_absolute_level[n]=abs(i-(maxlevel+1))
                     else:
                         category_crawling_absolute_level[n]=0
@@ -1327,8 +1401,8 @@ def store_articles_ethnic_group_binary_classifier():
             try:
                 category_crawling_relative_level=potential_ethnic_df['category_crawling_relative_level'].tolist()
                 maxlevel = max(category_crawling_absolute_level)
-                for n, i in enumerate(category_crawling_absolute_level):
-                    if i > 0:                   
+                for n, p in enumerate(category_crawling_absolute_level):
+                    if p > 0:                   
                         category_crawling_relative_level[n]=i/maxlevel
                     else:
                         category_crawling_relative_level[n]=0
@@ -1464,10 +1538,10 @@ def update_push_ethnic_group_topic_wikipedia_diversity():
 
     function_name = 'update_push_ethnic_group_topic_wikipedia_diversity'
     # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+
     functionstartTime = time.time()
 
     for languagecode in wikilanguagecodes:
-
 
         conn3 = sqlite3.connect(databases_path + ethnic_groups_content_db); cursor3 = conn3.cursor()
 
@@ -1546,18 +1620,22 @@ if __name__ == '__main__':
     wikilanguagecodes = languages.index.tolist()
     wikilanguages_qitems = languages.Qitem.tolist()
 
-    wikilanguagecodes = wikilanguagecodes[:wikilanguagecodes.index('en')]
-    print (wikilanguagecodes)
-    input('')
+    # wikilanguagecodes = wikilanguagecodes[wikilanguagecodes.index('en')+1:]
+#    wikilanguagecodes = ['en']
+    # wikilanguagecodes = ['ro','ja','af','ca']
+    # wikilanguagecodes = ['ro','it','fr','gl','ru','zh','is','ja','vi','oc','sw','af','ca']
+    # wikilanguagecodes = ['an', 'sco', 'ko', 'et', 'jam', 'pam', 'pnb', 'ast', 'bar', 'hr', 'la', 'lad', 'ln', 'mk']
 
-    # wikilanguagecodes = ['it']
+    # select qitem_ethnic_group, name_primary_lang_ethnic_group, count(*) from ethnic_group_articles where primary_lang = 'en' and ethnic_group_binary = 1 group by 1 order by 3 desc limit 100;
+
+    print (wikilanguagecodes)
+
 
     group_labels = wikilanguages_utils.get_group_identities_labels()
 
     # if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit();
     main()
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    duration = str(datetime.timedelta(seconds=time.time() - startTime))
     # wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
-
 
     wikilanguages_utils.finish_email(startTime,'ethnic_groups_content_selection.out','ETHNIC GROUPS CONTENT CONTENT Selection')

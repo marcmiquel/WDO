@@ -7,7 +7,7 @@ from dash_apps import *
 #### DATA ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 dash_app1 = Dash(__name__, server = app, url_base_pathname= webtype + '/language_territories_mapping/', external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 
-conn = sqlite3.connect(databases_path+'diversity_groups.db'); cursor = conn.cursor();  
+conn = sqlite3.connect(databases_path+'diversity_categories_production.db'); cursor = conn.cursor();  
 query = 'SELECT WikimediaLanguagecode, languagenameEnglishethnologue, territoryname, territorynameNative, QitemTerritory, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, officialnationalorregional, region, subregion, intermediateregion FROM wikipedia_languages_territories_mapping;'
 
 df = pd.read_sql_query(query, conn)

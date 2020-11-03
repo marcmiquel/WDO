@@ -47,15 +47,14 @@ import gc
 # MAIN
 def main():
 
-
     wd_dump_iterator()
     wd_geolocated_update_db()
     wd_instance_of_subclass_of_property_crawling()
     create_wikipedia_diversity_db()
     insert_page_ids_page_titles_qitems_wikipedia_diversity_db()
 
-    store_ethnic_groups_wd_diversity_groups_db()
-    store_religious_groups_wd_diversity_groups_db()
+    store_ethnic_groups_wd_diversity_categories_db()
+    store_religious_groups_wd_diversity_categories_db()
 
 
 ################################################################
@@ -866,7 +865,7 @@ def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
         iter = 0
         while True:
             line = dump_in.readline()
-            try: line = line.decode("utf-8")
+            try: line = line.decode("utf-8", "ignore") # https://phabricator.wikimedia.org/
             except UnicodeDecodeError: line = str(line)
             iter += 1
 
@@ -939,15 +938,15 @@ def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
 
 
 
-def store_religious_groups_wd_diversity_groups_db():
+def store_religious_groups_wd_diversity_categories_db():
 
-    function_name = 'store_religious_groups_wd_diversity_groups_db'
+    function_name = 'store_religious_groups_wd_diversity_categories_db'
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
 
     try:
         cursor2.execute('DROP TABLE religious_groups;')
@@ -992,16 +991,16 @@ def store_religious_groups_wd_diversity_groups_db():
 
 
 
-def store_ethnic_groups_wd_diversity_groups_db():
+def store_ethnic_groups_wd_diversity_categories_db():
 
-    function_name = 'store_ethnic_groups_wd_diversity_groups_db'
+    function_name = 'store_ethnic_groups_wd_diversity_categories_db'
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
     # get groups: property of ethnic group requires instance of ethnic group Q41710 or instance of people Q2472587.
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
 
     qitems_en_page_titles = {}
     query = "SELECT qitem, qitem2, 1 FROM instance_of_subclasses_of_properties WHERE qitem2 IN ('Q41710','Q2472587','Q1467740','Q231002','Q11197007','Q133311') ORDER BY qitem;"
@@ -1223,7 +1222,7 @@ if __name__ == '__main__':
 
     allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties = wd_properties()
 
-    # if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
     main()
 #    main_with_exception_email()
 #    main_loop_retry()

@@ -26,8 +26,8 @@ dumps_path = '/srv/wcdo/dumps/'
 
 wikidata_db = 'wikidata.db'
 
-diversity_groups_db = 'diversity_groups.db'
-diversity_groups_production_db  = 'diversity_groups_production.db'
+diversity_categories_db = 'diversity_categories.db'
+diversity_categories_production_db  = 'diversity_categories_production.db'
 
 diversity_observatory_log = 'diversity_observatory_log.db'
 
@@ -41,22 +41,30 @@ top_diversity_db = 'top_diversity_articles.db'
 top_diversity_production_db = 'top_diversity_articles_production.db'
 
 missing_ccc_db = 'missing_ccc.db'
-ethnic_groups_content_db = 'ethnic_groups_content.db'
-lgbt_content_db = 'lgbt_content.db'
+missing_ccc_db = 'missing_ccc.db'
 
-editor_engagement_db = 'editor_engagement.db'
+ethnic_groups_content_db = 'ethnic_groups_content.db'
+ethnic_groups_content_production_db = 'ethnic_groups_content_production.db'
+
+lgbt_content_db = 'lgbt_content.db'
+lgbt_content_production_db = 'lgbt_content_production.db'
+
+images_db = 'images.db'
+images_production_db = 'images_production.db'
 
 revision_db = 'revision.db'
 imageslinks_db = 'imagelinks.db'
 
-images_db = 'images.db'
-images_production_db = 'images_production.db'
+
+
+community_health_metrics_db = 'community_health_metrics.db'
+
 
 
 # Loads language_territories_mapping.csv file
 def load_wikipedia_languages_territories_mapping():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_production_db); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_production_db); cursor = conn.cursor();  
 
     query = 'SELECT WikimediaLanguagecode, languagenameEnglishethnologue, territoryname, territorynameNative, QitemTerritory, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, officialnationalorregional, region, subregion, intermediateregion FROM wikipedia_languages_territories_mapping;'
 
@@ -80,7 +88,7 @@ def load_wikipedia_languages_territories_mapping():
 def load_wiki_projects_information():
     # in case of extending the project to other WMF sister projects, it would be necessary to revise these columns and create a new file where a column would specify whether it is a language edition, a wikictionary, etc.
 
-    conn = sqlite3.connect(databases_path+diversity_groups_production_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_production_db); cursor = conn.cursor();
 
     query = 'SELECT languagename, Qitem, WikimediaLanguagecode, Wikipedia, WikipedialanguagearticleEnglish, languageISO, languageISO3, languageISO5, nativeLabel, region, subregion, intermediateregion FROM wiki_projects;'
 
@@ -93,7 +101,7 @@ def load_wiki_projects_information():
 
 def load_language_pairs_territory_status():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_production_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_production_db); cursor = conn.cursor();
 
     query = 'SELECT qitem,territoryname_english, territoryname_higher, ISO3166, ISO3166_2, language_lower_name, language_higher_name, wikimedia_lower, wikimedia_higher, type_overlap, status_lower, status_higher, equal_status, indigenous_lower, indigenous_higher FROM wikipedia_language_pairs_territory_status WHERE equal_status=0;'
 
@@ -214,7 +222,7 @@ def load_territories_names_from_language_country(ISO3166, languagecode, territor
 
 def load_iso_3166_to_geographical_regions():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     query = 'SELECT alpha_2, name, region, sub_region FROM country_regions;'
 
@@ -244,7 +252,7 @@ def load_countries_subdivisions_from_language(languagecode,territories):
 
 def load_iso_31662_to_subdivisions():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = 'SELECT territoryname, ISO31662 FROM wikipedia_languages_territories_mapping;'
     subdivisions = pd.read_sql_query(query, conn)
 
@@ -267,7 +275,7 @@ def load_iso_31662_to_subdivisions():
 
 def load_world_subdivisions():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = 'SELECT name, subdivision_code FROM world_subdivisions;'
 
     world_subdivisions = {}
@@ -279,7 +287,7 @@ def load_world_subdivisions():
 
 def load_world_subdivisions_ip2location():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = 'SELECT subdivision_name, subdivision_code FROM ISO3166_2_ip2location;'
 
     world_subdivisions = {}
@@ -292,7 +300,7 @@ def load_world_subdivisions_ip2location():
 
 def load_world_subdivisions_multilingual():
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = 'SELECT subdivision_name, subdivision_code FROM multilingual_ISO3166_2;'
 
     world_subdivisions = {}
@@ -311,7 +319,7 @@ def load_language_pairs_apertium(wikilanguagecodes):
 #    r = requests.get("https://cxserver.wikimedia.org/v1/list/languagepairs", timeout=0.5)
 #    print (r.text)
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     languagecode_translated_from={}
 
@@ -654,7 +662,7 @@ obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagec
 
 def obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, num):
 
-    conn = sqlite3.connect(databases_path+diversity_groups_db); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     query = ('CREATE TABLE IF NOT EXISTS obtain_closest_for_all_languages ('+
     'langcode text,'+
@@ -750,7 +758,7 @@ def obtain_region_wikipedia_language_list(languages, region, subregion, intermed
 def store_group_identities_labels(wikilanguagecodes):
 
     functionstartTime = time.time()
-    conn3 = sqlite3.connect(databases_path + diversity_groups_production_db); cursor3 = conn3.cursor()
+    conn3 = sqlite3.connect(databases_path + diversity_categories_db); cursor3 = conn3.cursor()
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
 
     cursor3.execute("DROP TABLE IF EXISTS groups_labels;")
@@ -797,7 +805,7 @@ def store_group_identities_labels(wikilanguagecodes):
 
 def get_group_identities_labels():
 
-    conn3 = sqlite3.connect(databases_path + diversity_groups_production_db); cursor3 = conn3.cursor()
+    conn3 = sqlite3.connect(databases_path + diversity_categories_db); cursor3 = conn3.cursor()
     query = 'SELECT qitem, label, lang, group_label FROM groups_labels;'
     df = pd.read_sql_query(query, conn3)
 
@@ -820,7 +828,7 @@ def get_group_identities_labels():
 def store_lgbt_label(store_get):
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + diversity_groups_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
 
     function_name = 'store_lgbt_label'
     functionstartTime = time.time()
@@ -863,7 +871,7 @@ def store_lgbt_label(store_get):
 def establish_mysql_connection_read(languagecode):
 #    print (languagecode)
     try: 
-        mysql_con_read = mdb.connect(host=languagecode+"wiki.analytics.db.svc.eqiad.wmflabs",db=languagecode + 'wiki_p',read_default_file=os.path.expanduser("./my.cnf"),charset='utf8mb4')
+        mysql_con_read = mdb.connect(host=languagecode+"wiki.analytics.db.svc.eqiad.wmflabs",db=languagecode + 'wiki_p',read_default_file=os.path.expanduser("./my.cnf"),charset='utf8mb4') # utf8mb4
         return mysql_con_read
     except:
         print ('This language has no database or we cannot connect to it: '+languagecode)
@@ -1318,7 +1326,7 @@ def parse_values(values):
 
 
 def copy_db_for_production(dbname, scriptname, databases_path):
-    function_name = 'copy_db_for_production content_selection'
+    function_name = 'copy_db_for_production'
     dbname_production = dbname.split('.')[0]+'_production.db'
 
     # if verify_function_run_db(function_name, 'check','')==1: return
@@ -1594,7 +1602,7 @@ def clean_failed_function_account():
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
-    function_parameters = {'label_diversity_groups_related_topics_wd':'gender','label_ccc_articles_geolocation_wd':'geocoordinates','label_ccc_articles_geolocated_reverse_geocoding':'ccc_geolocated','label_ccc_articles_country_wd':'country_wd','label_ccc_articles_location_wd':'location_wd','label_ccc_articles_language_strong_wd':'language_strong_wd','label_ccc_articles_created_by_properties_wd':'created_by_wd','label_ccc_articles_part_of_properties_wd':'part_of_wd','label_ccc_articles_keywords':'keyword_title','label_potential_ccc_articles_category_crawling':'category_crawling_level','label_potential_ccc_articles_with_inlinks ccc':'num_inlinks','label_potencial_ccc_articles_with_outlinks ccc':'num_outlinks','label_potential_ccc_articles_language_weak_wd':'language_weak_wd','label_potential_ccc_articles_affiliation_properties_wd':'affiliation_wd','label_potential_ccc_articles_has_part_properties_wd':'has_part_wd','label_other_ccc_wikidata_properties':'other_ccc_language_strong_wd','label_other_ccc_category_crawling':'other_ccc_category_crawling_relative_level','label_potential_ccc_articles_with_inlinks no_ccc':'num_inlinks_from_geolocated_abroad','label_potencial_ccc_articles_with_outlinks no_ccc':'num_outlinks_to_geolocated_abroad','calculate_articles_ccc_main_territory':'main_territory','calculate_articles_ccc_retrieval_strategies':'num_retrieval_strategies'}
+    function_parameters = {'label_diversity_categories_related_topics_wd':'gender','label_ccc_articles_geolocation_wd':'geocoordinates','label_ccc_articles_geolocated_reverse_geocoding':'ccc_geolocated','label_ccc_articles_country_wd':'country_wd','label_ccc_articles_location_wd':'location_wd','label_ccc_articles_language_strong_wd':'language_strong_wd','label_ccc_articles_created_by_properties_wd':'created_by_wd','label_ccc_articles_part_of_properties_wd':'part_of_wd','label_ccc_articles_keywords':'keyword_title','label_potential_ccc_articles_category_crawling':'category_crawling_level','label_potential_ccc_articles_with_inlinks ccc':'num_inlinks','label_potencial_ccc_articles_with_outlinks ccc':'num_outlinks','label_potential_ccc_articles_language_weak_wd':'language_weak_wd','label_potential_ccc_articles_affiliation_properties_wd':'affiliation_wd','label_potential_ccc_articles_has_part_properties_wd':'has_part_wd','label_other_ccc_wikidata_properties':'other_ccc_language_strong_wd','label_other_ccc_category_crawling':'other_ccc_category_crawling_relative_level','label_potential_ccc_articles_with_inlinks no_ccc':'num_inlinks_from_geolocated_abroad','label_potencial_ccc_articles_with_outlinks no_ccc':'num_outlinks_to_geolocated_abroad','calculate_articles_ccc_main_territory':'main_territory','calculate_articles_ccc_retrieval_strategies':'num_retrieval_strategies'}
 
 
     for languagecode in wikilanguagecodes:
@@ -1607,7 +1615,7 @@ def clean_failed_function_account():
             if row != None: num = row[0]
 
             query = 'SELECT count(*) FROM function_account WHERE function_name = "'+function+ ' ' + languagecode
-            if function == 'label_diversity_groups_related_topics_wd': query+= ' gender"'
+            if function == 'label_diversity_categories_related_topics_wd': query+= ' gender"'
             else: query+='"'
 
             cursor.execute(query)
@@ -1619,7 +1627,7 @@ def clean_failed_function_account():
             if num2 != 0 and num == 0:
                 print(function+' '+languagecode+' exists and the database is empty. we delete function account so the function runs again next time.')
                 query = 'DELETE FROM function_account WHERE function_name = "'+function+' '+languagecode
-                if function == 'label_diversity_groups_related_topics_wd': query+= ' gender"'
+                if function == 'label_diversity_categories_related_topics_wd': query+= ' gender"'
                 else: query+='"'
 
                 cursor.execute(query)

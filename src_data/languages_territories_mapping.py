@@ -359,7 +359,7 @@ def download_all_languages_wikidata():
 
     #    print (languages)
 
-        conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+        conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
         query = ('CREATE TABLE IF NOT EXISTS all_languages_wikidata ('+
         'Qitem text,'+
         'englishLabel text,'+
@@ -392,7 +392,7 @@ def download_all_languages_wikidata():
 
 def download_all_country_wikidata():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = ('CREATE TABLE IF NOT EXISTS all_countries_wikidata ('+
     'Qitem text,'+
     'territoryLabel text,'+
@@ -475,7 +475,7 @@ def download_all_country_wikidata():
 
 def download_all_country_subdivisions_wikidata():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = ('CREATE TABLE IF NOT EXISTS all_countries_subdivisions_wikidata ('+
     'Qitem text,'+
     'territoryLabel text,'+
@@ -560,7 +560,7 @@ def download_all_country_subdivisions_wikidata():
 
 def get_language_names_codes_url_eth():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     
     cursor.execute('CREATE TABLE IF NOT EXISTS ethnologue_languages_names (language_code text, language_name text, PRIMARY KEY (language_code));')
     conn.commit()
@@ -606,7 +606,7 @@ def get_language_names_codes_url_eth():
 def get_language_countries_mapping_eth(): # extracting from ethnologue.com
 	# create table language-territories mapping
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
     query = 'SELECT language_code, language_name FROM ethnologue_languages_names;'
 
     all_languages = {}
@@ -875,7 +875,7 @@ def parse_languages_countries_mapping():
             new_micro[macro].append(micro)
 
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     query = 'SELECT WikimediaLanguagecode, languageISO, languageISO3, languageISO5 FROM wiki_projects;'
     wiki_languages = pd.read_sql_query(query, conn)
@@ -1100,7 +1100,7 @@ def parse_languages_countries_mapping():
 def parse_languages_territories_mapping():
 
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
 
     query = ('CREATE TABLE IF NOT EXISTS language_territories_mapping ('+
@@ -1744,7 +1744,7 @@ def download_all_world_subdivisions_wikidata():
 
 def create_language_pairs_country_status_table():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     pairs = []
 
@@ -1831,7 +1831,7 @@ def create_language_pairs_country_status_table():
 
 def create_language_pairs_territory_status_table():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     # STORE THE DATA
     query = ('CREATE TABLE IF NOT EXISTS language_pairs_territory_status ('+
@@ -2012,7 +2012,7 @@ def count_language_pairs(country_rows,pairs):
 
 def create_wikipedia_language_pairs_territory_status_table():
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
 #    closest_langs = wikilanguages_utils.obtain_closest_for_all_languages(wikipedialanguage_numberarticles, wikilanguagecodes, 4)
 
@@ -2631,7 +2631,7 @@ def get_wikipedia_languages_territories_mapping():
 
     wikipedia_languages_territories_mapping = {}
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = 'SELECT WikimediaLanguagecode, QitemTerritory, territoryname, territorynameNative, demonym, demonymNative, ISO3166, ISO31662, regional, country, indigenous, languagestatuscountry, region, subregion, intermediateregion, languagenameEnglishethnologue FROM wikipedia_languages_territories_mapping ORDER BY WikimediaLanguagecode DESC;'
 
     lang_territories = []
@@ -2690,7 +2690,7 @@ def import_wikipedia_languages_territories_mapping_csv_store_sqlite3():
 
     territories = territories.reset_index()
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
 
     query = ('CREATE TABLE IF NOT EXISTS wikipedia_languages_territories_mapping ('+
     'WikimediaLanguagecode text,'+
@@ -2770,7 +2770,7 @@ def import_wiki_projects_csv_store_sqlite3(territories):
     languages = languages.rename(columns={'index': 'WikimediaLanguagecode'})
 
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
 
     query = ('CREATE TABLE IF NOT EXISTS wiki_projects ('+
     'WikimediaLanguagecode text,'+
@@ -2814,7 +2814,7 @@ def import_languages_wals_csv_store_sqlite3():
     wals_languages = wals_languages[['wals_code','iso_code','glottocode','Name','latitude','longitude','genus','family','macroarea','countrycodes']]
     wals_languages = wals_languages.values.tolist()
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
 
     query = ('CREATE TABLE IF NOT EXISTS wals_languages ('+
     'als_code text,'+
@@ -2842,7 +2842,7 @@ def import_country_regions_csv_store_sqlite3():
     country_regions = country_regions[['name','alpha-2','alpha-3','country-code','iso_3166-2','region','sub-region','intermediate-region','region-code','sub-region-code','intermediate-region-code']]
     country_regions = country_regions.values.tolist()
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
 
     query = ('CREATE TABLE IF NOT EXISTS country_regions ('+
     'name text,'+
@@ -2874,7 +2874,7 @@ def import_world_subdivisions_csv_store_sqlite3():
         info = line.strip('\n').split(',');
         subdivisions.append([info[0],info[1]])
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
 
     query = ('CREATE TABLE IF NOT EXISTS world_subdivisions ('+
     'name text,'+
@@ -2899,7 +2899,7 @@ def import_ip2location_ISO3166_2_csv_store_sqlite3():
         print (info)
         subdivisions.append([info[0],info[1],info[2]])
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
 
     query = ('CREATE TABLE IF NOT EXISTS ISO3166_2_ip2location ('+
     'country_code text,'+
@@ -2933,7 +2933,7 @@ def import_multilingual_ISO3166_2_csv_store_sqlite3():
                 subdivisions.append((country_code,subdivision_name,iso_3166_2))
                 print ((country_code,subdivision_name,iso_3166_2))
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();  
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();  
 
     query = ('CREATE TABLE IF NOT EXISTS multilingual_ISO3166_2 ('+
     'country_code text,'+
@@ -2954,7 +2954,7 @@ def export_language_characteristics_to_complement(property_update,number):
 
     languagestatus = {'0':'Q29051543','1':'Q29051546','2':'Q29051547','3':'Q29051549','4':'Q29051550','5':'Q29051551','6a':'Q29051552','6b':'Q29051554','7':'Q29051555','8a':'Q29051556','8b':'Q29051558','9':'Q29051560','10':'Q29051561','':'Q63671741'}
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     if property_update == 'P31' and number == 'language':
       # TO CALL THEM LANGUAGES
@@ -3099,7 +3099,7 @@ def export_countries_language_characteristics_to_complement(property_update,numb
 
     languagestatus = {'0':'Q29051543','1':'Q29051546','2':'Q29051547','3':'Q29051549','4':'Q29051550','5':'Q29051551','6a':'Q29051552','6b':'Q29051554','7':'Q29051555','8a':'Q29051556','8b':'Q29051558','9':'Q29051560','10':'Q29051561','':'Q63671741'}
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
 
     if property_update == 'P1705':
       # TO GIVE THEM A NATIVE NAME
@@ -3172,7 +3172,7 @@ def export_countries_subdivisions_language_characteristics_to_complement(propert
 
     languagestatus = {'0':'Q29051543','1':'Q29051546','2':'Q29051547','3':'Q29051549','4':'Q29051550','5':'Q29051551','6':'Q29051552','6a':'Q29051552','6b':'Q29051554','7':'Q29051555','8':'Q29051556','8a':'Q29051556','8b':'Q29051558','9':'Q29051560','10':'Q29051561','':'Q63671741'}
 
-    conn = sqlite3.connect(databases_path+'languages_territories.db'); cursor = conn.cursor();
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
     query = []
 
     if property_update == 'P1705':
