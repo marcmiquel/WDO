@@ -79,7 +79,7 @@ interface_row1 = html.Div([
         placement="bottom",
         style={'color':'black', 'backgroundColor':'transparent'},
     )],
-    style={'display': 'inline-block','width': '200px'},
+    style={'display': 'inline-block','width': '400px'},
     ),
 
 
@@ -235,7 +235,7 @@ interface_row3 = html.Div([
     ),
     dbc.Tooltip(
         html.P(
-            "Select Show the gaps to limit the results to only the articles that are missing in the target languages (All Gaps), that are missing in at least one language (At least one gap) or that are not missing (No language gaps.",
+            "Select Show the gaps to limit the results to only the articles that are missing in the target languages (All Gaps), that are missing in at least one language (At least one gap) or that are not missing (No language gaps).",
         style={"width": "42rem", 'font-size': 12, 'text-align':'left', 'backgroundColor':'#F7FBFE','padding': '12px 12px 12px 12px'}
         ),
         target="tooltip-target-exclude",
@@ -286,12 +286,12 @@ def dash_app33_build_layout(params):
         conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cur = conn.cursor()
 
         # SOURCE lANGUAGE
-        source_langs=params['source_langs'].lower()
+        source_langs = params['source_langs'].lower()
         source_langs = source_langs.split(',')
         source_lang1 = languages.loc[source_langs[0]]['languagename']
 
         # TARGET LANGUAGES
-        target_langs=params['target_langs'].lower()
+        target_langs = params['target_langs'].lower()
         target_langs = target_langs.split(',')
         target_lang1 = languages.loc[target_langs[0]]['languagename']
 
@@ -447,7 +447,7 @@ def dash_app33_build_layout(params):
         #         i+=1
         #     query += q + ') '
 
-        elif show_gaps == 'no-gaps': # show_gaps els que no existeixen a totes les llengües
+        if show_gaps == 'no-gaps': # show_gaps els que no existeixen a totes les llengües
 
             # condició: força tots a que existeixin.
             i=0

@@ -2044,42 +2044,52 @@ def update_pull_lgbt_topics_wikipedia_diversity():
 
     functionstartTime = time.time()
     conn2 = sqlite3.connect(databases_path + lgbt_content_db); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
     qitems = {}
+    keyword_title = {}
     for languagecode in wikilanguagecodes:
-        for row in cursor2.execute('SELECT qitem FROM '+languagecode+'wiki_lgbt WHERE lgbt_binary = 1;'):
-
+        for row in cursor2.execute('SELECT qitem, keyword FROM '+languagecode+'wiki_lgbt WHERE lgbt_binary = 1;'):
             try:
                 qitems[row[0]]+=1
             except:
                 qitems[row[0]]=1
 
+            keyword = row[1]
+            if keyword!='' and keyword!=None:
+                keyword_title[row[0]]=row[1]
+
+
+
 
     for languagecode in wikilanguagecodes:
         print (languagecode)
-        params = []
-
-        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
-
-        for q,v in qitems.items():
-
-            try:
-                page_title = qitems_page_titles[q]
-                page_id = page_titles_page_ids[page_title]
-                params.append((v, q, page_title, page_id))
-            except:
-                pass
-
         try:
             query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = NULL;'
             cursor.execute(query)
+            conn.commit()
         except:
             continue
 
-        query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = ? WHERE qitem = ? AND page_title = ? and page_id = ?;'
+        params = []
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+        qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+
+        for qitem,value in qitems.items():
+            try:
+                keyword = keyword_title[qitem]
+            except:
+                keyword = None
+            try:
+                page_title = qitems_page_titles[qitem]
+                page_id = page_titles_page_ids[page_title]
+                params.append((value, keyword, qitem, page_title, page_id))
+            except:
+                pass
+
+        query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = ?, lgbt_keyword_title = ? WHERE qitem = ? AND page_title = ? and page_id = ?;'
         cursor.executemany(query,params)
-        conn.commit()            
+        conn.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)

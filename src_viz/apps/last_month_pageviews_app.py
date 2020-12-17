@@ -283,7 +283,7 @@ dash_app6.layout = html.Div([
 
         ]),
 
-        dcc.Tab(label="Extent of Languages' CCC in Pageviews", children=[
+        dcc.Tab(label="Extent of Languages' CCC in Pageviews (Treemap)", children=[
             html.Br(),
 
 #            html.H5("Extent of Languages' CCC in Pageviews"),

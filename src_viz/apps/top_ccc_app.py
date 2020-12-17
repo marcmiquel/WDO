@@ -28,6 +28,7 @@ Select a Top CCC Diversity list or it will use the default list "editors". These
 
 
 
+
 interface_row1 = html.Div([
 
     html.Div(
@@ -183,6 +184,7 @@ interface_row2 = html.Div([
     ),
 
     ])
+
 
 
 covered = {'Existing articles':'existing', 'Non-existing articles':'non-existing'}
@@ -572,9 +574,10 @@ def dash_app7_build_layout(params):
 
         # group labels
         if list_name in ('sexual_orientation', 'ethnic_group', 'religious_group'):
+            if list_name != sexual_orientation: list_name+='s'
 
-            qitem_labels_target_lang = group_labels.loc[(group_labels["lang"] == target_lang) & (group_labels["group_label"] == list_name)][['qitem','label','lang']]
-            qitem_labels_en = group_labels.loc[(group_labels["lang"] == "en") & (group_labels["group_label"] == list_name)][['qitem','label','lang']]
+            qitem_labels_target_lang = group_labels.loc[(group_labels["lang"] == target_lang) & (group_labels["category_label"] == list_name)][['qitem','label','lang']]
+            qitem_labels_en = group_labels.loc[(group_labels["lang"] == "en") & (group_labels["category_label"] == list_name)][['qitem','label','lang']]
 
             qitem_labels_en = qitem_labels_en.set_index('qitem')
             qitem_labels_target_lang = qitem_labels_target_lang.set_index('qitem')
