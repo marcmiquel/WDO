@@ -189,6 +189,8 @@ interface_row2 = html.Div([
 
 covered = {'Existing articles':'existing', 'Non-existing articles':'non-existing'}
 
+
+
 def dash_app7_build_layout(params):
     features_dict = {'Number of Editors':'num_editors','Number of Edits':'num_edits','Number of Images':'num_images','Wikirank':'wikirank','Number of Pageviews':'num_pageviews','Number of Inlinks':'num_inlinks','Number of References':'num_references','Number of Bytes':'num_bytes','Number of Outlinks':'num_outlinks','Number of Interwiki':'num_interwiki','Number of WDProperties':'num_wdproperty','Number of Discussions':'num_discussions','Creation Date':'date_created','Number of Inlinks from CCC':'num_inlinks_from_CCC'}
 
@@ -572,6 +574,27 @@ def dash_app7_build_layout(params):
 
 
 
+        conn = sqlite3.connect(databases_path + 'wikipedia_diversity_production.db'); cur = conn.cursor()
+        qitems = df.qitem.tolist()
+        page_asstring = ','.join( ['?'] * len(qitems) )
+        query = 'SELECT qitem, page_id FROM '+source_lang+'wiki WHERE qitem IN (%s);' % page_asstring
+        dfx = pd.read_sql_query(query, conn, params = qitems)#, parameters)
+        dfx = dfx.set_index('qitem')
+        qitems_page_ids = dfx.to_dict()['page_id']
+
+        df['page_id'] = df['qitem'].map(qitems_page_ids).fillna(0)
+        df['page_id'] = df['page_id'].astype(int)
+
+        target_langs = closest_languages
+        target_langs.insert(0,target_lang)
+        mysql_con_read = wikilanguages_utils.establish_mysql_connection_read(source_lang); mysql_cur_read = mysql_con_read.cursor()
+        df = wikilanguages_utils.get_interwikilinks_articles(source_lang, target_langs, df, mysql_con_read)
+        df = df.fillna('')
+        target_langs.pop(0)
+
+
+
+
         # group labels
         if list_name in ('sexual_orientation', 'ethnic_group', 'religious_group'):
             if list_name != sexual_orientation: list_name+='s'
@@ -718,37 +741,36 @@ def dash_app7_build_layout(params):
                     worksheet.write(pos, text_ex)
 
                 elif col == 'Related Languages':
-                    i = 0
+
+                    target_langs
+                    target_langs_titles = []
+                    for i in range(2,len(target_langs)+2):
+                        target_langs_titles.append(rows['page_title_'+str(i)])
+#                    print (target_langs_titles)
+
                     text = ''
                     text_ex = ''
                     text_wt = ''
 
-                    for x in range(cl):
-                        cur_generation_method = rows[generation_method_target[x]]
-                        if cur_generation_method != 'sitelinks': continue
-                        cur_title = rows[page_titles_target[x]]
-                        try:
-                            cur_title = cur_title.decode('utf-8')
-                        except:
-                            pass
+                    for x in range(0,len(target_langs)):
+                        cur_title = target_langs_titles[x]
+                        if cur_title!= None and cur_title != '' and cur_title != 0:
+                            if text!='': text+=', '
 
-                        if cur_title!= 0:
-                            if i!=0 and i!=cl:
-                                text+=', '
-                                text_ex+=', '
-                                text_wt+=', '
+                            cur_title = str(cur_title)
 
-                            text+= '['+closest_languages[x]+']'+'('+'http://'+closest_languages[x]+'.wikipedia.org/wiki/'+ cur_title.replace(' ','_')+')'
-                            text_wt+= '[[:'+closest_languages[x]+':'+cur_title.replace(' ','_')+'|'+closest_languages[x]+']]'
+                            text+= '['+target_langs[x]+']'+'('+'http://'+target_langs[x]+'.wikipedia.org/wiki/'+ cur_title.replace(' ','_')+')'
+                            text_wt+= '[[:'+target_langs[x]+':'+cur_title.replace(' ','_')+'|'+target_langs[x]+']]'
 
                             #+'{:target="_blank"}'
-                            text_ex+= closest_languages[x]
-                            i+=1
+                            text_ex+= target_langs[x]
 
-
+    
                     df_row.append(dcc.Markdown(text))
                     df_row_wt.append(text_wt)
                     worksheet.write(pos, text_ex)
+
+
 
                 elif col == 'Bytes':
 #                    print (rows[col])
@@ -774,31 +796,53 @@ def dash_app7_build_layout(params):
                     df_row_wt.append(date)
                     worksheet.write(pos, date)
 
+
                 elif col == 'Article Title':
                     title = rows['Article Title']
                     df_row.append(html.A(title.replace('_',' '), href='https://'+source_lang+'.wikipedia.org/wiki/'+title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
                     df_row_wt.append('[[:'+source_lang+':'+title+'|'+title.replace('_',' ')+']]')
                     worksheet.write_url(pos, 'https://'+source_lang+'.wikipedia.org/wiki/'+title.replace(' ','_'), string=title)
 
+
                 elif col == ' Article Title':
-                    cur_title = rows[' Article Title']
-                    if cur_title != 0:
+
+                    cur_title = ''
+                    cur_title = rows['page_title_1']
+
+                    # print ('\n*')
+                    # print (k)
+
+                    curx_title = rows[' Article Title']
+
+                    if cur_title != '':
+
+                        df_row.append(html.A(cur_title, href='https://'+target_lang+'.wikipedia.org/wiki/'+cur_title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
+                        df_row_wt.append('[[:'+tl+':'+cur_title+'|'+cur_title+']]')
+                        worksheet.write_url(pos, 'https://'+target_lang+'.wikipedia.org/wiki/'+cur_title.replace(' ','_'), string=cur_title)
+                        print (cur_title)
+                        print ('replica')
+
+                    elif rows['generation_method'] != 'sitelinks' and curx_title != 0:
                         try:
-                            cur_title = cur_title.decode('utf-8')
+                            curx_title = curx_title.decode('utf-8')
                         except:
                             pass
-                        cur_title = cur_title.replace('_',' ')
-                        if rows['generation_method'] == 'sitelinks':
-                            df_row.append(html.A(cur_title, href='https://'+target_lang+'.wikipedia.org/wiki/'+cur_title.replace(' ','_'), target="_blank", style={'text-decoration':'none'}))
-                            df_row_wt.append('[[:'+tl+':'+cur_title+'|'+cur_title+']]')
-                            worksheet.write_url(pos, 'https://'+target_lang+'.wikipedia.org/wiki/'+cur_title.replace(' ','_'), string=cur_title)
-                        else:
-                            df_row.append(html.A(cur_title+' ('+rows['generation_method']+')',href='https://'+target_lang+'.wikipedia.org/wiki/'+cur_title.replace(' ','_'), target="_blank", style={'text-decoration':'none',"color":"#ba0000"}))
-                            df_row_wt.append('[[:'+tl+':'+cur_title+'|'+cur_title+']]')
+                        curx_title = curx_title.replace('_',' ')
+
+
+                        df_row.append(html.A(curx_title+' ('+rows['generation_method']+')',href='https://'+target_lang+'.wikipedia.org/wiki/'+curx_title.replace(' ','_'), target="_blank", style={'text-decoration':'none',"color":"#ba0000"}))
+                        df_row_wt.append('[[:'+tl+':'+curx_title+'|'+curx_title+']]')
+
+                        # print (curx_title)
+                        # print (rows['generation_method'])
+                        # print ('extra')
 
                     else:
                         df_row.append('')
                         df_row_wt.append('')
+
+                    # print ('*\n')
+
 
 
                 else:

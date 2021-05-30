@@ -22,7 +22,7 @@ for languagecode in wikilanguagecodes:
     lang_name = languages.loc[languagecode]['languagename']+' ('+languagecode+')'
     source_lang_dict[lang_name] = languagecode
 
-topic_dict={'All':'all','Keywords':'keywords','Geolocated':'geolocated','People':'people','Women':'women','Men':'men','Folk':'folk','Earth':'earth','Monuments and Buildings':'monuments_and_buildings','Music Creations and Organizations':'music_creations_and_organizations','Sports and Teams':'sport_and_teams','Food':'food','Paintings':'paintings','GLAM':'glam','Books':'books','Clothing and Fashion':'clothing_and_fashion','Industry':'industry','Not people':'not_people'}
+topic_dict={'All':'all','Keywords':'keywords','Geolocated':'geolocated','People':'people','Women':'women','Men':'men','Folk':'folk','Earth':'earth','Monuments and Buildings':'monuments_and_buildings','Music Creations and Organizations':'music_creations_and_organizations','Sports and Teams':'sport_and_teams','Food':'food','Paintings':'paintings','GLAM':'glam','Books':'books','Clothing and Fashion':'clothing_and_fashion','Industry':'industry','Not people':'not_people','CCC':'ccc'}
 
 target_langs_dict = language_names
 
@@ -286,6 +286,8 @@ def dash_app19_build_layout(params):
                 query += 'AND r.gender IS NOT NULL '
             elif topic == 'not_people':
                 query += 'AND r.gender IS NULL '
+            elif topic == 'ccc':
+                query += 'AND r.ccc_binary = 1 AND percent_outlinks_to_CCC > 0.15 '
             else:
                 query += 'AND r.'+topic+' IS NOT NULL '
 
@@ -520,7 +522,7 @@ def dash_app19_build_layout(params):
 
                 elif col == 'Creation Date':
                     date = rows['Creation Date']
-                    if date == 0: 
+                    if date == 0 or date == '' or date == None: 
                         date = ''
                     else:
                         date = str(time.strftime("%Y-%m-%d", time.strptime(str(int(date)), "%Y%m%d%H%M%S")))

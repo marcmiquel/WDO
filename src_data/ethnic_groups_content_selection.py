@@ -48,6 +48,11 @@ import gc
 def main():
 
 
+    get_relevance_features_wikipedia_diversity()
+
+    print ('fi')
+    input('')
+
     # store_choosen_langs_for_ethnic_groups() # it stores the relationship between ethnic groups and the languages where to retrieve articles from (e.g. those with which the biographies of the ethnic belongs to its CCC).
 
 
@@ -62,6 +67,8 @@ def main():
     store_articles_links() # it stores the articles whose inlinks and outlinks point to anarticle of an ethnic group.
 
     store_articles_ethnic_group_binary_classifier() # it generates the final collection of articles for each ethnic group.
+
+    get_relevance_features_wikipedia_diversity()
 
     print ('the end!')
     return
@@ -176,6 +183,7 @@ def create_ethnic_groups_content_db():
     # general
     'qitem text NOT NULL, '+
     'page_title text, '+
+    'page_id integer, '+
 
     'primary_lang text, '+
     'qitem_ethnic_group text, '+
@@ -197,6 +205,42 @@ def create_ethnic_groups_content_db():
     'percent_outlinks_to_group real, '+
 
     'ethnic_group_binary integer, '+
+
+    # feature
+    'date_created integer, '+
+
+    # GENERAL TOPICS DIVERSITY
+    # topics: people, organizations, things and places
+    'folk text, '+
+    'earth text, '+
+    'monuments_and_buildings text, '+
+    'music_creations_and_organizations text, '+
+    'sport_and_teams text, '+
+    'food text, '+
+    'paintings text, '+
+    'glam text,'+
+    'books text,'+
+    'clothing_and_fashion text,'+
+    'industry text, '+
+    'religion text, '+ # as a topic
+    'time_interval text, '+
+    'start_time integer, '+
+    'end_time text, '+
+
+    # characteristics of article relevance
+    'num_inlinks integer, '+
+    'num_outlinks integer, '+
+    'num_bytes integer, '+
+    'num_references integer, '+
+    'num_edits integer, '+
+    'num_edits_last_month integer, '+
+    'num_editors integer, '+
+    'num_discussions integer, '+
+    'num_pageviews integer, '+
+    'num_wdproperty integer, '+
+    'num_interwiki integer, '+
+    'num_images integer, '+
+
 
     # relevance features
     'PRIMARY KEY (qitem, qitem_ethnic_group, primary_lang));')
@@ -1200,8 +1244,6 @@ def store_articles_ethnic_group_binary_classifier():
     # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
     functionstartTime = time.time()
 
-    ethnic_groups = group_labels.loc[(group_labels["group_label"] == 'ethnic_group')]
-
     conn2 = sqlite3.connect(databases_path + diversity_categories_db); cursor2 = conn2.cursor()
     ethnic_groups_choosen_langs = pd.read_sql_query('SELECT count, ethnic_group, lang, ccc, cycle_year_month, choosen_lang FROM ethnic_groups_choosen_langs WHERE ccc = "yes" AND count >= 1;', conn2)
 
@@ -1548,7 +1590,7 @@ def update_push_ethnic_group_topic_wikipedia_diversity():
         qitem_ethnic_groups = {}
         query = 'SELECT qitem, qitem_ethnic_group FROM ethnic_group_articles WHERE primary_lang = "'+languagecode+'" AND ethnic_group_binary = 1 ORDER BY qitem;'
 
-        for row in cursor.execute(query):
+        for row in cursor3.execute(query):
 
             qitem = row[0]
             qitem_ethnic_group = row[1]
@@ -1578,6 +1620,76 @@ def update_push_ethnic_group_topic_wikipedia_diversity():
         conn.commit()
 
 
+def get_relevance_features_wikipedia_diversity():
+
+    function_name = 'get_relevance_features_wikipedia_diversity'
+    # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+
+    functionstartTime = time.time()
+
+    for languagecode in wikilanguagecodes:
+        print (languagecode)
+
+        conn3 = sqlite3.connect(databases_path + ethnic_groups_content_db); cursor3 = conn3.cursor()
+        qitem_ethnic_groups = []
+        query = 'SELECT DISTINCT qitem FROM ethnic_group_articles WHERE ethnic_group_binary = 1 AND primary_lang = "'+languagecode+'";'
+        for row in cursor3.execute(query):
+            qitem = row[0];
+            qitem_ethnic_groups.append(qitem)
+
+
+        conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()      
+        while (len(qitem_ethnic_groups) > 0):
+
+            sample = qitem_ethnic_groups[:50000]
+
+            page_asstring = ','.join( ['?'] * len(sample) );
+            query = 'SELECT qitem, page_id, date_created, folk, earth, monuments_and_buildings, music_creations_and_organizations, sport_and_teams, food, paintings, glam, books, clothing_and_fashion, industry, religion, time_interval, start_time, end_time, num_bytes, num_references, num_edits, num_edits_last_month, num_editors, num_discussions, num_pageviews, num_wdproperty, num_interwiki, num_images FROM '+languagecode+'wiki WHERE qitem IN (%s);' % page_asstring
+
+            params = []
+            k = 0
+            for row in cursor.execute(query, sample):
+                k+=1
+
+                qitem = row[0]
+                page_id = row[1]
+                date_created = row[2]
+                folk = row[3]
+                earth = row[4]
+                monuments_and_buildings = row[5]
+                music_creations_and_organizations = row[6]
+                sport_and_teams = row[7]
+                food = row[8]
+                paintings = row[9]
+                glam = row[10]
+                books = row[11]
+                clothing_and_fashion = row[12]
+                industry = row[13]
+                religion = row[14]
+                time_interval = row[15]
+                start_time = row[16]
+                end_time = row[17]
+                num_bytes = row[18]
+                num_references = row[19]
+                num_edits = row[20]
+                num_edits_last_month = row[21]
+                num_editors = row[22]
+                num_discussions = row[23]
+                num_pageviews = row[24]
+                num_wdproperty = row[25]
+                num_interwiki = row[26]
+                num_images = row[27]
+
+                params.append((page_id, date_created, folk, earth, monuments_and_buildings, music_creations_and_organizations, sport_and_teams, food, paintings, glam, books, clothing_and_fashion, industry, religion, time_interval, start_time, end_time, num_bytes, num_references, num_edits, num_edits_last_month, num_editors, num_discussions, num_pageviews, num_wdproperty, num_interwiki, num_images, qitem, languagecode))
+        
+            query = 'UPDATE ethnic_group_articles SET page_id = ?, date_created = ?, folk = ?, earth = ?, monuments_and_buildings = ?, music_creations_and_organizations = ?, sport_and_teams = ?, food = ?, paintings = ?, glam = ?, books = ?, clothing_and_fashion = ?, industry = ?, religion = ?, time_interval = ?, start_time = ?, end_time = ?, num_bytes = ?, num_references = ?, num_edits = ?, num_edits_last_month = ?, num_editors = ?, num_discussions = ?, num_pageviews = ?, num_wdproperty = ?, num_interwiki = ?, num_images = ? WHERE qitem = ? AND primary_lang = ?;'
+            cursor3.executemany(query,params)
+            conn3.commit()
+
+            qitem_ethnic_groups = qitem_ethnic_groups[50000:]
+            print (len(qitem_ethnic_groups))
+    
+        print ('inserted')
 
 
 
@@ -1620,7 +1732,9 @@ if __name__ == '__main__':
     wikilanguagecodes = languages.index.tolist()
     wikilanguages_qitems = languages.Qitem.tolist()
 
-    # wikilanguagecodes = wikilanguagecodes[wikilanguagecodes.index('en')+1:]
+    print (wikilanguagecodes)
+    input('')
+    wikilanguagecodes = wikilanguagecodes[wikilanguagecodes.index('smn')+1:]
 #    wikilanguagecodes = ['en']
     # wikilanguagecodes = ['ro','ja','af','ca']
     # wikilanguagecodes = ['ro','it','fr','gl','ru','zh','is','ja','vi','oc','sw','af','ca']
@@ -1631,7 +1745,8 @@ if __name__ == '__main__':
     print (wikilanguagecodes)
 
 
-    group_labels = wikilanguages_utils.get_group_identities_labels()
+    ethnic_groups = wikilanguages_utils.get_ethnic_groups_labels()
+    # group_labels = wikilanguages_utils.get_diversity_categories_labels()
 
     # if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit();
     main()

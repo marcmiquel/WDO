@@ -43,11 +43,11 @@ import gc
 # MAIN
 def main():
 
+    wikilanguages_utils.get_store_diversity_categories_labels(wikilanguagecodes)
+
     execution_block_potential_ccc_features()
     execution_block_classifying_ccc()
     execution_block_pull_external_topics_features()
-
-    print ('done.')
 
 
 
@@ -64,7 +64,7 @@ def execution_block_potential_ccc_features():
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
         label_potential_ccc_articles_category_crawling(languagecode,page_titles_page_ids,page_titles_qitems)
         label_potential_ccc_articles_language_weak_wd(languagecode,page_titles_page_ids)
-        label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_titles_qitems)
+        label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_titles_page_ids)
         label_potential_ccc_articles_has_part_properties_wd(languagecode,page_titles_page_ids)
         label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,page_titles_qitems)
 
@@ -107,14 +107,18 @@ def execution_block_classifying_ccc():
 
 def execution_block_pull_external_topics_features():
 
-    update_pull_ccc_wikipedia_diversity()
+    functionstartTime = time.time()
+    function_name = 'execution_block_pull_external_topics_features'
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+
+#    update_pull_ccc_wikipedia_diversity()
 
     update_pull_missing_ccc_wikipedia_diversity()
-
     update_pull_lgbt_topics_wikipedia_diversity()
-
     update_pull_ethnic_group_topic_wikipedia_diversity()
 
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -127,7 +131,7 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
 
     functionstartTime = time.time()
     function_name = 'label_potential_ccc_articles_category_crawling '+languagecode
-#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
 
     # CREATING KEYWORDS DICTIONARY
@@ -198,7 +202,7 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
 
 
     print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-    print (len(category_links_cat_cat))
+    print (len(category_page_titles_page_ids))
     print ('all categories loaded')
 
 
@@ -314,7 +318,6 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
 
 
     print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-    print (len(category_links_cat_art))
     print ('all category links loaded')
 
 
@@ -350,7 +353,7 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
         # CATEGORIES FROM LEVELS
         level = 1
         num_levels = 25
-        if languagecode=='en': num_levels = 10     
+        if languagecode=='en' or languagecode == 'ar': num_levels = 10     
         j = 0
         total_categories = dict(); total_categories.update(cattitles_total_level)
         print ('Number of categories to start: '+str(len(total_categories)))
@@ -384,9 +387,9 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
                             selectedarticles_level[page_id] = level
 
                         if page_id in selectedarticles:
-                            selectedarticles[page_id].add(kw)
+                            selectedarticles[page_id].add(item)
                         else:
-                            selectedarticles[page_id] = {kw}
+                            selectedarticles[page_id] = {item}
 
                         i += 1
 
@@ -399,9 +402,9 @@ def label_potential_ccc_articles_category_crawling(languagecode,page_titles_page
                             selectedarticles_level[page_id] = level
 
                         if page_id in selectedarticles:
-                            selectedarticles[page_id].add(kw)
+                            selectedarticles[page_id].add(item)
                         else:
-                            selectedarticles[page_id] = {kw}
+                            selectedarticles[page_id] = {item}
 
                         i += 1
 
@@ -475,14 +478,14 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
     content_selection_page_id = {}
     query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE ccc_binary=1;'
     for row in cursor.execute(query):
-        content_selection_page_id[row[0]]=row[1]
+        content_selection_page_id[int(row[0])]=row[1]
         content_selection_page_title[row[1]]=row[0]
 
     other_content_selection_page_title = {}
     other_content_selection_page_id = {}
     query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE ccc_binary=0;'
     for row in cursor.execute(query):
-        other_content_selection_page_id[row[0]]=row[1]
+        other_content_selection_page_id[int(row[0])]=row[1]
         other_content_selection_page_title[row[1]]=row[0]
 
 
@@ -490,7 +493,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
     female_page_id = {}
     query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE gender = "Q6581072";'
     for row in cursor.execute(query):
-        female_page_id[row[0]]=row[1]
+        female_page_id[int(row[0])]=row[1]
         female_page_title[row[1]]=row[0]
 
 
@@ -498,16 +501,33 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
     male_page_id = {}
     query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE gender = "Q6581097";'
     for row in cursor.execute(query):
-        male_page_id[row[0]]=row[1]
+        male_page_id[int(row[0])]=row[1]
         male_page_title[row[1]]=row[0]
 
 
     lgbt_page_title = {}
     lgbt_page_id = {}
-    query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE sexual_orientation != "Q1035954";'
+    # NEED TO REVISE THESE QUERIES
+    query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE sexual_orientation_property IS NOT NULL and sexual_orientation_property != "Q1035954";'
     for row in cursor.execute(query):
-        lgbt_page_id[row[0]]=row[1]
+        lgbt_page_id[int(row[0])]=row[1]
         lgbt_page_title[row[1]]=row[0]
+
+    query = 'SELECT page_id, page_title FROM '+languagecode+'wiki WHERE sexual_orientation_partner IS NOT NULL and sexual_orientation_partner != "Q1035954";'
+    for row in cursor.execute(query):
+        lgbt_page_id[int(row[0])]=row[1]
+        lgbt_page_title[row[1]]=row[0]
+
+
+    # NEW WIKIPEDIA NAMESPACE
+    conn2 = sqlite3.connect(databases_path + wikipedia_namespace_db); cursor2 = conn2.cursor()
+    wikipedia_namespace_page_title = {}
+    wikipedia_namespace_page_id = {}
+    query = 'SELECT page_id, page_title FROM '+languagecode+'wiki_wikipedia_namespace WHERE ccc_keyword_title IS NOT NULL;'
+    for row in cursor2.execute(query):
+        wikipedia_namespace_page_id[int(row[0])]=row[1]
+        wikipedia_namespace_page_title[row[1]]=row[0]
+
 
 
 #    print (len(page_titles_page_ids),len(content_selection_page_id),len(other_content_selection_page_id))
@@ -520,11 +540,13 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
     num_outlinks_men = {}
     num_outlinks_lgbt = {}
 
+
     num_inlinks_ccc = {}
     num_inlinks_other_ccc = {}
     num_inlinks_women = {}
     num_inlinks_men = {}
     num_inlinks_lgbt = {}
+    num_inlinks_wikipediaNS = {}
 
 
     for page_id in page_titles_page_ids.values():
@@ -546,6 +568,7 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         num_inlinks_lgbt[page_id]=0
         num_outlinks_lgbt[page_id]=0
 
+        num_inlinks_wikipediaNS[page_id]=0
 
 
 #    dumps_path = 'gnwiki-20190720-pagelinks.sql.gz' # read_dump = '/public/dumps/public/wikidatawiki/latest-all.json.gz'
@@ -593,98 +616,126 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
                     pl_title_page_id = None
 
 
-                if pl_from_namespace != '0' or pl_namespace != '0': continue
-
-                ########
-                # OUTLINKS
-
-                try:
-                    num_of_outlinks[pl_from]= num_of_outlinks[pl_from] + 1
-#                    print('num_outlinks')
-#                    print (num_of_outlinks[pl_from])
-                except:
-                    pass
-
-                try:
-                    ccc=content_selection_page_id[pl_title_page_id]
-                    num_outlinks_ccc[pl_from] = num_outlinks_ccc[pl_from] + 1
-#                    print (num_outlinks_ccc[pl_from])
-                except:
-                    pass
-
-                try:
-                    abroad=other_content_selection_page_id[pl_title_page_id]
-                    num_outlinks_other_ccc[pl_from] = num_outlinks_other_ccc[pl_from] + 1
-#                    print('num_outlinks_other_ccc')
-#                    print (num_outlinks_other_ccc[pl_from])
-                except:
-                    pass
-
-                ########
-
-                try:
-                    female=female_page_id[pl_title_page_id]
-                    num_outlinks_women[pl_from] = num_outlinks_women[pl_from] + 1
-                except:
-                    pass
-
-                try:
-                    male=male_page_id[pl_title_page_id]
-                    num_outlinks_men[pl_from] = num_outlinks_men[pl_from] + 1
-                except:
-                    pass
-
-                try:
-                    lgbt=lgbt_page_id[pl_title_page_id]
-                    num_outlinks_lgbt[pl_from] = num_outlinks_lgbt[pl_from] + 1
-                except:
-                    pass
+                # if pl_from == 1307813:
+                #     print (row)
+                #     input('')
 
 
-                ########
+                # if (pl_from_namespace == '4'): #or pl_from_namespace == '10'
+                #     print ('-',row, pl_title)
 
-                # INLINKS
-
-                try:
-                    num_of_inlinks[pl_title_page_id] = num_of_inlinks[pl_title_page_id] + 1
-                except:
-                    pass
-
-                try:
-                    ccc=content_selection_page_id[pl_from]
-                    num_inlinks_ccc[pl_title_page_id] = num_inlinks_ccc[pl_title_page_id] + 1
-                except:
-                    pass
-
-                try:
-                    abroad=other_content_selection_page_id[pl_from]
-                    num_inlinks_other_ccc[pl_title_page_id] = num_inlinks_other_ccc[pl_title_page_id] + 1
-#                    print('num_inlinks_other_ccc')                    
-#                    print (num_inlinks_other_ccc[page_titles_page_ids[pl_title]])
-                except:
-                    pass
+                # if (int(pl_from_namespace) == 4): #  or int(pl_from_namespace) == 10
+                #     print ('***',row, pl_title)
 
 
 
-                ########
+                # INLINKS WIKIPEDIA NAMESPACE
+                if (pl_from_namespace == '4' or pl_from_namespace == '10') and (pl_namespace == '0'):
+                    # print (row, pl_title,'dins')
+                    try:
+                        wikipedia_ns=wikipedia_namespace_page_id[pl_from]
+                        # print ('stop3',row, pl_title)
+                        # input('')
+                        num_inlinks_wikipediaNS[pl_title_page_id] = num_inlinks_wikipediaNS[pl_title_page_id] + 1
 
-                try:
-                    female=female_page_id[pl_from]
-                    num_inlinks_women[pl_title_page_id] = num_inlinks_women[pl_title_page_id] + 1
-                except:
-                    pass
+                    except:
+                        pass
 
-                try:
-                    male=male_page_id[pl_from]
-                    num_inlinks_men[pl_title_page_id] = num_inlinks_men[pl_title_page_id] + 1
-                except:
-                    pass
 
-                try:
-                    lgbt=other_content_selection_page_id[pl_from]
-                    num_inlinks_lgbt[pl_title_page_id] = num_inlinks_lgbt[pl_title_page_id] + 1
-                except:
-                    pass
+                elif pl_from_namespace == '0' or pl_namespace == '0': 
+
+                    ########
+                    # OUTLINKS
+
+                    try:
+                        num_of_outlinks[pl_from]= num_of_outlinks[pl_from] + 1
+    #                    print('num_outlinks')
+    #                    print (num_of_outlinks[pl_from])
+                    except:
+                        pass
+
+                    try:
+                        ccc=content_selection_page_id[pl_title_page_id]
+                        num_outlinks_ccc[pl_from] = num_outlinks_ccc[pl_from] + 1
+    #                    print (num_outlinks_ccc[pl_from])
+                    except:
+                        pass
+
+                    try:
+                        abroad=other_content_selection_page_id[pl_title_page_id]
+                        num_outlinks_other_ccc[pl_from] = num_outlinks_other_ccc[pl_from] + 1
+    #                    print('num_outlinks_other_ccc')
+    #                    print (num_outlinks_other_ccc[pl_from])
+                    except:
+                        pass
+
+                    ########
+
+                    try:
+                        female=female_page_id[pl_title_page_id]
+                        num_outlinks_women[pl_from] = num_outlinks_women[pl_from] + 1
+                    except:
+                        pass
+
+                    try:
+                        male=male_page_id[pl_title_page_id]
+                        num_outlinks_men[pl_from] = num_outlinks_men[pl_from] + 1
+                    except:
+                        pass
+
+                    try:
+                        lgbt=lgbt_page_id[pl_title_page_id]
+                        num_outlinks_lgbt[pl_from] = num_outlinks_lgbt[pl_from] + 1
+                    except:
+                        pass
+
+
+                    ########
+
+                    # INLINKS
+
+                    try:
+                        num_of_inlinks[pl_title_page_id] = num_of_inlinks[pl_title_page_id] + 1
+                    except:
+                        pass
+
+                    try:
+                        ccc=content_selection_page_id[pl_from]
+                        num_inlinks_ccc[pl_title_page_id] = num_inlinks_ccc[pl_title_page_id] + 1
+                    except:
+                        pass
+
+                    try:
+                        abroad=other_content_selection_page_id[pl_from]
+                        num_inlinks_other_ccc[pl_title_page_id] = num_inlinks_other_ccc[pl_title_page_id] + 1
+    #                    print('num_inlinks_other_ccc')                    
+    #                    print (num_inlinks_other_ccc[page_titles_page_ids[pl_title]])
+                    except:
+                        pass
+
+
+
+                    ########
+
+                    try:
+                        female=female_page_id[pl_from]
+                        num_inlinks_women[pl_title_page_id] = num_inlinks_women[pl_title_page_id] + 1
+                    except:
+                        pass
+
+                    try:
+                        male=male_page_id[pl_from]
+                        num_inlinks_men[pl_title_page_id] = num_inlinks_men[pl_title_page_id] + 1
+                    except:
+                        pass
+
+                    try:
+                        lgbt=lgbt_page_id[pl_from]
+                        num_inlinks_lgbt[pl_title_page_id] = num_inlinks_lgbt[pl_title_page_id] + 1
+                    except:
+                        pass
+
+
 
 
                 if w % 1000000 == 0: # 10 million
@@ -781,13 +832,18 @@ def label_potential_ccc_articles_with_links(languagecode,page_titles_page_ids,pa
         if num_inlinks!= 0: percent_inlinks_from_lgbt = float(num_inlinks_from_lgbt)/float(num_inlinks)
         else: percent_inlinks_from_lgbt = 0
 
+        num_inlinks_from_wikipediaNS = num_inlinks_wikipediaNS[page_id]
+        if num_inlinks!= 0: percent_inlinks_from_wikipediaNS = float(num_inlinks_from_wikipediaNS)/float(num_inlinks)
+        else: percent_inlinks_from_wikipediaNS = 0
 
-        parameters.append((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt,page_id,qitem,page_title))
+
+
+        parameters.append((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt,num_inlinks_from_wikipediaNS,percent_inlinks_from_wikipediaNS,page_id,qitem,page_title))
 
         # print ((num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt,page_id,qitem,page_title))
 
 
-    query = 'UPDATE '+languagecode+'wiki SET (num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt)=(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
+    query = 'UPDATE '+languagecode+'wiki SET (num_outlinks,num_outlinks_to_CCC,percent_outlinks_to_CCC,num_outlinks_to_geolocated_abroad,percent_outlinks_to_geolocated_abroad,num_inlinks,num_inlinks_from_CCC,percent_inlinks_from_CCC,num_inlinks_from_geolocated_abroad,percent_inlinks_from_geolocated_abroad,num_inlinks_from_women, num_outlinks_to_women, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt,num_inlinks_from_ccc_wikiprojects,percent_inlinks_from_ccc_wikiprojects)=(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) WHERE page_id = ? AND qitem = ? AND page_title=?;'
         
     cursor.executemany(query,parameters)
     conn.commit()
@@ -877,7 +933,7 @@ def label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_tit
     functionstartTime = time.time()
 
     function_name = 'label_potential_ccc_articles_affiliation_properties_wd '+languagecode
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -940,7 +996,7 @@ def label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_tit
         for x in range(0,int((len(values)-1)/2)):
             if x >= 1: value = value + ';'
             value = value + values[x*2+1]+':'+values[x*2+2]
-#        print ((value,page_title,qitem,page_id))
+        print ((value,page_title,qitem,page_id))
         ccc_affiliation_items.append((value,page_title,qitem,page_id))
 #    print (len(ccc_affiliation_items))
 
@@ -954,6 +1010,8 @@ def label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_tit
             pass
 
 
+    print (len(ccc_affiliation_items),len(other_ccc_affiliation_items))
+
     # INSERT INTO CCC DATABASE
     query = 'UPDATE '+languagecode+'wiki SET affiliation_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor.executemany(query,ccc_affiliation_items)
@@ -964,7 +1022,7 @@ def label_potential_ccc_articles_affiliation_properties_wd(languagecode,page_tit
     conn.commit()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+#    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -974,7 +1032,7 @@ def label_potential_ccc_articles_has_part_properties_wd(languagecode,page_titles
     functionstartTime = time.time()
 
     function_name = 'label_potential_ccc_articles_has_part_properties_wd '+languagecode
-#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + wikidata_db); cursor2 = conn2.cursor()
@@ -1115,9 +1173,6 @@ def get_ccc_training_data(languagecode):
 
     # OBTAIN THE DATA TO FIT.
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    query = 'SELECT * FROM '+languagecode+'wiki WHERE ccc_binary IS NOT NULL;'
-    ccc_df = pd.read_sql_query(query, conn)
-
 
     positive_features = ['category_crawling_territories','category_crawling_territories_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC','ccc_binary']
 
@@ -1128,12 +1183,20 @@ def get_ccc_training_data(languagecode):
     features = ['qitem']+positive_features+negative_features
 #    features = positive_features
 
-    ccc_df = ccc_df[features]
+    query = 'SELECT '+', '.join(features)+' FROM '+languagecode+'wiki WHERE ccc_binary IS NOT NULL;'
+    ccc_df = pd.read_sql_query(query, conn)
+
+    print ('ccc_df loaded for lang: '+languagecode)
+    
+
+
+ #   ccc_df = ccc_df[features]
     ccc_df = ccc_df.set_index(['qitem'])
 #    print (ccc_df.head())
     if len(ccc_df.index.tolist())==0: print ('It is not possible to classify Wikipedia Articles as there is no groundtruth.'); return (0,0,[],[]) # maxlevel,num_articles_ccc,ccc_df_list,binary_list
     ccc_df = ccc_df.fillna(0)
 
+    print ('there we go.')
 
     # FORMAT THE DATA FEATURES AS NUMERICAL FOR THE MACHINE LEARNING
     category_crawling_paths=ccc_df['category_crawling_territories'].tolist()
@@ -1189,7 +1252,7 @@ def get_ccc_training_data(languagecode):
 
         ccc_df_list_probably_no = []
         size_sample = 6
-        if languagecode == 'en': size_sample = 4 # exception for English
+        if languagecode == 'en': size_sample = 3 # exception for English
         for i in range(1,1+size_sample):
             ccc_df = ccc_df.sample(frac=1) # randomize the rows order
             ccc_df_probably_no = ccc_df.loc[ccc_df['ccc_binary'] != 1]
@@ -1237,24 +1300,27 @@ def get_ccc_testing_data(languagecode,maxlevel):
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 #    query = 'SELECT * FROM '+languagecode+'wiki WHERE ccc_binary IS NULL;' # ALL
     
-    # WE GET THE POTENTIAL CCC ARTICLES THAT HAVE NOT BEEN 1 BY ANY OTHER MEANS.
-    # For the testing takes those with one of these features not null (category crawling, language weak, affiliation or has part).
-    query = 'SELECT * FROM '+languagecode+'wiki WHERE ccc_binary IS NULL AND (category_crawling_territories IS NOT NULL OR category_crawling_territories_level IS NOT NULL OR language_weak_wd IS NOT NULL OR affiliation_wd IS NOT NULL OR has_part_wd IS NOT NULL);'
-
-    # For the testing takes those with one of these features not null (category crawling, language weak, affiliation or has part), and those with keywords on title.
-#    query = 'SELECT * FROM '+languagecode+'wiki WHERE ccc_binary IS NULL AND (category_crawling_territories IS NOT NULL OR category_crawling_territories_level IS NOT NULL OR language_weak_wd IS NOT NULL OR affiliation_wd IS NOT NULL OR has_part_wd IS NOT NULL) OR keyword_title IS NOT NULL;' # POTENTIAL
-
-    potential_ccc_df = pd.read_sql_query(query, conn)
-
     positive_features = ['category_crawling_territories','category_crawling_territories_level','language_weak_wd','affiliation_wd','has_part_wd','num_inlinks_from_CCC','num_outlinks_to_CCC','percent_inlinks_from_CCC','percent_outlinks_to_CCC']
 
     negative_features = ['other_ccc_language_strong_wd','other_ccc_created_by_wd','other_ccc_part_of_wd','other_ccc_language_weak_wd','other_ccc_affiliation_wd','other_ccc_has_part_wd']
 
 #    negative_features_2 = ['other_ccc_keyword_title','other_ccc_category_crawling_relative_level', 'num_inlinks_from_geolocated_abroad', 'num_outlinks_to_geolocated_abroad', 'percent_inlinks_from_geolocated_abroad', 'percent_outlinks_to_geolocated_abroad']
     features = ['page_title'] + positive_features + negative_features
+
+
+    # WE GET THE POTENTIAL CCC ARTICLES THAT HAVE NOT BEEN 1 BY ANY OTHER MEANS.
+    # For the testing takes those with one of these features not null (category crawling, language weak, affiliation or has part).
+    query = 'SELECT '+', '.join(features)+' FROM '+languagecode+'wiki WHERE ccc_binary IS NULL AND (category_crawling_territories IS NOT NULL OR category_crawling_territories_level IS NOT NULL OR language_weak_wd IS NOT NULL OR affiliation_wd IS NOT NULL OR has_part_wd IS NOT NULL);'
+
+    # For the testing takes those with one of these features not null (category crawling, language weak, affiliation or has part), and those with keywords on title.
+#    query = 'SELECT * FROM '+languagecode+'wiki WHERE ccc_binary IS NULL AND (category_crawling_territories IS NOT NULL OR category_crawling_territories_level IS NOT NULL OR language_weak_wd IS NOT NULL OR affiliation_wd IS NOT NULL OR has_part_wd IS NOT NULL) OR keyword_title IS NOT NULL;' # POTENTIAL
+
+    potential_ccc_df = pd.read_sql_query(query, conn)
+
+
 #    features = positive_features
 
-    potential_ccc_df = potential_ccc_df[features]
+#    potential_ccc_df = potential_ccc_df[features]
     potential_ccc_df = potential_ccc_df.set_index(['page_title'])
     potential_ccc_df = potential_ccc_df.fillna(0)
 
@@ -1691,11 +1757,6 @@ def groundtruth_reaffirmation(languagecode):
     conn2.commit()
     print ('geolocated abroad, done.')
 
-    query = 'UPDATE '+languagecode+'wiki SET ccc_binary = 0 WHERE other_ccc_location_wd IS NOT NULL;'
-    cursor2.execute(query);
-    conn2.commit()
-    print ('location wikidata property abroad, done.')
-
     query = 'UPDATE '+languagecode+'wiki SET ccc_binary = 0 WHERE other_ccc_country_wd IS NOT NULL AND country_wd IS NULL;'
     cursor2.execute(query);
     conn2.commit()
@@ -1971,7 +2032,10 @@ def update_pull_ccc_wikipedia_diversity():
         params = []
         for page_title, qitem in page_titles_qitems.items():
             page_id = page_titles_page_ids[page_title]
-            params.append((qitems_langs[qitem], page_id, qitem))
+            try:
+                params.append((qitems_langs[qitem], page_id, qitem))
+            except:
+                pass
 
         conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
         query = 'UPDATE '+languagecode+'wiki SET ccc = ? WHERE page_id = ? AND qitem = ?;'
@@ -1999,37 +2063,40 @@ def update_pull_missing_ccc_wikipedia_diversity():
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
-    conn2 = sqlite3.connect(databases_path + missing_ccc_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + missing_ccc_production_db); cursor2 = conn2.cursor()
 
     for languagecode1 in wikilanguagecodes:
+
         qitems_langs = {} 
         for languagecode2 in wikilanguagecodes:
 
-            query = 'SELECT qitem, page_id, page_title FROM '+languagecode2+'wiki WHERE languagecode = "'+languagecode1+'"'
+            if languagecode1 == languagecode2: continue
+
+            if cursor2.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='"+languagecode2+"wiki';").fetchone() == None: continue
+
+            query = 'SELECT qitem, page_id, page_title FROM '+languagecode2+'wiki WHERE languagecode = "'+languagecode1+'"' # languagecode2 is the target we want to bridge; languagecode1 is the source.
 
             for row in cursor2.execute(query): 
-                i+=1
                 qitem = row[0]
-                try:
-                    langs = qitems_langs[qitem]
-                    qitems_langs[qitem] = langs + ';' + languagecode2
-                except:
-                    qitems_langs[qitem] = languagecode2
-
+                try: qitems_langs[qitem] = qitems_langs[qitem] + ';' + languagecode2
+                except: qitems_langs[qitem] = languagecode2
 
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode1)
         qitems_page_ids = {v: page_titles_page_ids[k] for k, v in page_titles_qitems.items()}
 
-
         params = []
         for qitem, langs in qitems_langs.items():
-            params.append((langs, qitem, qitems_page_ids[qitem]))
+            try:
+                params.append((langs, qitems_page_ids[qitem], qitem))
+            except:
+                pass
 
         conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-        query = 'UPDATE '+languagecode2+'wiki SET missing_ccc = ? WHERE page_id = ? AND qitem = ?;'
+        query = 'UPDATE '+languagecode1+'wiki SET missing_ccc = ? WHERE page_id = ? AND qitem = ?;'
         cursor.executemany(query,params)
         conn.commit()
 
+        print (languagecode1, str(len(params)))
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -2047,20 +2114,15 @@ def update_pull_lgbt_topics_wikipedia_diversity():
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
     qitems = {}
-    keyword_title = {}
     for languagecode in wikilanguagecodes:
-        for row in cursor2.execute('SELECT qitem, keyword FROM '+languagecode+'wiki_lgbt WHERE lgbt_binary = 1;'):
-            try:
-                qitems[row[0]]+=1
-            except:
-                qitems[row[0]]=1
-
-            keyword = row[1]
-            if keyword!='' and keyword!=None:
-                keyword_title[row[0]]=row[1]
-
-
-
+        try:
+            for row in cursor2.execute('SELECT qitem FROM '+languagecode+'wiki_lgbt WHERE lgbt_binary = 1;'):
+                try:
+                    qitems[row[0]]+=1
+                except:
+                    qitems[row[0]]=1
+        except:
+            pass
 
     for languagecode in wikilanguagecodes:
         print (languagecode)
@@ -2077,19 +2139,15 @@ def update_pull_lgbt_topics_wikipedia_diversity():
 
         for qitem,value in qitems.items():
             try:
-                keyword = keyword_title[qitem]
-            except:
-                keyword = None
-            try:
                 page_title = qitems_page_titles[qitem]
                 page_id = page_titles_page_ids[page_title]
-                params.append((value, keyword, qitem, page_title, page_id))
+                params.append((value, qitem, page_title, page_id))
             except:
-                pass
+                print ('This language is not in the LGBT database: '+languagecode)
 
-        query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = ?, lgbt_keyword_title = ? WHERE qitem = ? AND page_title = ? and page_id = ?;'
+        query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = ? WHERE qitem = ? AND page_title = ? and page_id = ?;'
         cursor.executemany(query,params)
-        conn.commit()
+        conn.commit()            
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -2107,20 +2165,24 @@ def update_pull_ethnic_group_topic_wikipedia_diversity():
 
     for languagecode in wikilanguagecodes:
 
-        conn3 = sqlite3.connect(databases_path + ethnic_groups_content_db); cursor3 = conn3.cursor()
+        conn3 = sqlite3.connect(databases_path + ethnic_groups_content_production_db); cursor3 = conn3.cursor()
 
         qitem_ethnic_groups = {}
         query = 'SELECT qitem, qitem_ethnic_group FROM ethnic_group_articles WHERE primary_lang = "'+languagecode+'" AND ethnic_group_binary = 1 ORDER BY qitem;'
 
-        for row in cursor.execute(query):
+        try:
+            for row in cursor3.execute(query):
 
-            qitem = row[0]
-            qitem_ethnic_group = row[1]
+                qitem = row[0]
+                qitem_ethnic_group = row[1]
 
-            try:
-                qitem_ethnic_groups[qitem]=qitem_ethnic_groups[qitem]+';'+qitem_ethnic_group
-            except:
-                qitem_ethnic_groups[qitem]=qitem_ethnic_group
+                try:
+                    qitem_ethnic_groups[qitem]=qitem_ethnic_groups[qitem]+';'+qitem_ethnic_group
+                except:
+                    qitem_ethnic_groups[qitem]=qitem_ethnic_group
+        except:
+            print ('This language is not in the Ethnic groups database: '+languagecode)
+            continue
 
 
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
@@ -2130,7 +2192,10 @@ def update_pull_ethnic_group_topic_wikipedia_diversity():
 
         params = []
         for q, ethnic_groups in qitem_ethnic_groups.items():
-            page_title = qitems_page_titles[q]
+            try:
+                page_title = qitems_page_titles[q]
+            except:
+                continue
             page_id = page_titles_page_ids[page_title]
             params.append((ethnic_groups, q, page_title, page_id))
 
@@ -2141,6 +2206,7 @@ def update_pull_ethnic_group_topic_wikipedia_diversity():
         cursor.executemany(query,params)
         conn.commit()
 
+        print (languagecode,str(len(params)))
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -2235,13 +2301,14 @@ if __name__ == '__main__':
     biggest = wikilanguagecodes_by_size[:20]; smallest = wikilanguagecodes_by_size[20:]
 
 
-    # if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+#    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
-    duration = str(datetime.timedelta(seconds=time.time() - startTime))
-    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
+    duration = str(datetime.timedelta(seconds=time.time() - startTime))
+#    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
     wikilanguages_utils.finish_email(startTime,'content_selection.out','Content Selection')
 

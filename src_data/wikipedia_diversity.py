@@ -48,8 +48,11 @@ import gc
 def main():
 
     wd_dump_iterator()
+    print ('dump iterated')
+
     wd_geolocated_update_db()
     wd_instance_of_subclass_of_property_crawling()
+
     create_wikipedia_diversity_db()
     insert_page_ids_page_titles_qitems_wikipedia_diversity_db()
 
@@ -99,6 +102,9 @@ def create_wikipedia_diversity_db():
 
         # GEOGRAPHY DIVERSITY
         # set as geography diversity features:
+        'geographical_location text,'+
+        'territorial_entity text,'+
+        'country_qitem text, '+
         'geocoordinates text, '+ # coordinate1,coordinate2
         'iso3166 text, '+ # code
         'iso31662 text, '+ # code
@@ -109,8 +115,10 @@ def create_wikipedia_diversity_db():
         'gender text, '+
         'ethnic_group text, '+
         'supra_ethnic_group text, '+
-        'sexual_orientation text, '+ # wikidata properties
+        'sexual_orientation_property text, '+ # wikidata properties
+        'sexual_orientation_partner text, '+ # wikidata properties
         'religious_group text, '+ # wikidata religious adscription for people
+        'occupation_and_field text, '+ 
 
             # from links to/from women articles.
         'num_inlinks_from_women integer, '+
@@ -124,11 +132,15 @@ def create_wikipedia_diversity_db():
         'percent_inlinks_from_men real, '+
         'percent_outlinks_to_men real, '+
 
-            # from links to/from LGBT+ articles.
+            # from links to/from LGBT+ biographies.
         'num_inlinks_from_lgbt integer, '+
         'num_outlinks_to_lgbt integer, '+
         'percent_inlinks_from_lgbt real, '+
         'percent_outlinks_to_lgbt real, '+
+
+            # from links to/from LGBT+ articles.
+        'num_inlinks_from_ccc_wikiprojects integer, '+
+        'percent_inlinks_from_ccc_wikiprojects real, '+
 
 
         # CULTURAL CONTEXT DIVERSITY TOPICS
@@ -187,32 +199,53 @@ def create_wikipedia_diversity_db():
         'sport_and_teams text, '+
         'food text, '+
         'paintings text, '+
-        'glam text,'+
-        'books text,'+
-        'clothing_and_fashion text,'+
+        'glam text, '+
+        'books text, '+
+        'clothing_and_fashion text, '+
         'industry text, '+
         'religion text, '+ # as a topic
+        'medicine text, '+
+
+
         'time_interval text, '+
         'start_time integer, '+
-        'end_time text, '+
+        'end_time integer, '+
 
         # other diversity topics
         'ethnic_group_topic text, '+
         'lgbt_topic integer, '+
+        'lgbt_keyword_title text, '+
 
         # characteristics of article relevance
-        'num_inlinks integer, '+
-        'num_outlinks integer, '+
         'num_bytes integer, '+
         'num_references integer, '+
+        'num_images integer, '+
+
+        'num_inlinks integer, '+
+        'num_outlinks integer, '+
+
         'num_edits integer, '+
         'num_edits_last_month integer, '+
-        'num_editors integer, '+
         'num_discussions integer, '+
+
+        'num_anonymous_edits integer, '+
+        'num_bot_edits integer, '+
+        'num_reverts integer, '+
+
+        'num_editors integer, '+
+        'num_admin_editors integer, '+
+
+
+        'median_year_first_edit integer, '+
+        'median_editors_edits integer, '+
+
         'num_pageviews integer, '+
-        'num_wdproperty integer, '+
         'num_interwiki integer, '+
-        'num_images integer, '+
+
+        'sister_projects text, '+
+        'num_multilingual_sisterprojects integer, '+
+        'num_wdproperty integer, '+
+        'num_wdidentifiers integer, '+
 
         # quality
         'featured_article integer, '+
@@ -237,13 +270,22 @@ def create_wikidata_db():
     conn = sqlite3.connect(databases_path + wikidata_db)
     cursor = conn.cursor()
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS sitelinks (qitem text, langcode text, page_title text, PRIMARY KEY (qitem, langcode));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS sitelinks (qitem text, langcode text, page_title text, sisterprojects text, PRIMARY KEY (qitem, langcode));")
 
-    cursor.execute("CREATE TABLE IF NOT EXISTS metadata (qitem text, properties integer, sitelinks integer, PRIMARY KEY (qitem));")
     cursor.execute("CREATE TABLE IF NOT EXISTS labels (qitem text, langcode text, label text, PRIMARY KEY (qitem, langcode));")
 
+    cursor.execute("CREATE TABLE IF NOT EXISTS metadata (qitem text, properties integer, sitelinks integer, wd_identifiers integer, sisterprojects_sitelinks integer, PRIMARY KEY (qitem));")
+
+
+
     # GEOGRAPHY
-    cursor.execute("CREATE TABLE IF NOT EXISTS geolocated_property (qitem text, property text, coordinates text, admin1 text, iso3166 text, PRIMARY KEY (qitem));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS geolocated_property (qitem text, property text, coordinates text, admin1 text, iso3166 text, PRIMARY KEY (qitem, coordinates));")
+
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS geographical_location (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS territorial_entity (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+
 
     # CCC
     cursor.execute("CREATE TABLE IF NOT EXISTS language_strong_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
@@ -262,6 +304,8 @@ def create_wikidata_db():
     cursor.execute("CREATE TABLE IF NOT EXISTS religious_group_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS ethnic_group_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
 
+    cursor.execute("CREATE TABLE IF NOT EXISTS occupation_and_field_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+
 
     ###
     cursor.execute("CREATE TABLE IF NOT EXISTS time_properties (qitem text, property text, value text, PRIMARY KEY (qitem, property, value));")
@@ -274,6 +318,9 @@ def create_wikidata_db():
     # GENERAL TOPICS
     ###
     cursor.execute("CREATE TABLE IF NOT EXISTS industry_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS medicine_properties (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+
+
     cursor.execute("CREATE TABLE IF NOT EXISTS folk (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS monuments_and_buildings (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS earth (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
@@ -285,6 +332,8 @@ def create_wikidata_db():
     cursor.execute("CREATE TABLE IF NOT EXISTS books (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS clothing_and_fashion (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
     cursor.execute("CREATE TABLE IF NOT EXISTS religion (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+    cursor.execute("CREATE TABLE IF NOT EXISTS medicine (qitem text, property text, qitem2 text, PRIMARY KEY (qitem, qitem2));")
+
 
 
     ###
@@ -329,15 +378,25 @@ def wd_properties():
     language_weak_properties = {'P407':'language of work or name', 'P1412':'language spoken','P2936':'language used'}; allproperties.update(language_weak_properties); # obtain people and groups
     has_part_properties = {'P527':'has part','P150':'contains administrative territorial entity'}; allproperties.update(has_part_properties); # obtain organizations, things and places
     affiliation_properties = {'P463':'member of','P102':'member of political party','P54':'member of sport_and_teams team','P69':'educated at', 'P108':'employer','P39':'position held','P937':'work location','P1027':'conferred by','P166':'award received', 'P118':'league','P611':'religious order','P1416':'affiliation','P551':'residence'}; allproperties.update(affiliation_properties); # obtain people and groups
+
+    # TOPICS
     industry_properties = {'P452':'industry'}; allproperties.update(industry_properties);
+    medicine_properties = {'P927':'anatomical location', 'P1060':'pathogen transmission process', 'P2176':'drug used for treatment', 'P923':'possible treatment','P923':'medical examinations', 'P780':'symptoms', 'P1995':'health specialty'}; allproperties.update(medicine_properties);
+
+
+
+
 
     # PEOPLE
     # other types of diversity
     people_properties = {'P31':'instance of','P21':'sex or gender'}; allproperties.update(people_properties); # obtain people and groups
 
-    sexual_orientation_properties = {'P26':'spouse', 'P91':'sexual orientation', 'P451': 'partner'}; allproperties.update(sexual_orientation_properties);
+    sexual_orientation_properties = {'P91':'sexual orientation', 'P26':'spouse', 'P451': 'partner'}; allproperties.update(sexual_orientation_properties);
     religious_group_properties = {'P140': 'religion', 'P708': 'diocese'}; allproperties.update(religious_group_properties);
     ethnic_group_properties = {'P172': 'ethnic group'}; allproperties.update(ethnic_group_properties);
+
+    occupation_and_field_properties = {'P106':'occupation', 'P101':'field of work'}; allproperties.update(occupation_and_field_properties);
+
 
     # OTHER
     time_properties = {'P569': 'date of birth', 'P570': 'date of death', 'P580':'start time', 'P582': 'end time', 'P577': 'publication date', 'P571': 'inception', 'P1619': 'date of official opening', 'P576':'dissolved, abolished or demolished', 'P1191': 'date of first performance', 'P813': 'retrieved', 'P1249': 'time of earliest written record', 'P575':'time of discovery or invention'}; allproperties.update(time_properties);
@@ -345,7 +404,7 @@ def wd_properties():
     # all instances of and subclasses of
     instance_of_subclasses_of_properties = {'P31':'instance of','P279':'subclass of'}; allproperties.update(instance_of_subclasses_of_properties); # obtain people and groups
 
-    return allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties
+    return allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, medicine_properties, occupation_and_field_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties
 
 
 
@@ -399,7 +458,7 @@ def wd_dump_iterator():
  
     sitelinks_values = []
     labels_values = []
-    metadata_list = []; geolocated_property_list = []; time_properties_list = []; language_strong_properties_list = []; language_weak_properties_list = []; country_properties_list = []; location_properties_list = []; has_part_properties_list = []; affiliation_properties_list = []; created_by_properties_list = []; part_of_properties_list = []; industry_properties_list = []; sexual_orientation_properties_list = []; religious_group_properties_list = []; ethnic_group_properties_list = []; people_properties_list = []; instance_of_subclasses_of_properties_list = []
+    metadata_list = []; geolocated_property_list = []; time_properties_list = []; language_strong_properties_list = []; language_weak_properties_list = []; country_properties_list = []; location_properties_list = []; has_part_properties_list = []; affiliation_properties_list = []; created_by_properties_list = []; part_of_properties_list = []; industry_properties_list = []; medicine_properties_list = []; sexual_orientation_properties_list = []; religious_group_properties_list = []; ethnic_group_properties_list = []; occupation_and_field_properties_list = []; people_properties_list = []; instance_of_subclasses_of_properties_list = []
 
     print ('Iterating the dump.')
     while line != '':
@@ -421,11 +480,29 @@ def wd_dump_iterator():
 
         if ':' in list(wd_sitelinks.values())[0]: continue # it means it is a category or any other type of page.
 
+      
+        lang_sisters = ''
+
         # SITELINKS
-        for code, title in wd_sitelinks.items():
-            if code in wikilanguagecodeswiki:
-                sitelinks_values.append((qitem,code,title['title']))
+        for code, title in sorted(wd_sitelinks.items(), reverse=True):
+            # print (code, title)
+            # input('')
+#            if code in wikilanguagecodes: 
+            
+            cd = code.split('wik')
+            l = cd[0]
+            p = 'wik'+cd[1]
+
+            if p == 'wiki':
+#            if code in wikilanguagecodeswiki: # wikipedia article
+                sitelinks_values.append((qitem,code,title['title'],lang_sisters))
                 sitelinks.append(code)
+                lang_sisters = ''
+            else:
+                lang_sisters+= p+';'
+
+
+        sisterprojects_sitelinks = len(wd_sitelinks) - len(sitelinks)
 
         # LABELS
         if len(sitelinks) != 0:           
@@ -434,23 +511,20 @@ def wd_dump_iterator():
                 if code not in wd_sitelinks and code in wikilanguagecodeswiki:
                     labels_values.append((qitem,code,title['value']))
 
+
         # PROPERTIES
     #    print ([qitem,len(claims),len(entity['sitelinks'])])
         claims = entity['claims']
-
-
-        # print (entity['aliases'])
-        # here we could save "aliases".
-
-
-        # meta info
-        metadata_list.append((qitem,len(claims),len(sitelinks)-1))
+        identifiers = []
 
         # properties
-        for claim in claims:
-            wdproperty = claim
+        for wdproperty, claimlist in claims.items():
+            try:
+                if claimlist[0]['mainsnak']['datatype'] == 'external-id': identifiers.append(wdproperty)
+            except:
+                pass
             if wdproperty not in allproperties: continue
-            claimlist = claims[claim]
+
             for snak in claimlist:
                 mainsnak = snak['mainsnak']
 
@@ -533,6 +607,12 @@ def wd_dump_iterator():
                     industry_properties_list.append((qitem,wdproperty,qitem2))
                     continue
 
+                if wdproperty in medicine_properties:
+    #                print ('medicine_properties')
+    #                print (qitem,wdproperty,qitem2)
+                    medicine_properties_list.append((qitem,wdproperty,qitem2))
+                    continue
+
 
                 if wdproperty in sexual_orientation_properties:
     #                print ('sexual_orientation_properties')
@@ -552,6 +632,13 @@ def wd_dump_iterator():
                     ethnic_group_properties_list.append((qitem,wdproperty,qitem2))
                     continue
 
+                if wdproperty in occupation_and_field_properties:
+    #                print ('occupation_and_field_properties')
+    #                print (qitem,wdproperty,qitem2)
+                    occupation_and_field_properties_list.append((qitem,wdproperty,qitem2))
+                    continue
+
+
                 if wdproperty in people_properties:
                     if wdproperty == 'P21' or (wdproperty == 'P31' and qitem2 == 'Q5'):
         #                print ('people properties')
@@ -561,18 +648,28 @@ def wd_dump_iterator():
 
                 if wdproperty in instance_of_subclasses_of_properties:
                     if wdproperty == 'P31' and qitem2 == 'Q5': continue # if human, continue
-                    values = [qitem,wdproperty,qitem2]
+                    # values = [qitem,wdproperty,qitem2]
     #                print ('instance_of_subclasses_of_properties properties')
     #                print (qitem,wdproperty,qitem2)
                     instance_of_subclasses_of_properties_list.append((qitem,wdproperty,qitem2))
                     continue
 
 
+        # meta info
+        metadata_list.append((qitem,len(claims),len(sitelinks)-1, len(identifiers), sisterprojects_sitelinks))
+        # print ((qitem,len(claims),len(sitelinks)-1, len(identifiers), sisterprojects_sitelinks))
+        # input('')
+
+
+#        if iter % 850000 == 0:
         if iter % 850000 == 0:
             # insert
-            cursor.executemany("INSERT INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",sitelinks_values)
+            cursor.executemany("INSERT INTO sitelinks (qitem, langcode, page_title, sisterprojects) VALUES (?,?,?,?)",sitelinks_values)
+
             cursor.executemany("INSERT INTO labels (qitem, langcode, label) VALUES (?,?,?)",labels_values)
-            cursor.executemany("INSERT OR IGNORE INTO metadata (qitem, properties, sitelinks) VALUES (?,?,?)", metadata_list)
+
+            cursor.executemany("INSERT OR IGNORE INTO metadata (qitem, properties, sitelinks, wd_identifiers, sisterprojects_sitelinks) VALUES (?,?,?,?,?)", metadata_list)
+
             cursor.executemany("INSERT OR IGNORE INTO geolocated_property (qitem, property, coordinates) VALUES (?,?,?)",geolocated_property_list)
             cursor.executemany("INSERT OR IGNORE INTO time_properties (qitem, property, value) VALUES (?,?,?)",time_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO language_strong_properties (qitem, property, qitem2) VALUES (?,?,?)",language_strong_properties_list)
@@ -584,16 +681,18 @@ def wd_dump_iterator():
             cursor.executemany("INSERT OR IGNORE INTO created_by_properties (qitem, property, qitem2) VALUES (?,?,?)",created_by_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO part_of_properties (qitem, property, qitem2) VALUES (?,?,?)",part_of_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO industry_properties (qitem, property, qitem2) VALUES (?,?,?)",industry_properties_list)
+            cursor.executemany("INSERT OR IGNORE INTO medicine_properties (qitem, property, qitem2) VALUES (?,?,?)",medicine_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO sexual_orientation_properties (qitem, property, qitem2) VALUES (?,?,?)",sexual_orientation_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO religious_group_properties (qitem, property, qitem2) VALUES (?,?,?)",religious_group_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO ethnic_group_properties (qitem, property, qitem2) VALUES (?,?,?)",ethnic_group_properties_list)
+            cursor.executemany("INSERT OR IGNORE INTO occupation_and_field_properties (qitem, property, qitem2) VALUES (?,?,?)",occupation_and_field_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO people_properties (qitem, property, qitem2) VALUES (?,?,?)",people_properties_list)
             cursor.executemany("INSERT OR IGNORE INTO instance_of_subclasses_of_properties (qitem, property, qitem2) VALUES (?,?,?)",instance_of_subclasses_of_properties_list)
             conn.commit()
 
             sitelinks_values = []
             labels_values = []
-            metadata_list = []; geolocated_property_list = []; time_properties_list = []; language_strong_properties_list = []; language_weak_properties_list = []; country_properties_list = []; location_properties_list = []; has_part_properties_list = []; affiliation_properties_list = []; created_by_properties_list = []; part_of_properties_list = []; industry_properties_list = []; sexual_orientation_properties_list = []; religious_group_properties_list = []; ethnic_group_properties_list = []; people_properties_list = []; instance_of_subclasses_of_properties_list = []
+            metadata_list = []; geolocated_property_list = []; time_properties_list = []; language_strong_properties_list = []; language_weak_properties_list = []; country_properties_list = []; location_properties_list = []; has_part_properties_list = []; affiliation_properties_list = []; created_by_properties_list = []; part_of_properties_list = []; industry_properties_list = []; medicine_properties_list = []; sexual_orientation_properties_list = []; religious_group_properties_list = []; ethnic_group_properties_list = []; occupation_and_field_properties_list = []; people_properties_list = []; instance_of_subclasses_of_properties_list = []
 
             print (iter)
             print (100*iter/n_qitems)
@@ -604,9 +703,12 @@ def wd_dump_iterator():
 
     # last round 
     # insert
-    cursor.executemany("INSERT OR IGNORE INTO sitelinks (qitem, langcode, page_title) VALUES (?,?,?)",sitelinks_values)  
+    cursor.executemany("INSERT OR IGNORE INTO sitelinks (qitem, langcode, page_title, sisterprojects) VALUES (?,?,?,?)",sitelinks_values)  
+
     cursor.executemany("INSERT OR IGNORE INTO labels (qitem, langcode, label) VALUES (?,?,?)",labels_values)
-    cursor.executemany("INSERT OR IGNORE INTO metadata (qitem, properties, sitelinks) VALUES (?,?,?)", metadata_list)
+
+    cursor.executemany("INSERT OR IGNORE INTO metadata (qitem, properties, sitelinks, wd_identifiers, sisterprojects_sitelinks) VALUES (?,?,?,?,?)", metadata_list)
+
     cursor.executemany("INSERT OR IGNORE INTO geolocated_property (qitem, property, coordinates) VALUES (?,?,?)",geolocated_property_list)
     cursor.executemany("INSERT OR IGNORE INTO time_properties (qitem, property, value) VALUES (?,?,?)",time_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO language_strong_properties (qitem, property, qitem2) VALUES (?,?,?)",language_strong_properties_list)
@@ -618,9 +720,11 @@ def wd_dump_iterator():
     cursor.executemany("INSERT OR IGNORE INTO created_by_properties (qitem, property, qitem2) VALUES (?,?,?)",created_by_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO part_of_properties (qitem, property, qitem2) VALUES (?,?,?)",part_of_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO industry_properties (qitem, property, qitem2) VALUES (?,?,?)",industry_properties_list)
+    cursor.executemany("INSERT OR IGNORE INTO medicine_properties (qitem, property, qitem2) VALUES (?,?,?)",medicine_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO sexual_orientation_properties (qitem, property, qitem2) VALUES (?,?,?)",sexual_orientation_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO religious_group_properties (qitem, property, qitem2) VALUES (?,?,?)",religious_group_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO ethnic_group_properties (qitem, property, qitem2) VALUES (?,?,?)",ethnic_group_properties_list)
+    cursor.executemany("INSERT OR IGNORE INTO occupation_and_field_properties (qitem, property, qitem2) VALUES (?,?,?)",occupation_and_field_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO people_properties (qitem, property, qitem2) VALUES (?,?,?)",people_properties_list)
     cursor.executemany("INSERT OR IGNORE INTO instance_of_subclasses_of_properties (qitem, property, qitem2) VALUES (?,?,?)",instance_of_subclasses_of_properties_list)
     conn.commit()
@@ -679,11 +783,12 @@ def wd_geolocated_update_db():
 
 
 
+
 # fills the tables of qitems about folk, earth, music_creations_and_organizations, etc.
 def wd_instance_of_subclass_of_property_crawling():
 
     function_name = 'wd_instance_of_subclass_of_property_crawling'
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
@@ -697,6 +802,10 @@ def wd_instance_of_subclass_of_property_crawling():
     conn.commit()
     print ('DELETED.')
     """
+
+    geographical_location = {'Q2221906':'geographical location'}
+    territorial_entity = {'Q15617994':'designation for an administrative territorial entity','Q104098715':'territorial_entity type','Q1048835':'political territorial entity','Q1496967':'territorial entity'}
+
 
     # DICTIONARIES OF TOPICS
     # places
@@ -717,16 +826,23 @@ def wd_instance_of_subclass_of_property_crawling():
 
     # other
     religion = {'Q9174':'religion'}
-    time_interval = {'Q186081': 'time interval'}
+    time_interval = {'Q186081': 'time interval', 'Q1790144': 'unit of time'}
+
+    medicine = {'Q843601':'health science', 'Q44597158':'health specialty', 'Q12136':'disease', 'Q808':'virus','Q86746756':'medicinal product'}
+
 
     # LOOP TOPICS
-    topics_dict = {'folk':folk,'monuments_and_buildings':monuments_and_buildings,'earth':earth,'music_creations_and_organizations':music_creations_and_organizations,'sport_and_teams':sport_and_teams,'food':food,'paintings':paintings,'glam':glam,'books':books,'clothing_and_fashion':clothing_and_fashion, 'religion':religion, 'time_interval': time_interval}
+    topics_dict = {'folk':folk,'monuments_and_buildings':monuments_and_buildings,'earth':earth,'music_creations_and_organizations':music_creations_and_organizations,'sport_and_teams':sport_and_teams,'food':food,'paintings':paintings,'glam':glam,'books':books,'clothing_and_fashion':clothing_and_fashion, 'religion':religion, 'time_interval': time_interval, 'medicine': medicine, 'geographical_location':geographical_location, 'territorial_entity':territorial_entity}
 
 
-#    (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(1,'en')
-#    qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+#    topics_dict = {'medicine': medicine}
 
-    print (topics_dict.keys())
+
+    # (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(1,'en')
+    # qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+
+
+    print (topics_dict)
  
     for topic, list_qitems in topics_dict.items():
         print ('\nSTARTING WITH THE TOPIC: '+topic)
@@ -749,6 +865,9 @@ def wd_instance_of_subclass_of_property_crawling():
             new_level_qitems = []
             new_level_qitems.append(x)
 
+#            print (new_level_qitems)
+#            input('')
+
             while (level <= num_levels and len(new_level_qitems)!=0): # Here we choose the number of levels we prefer.
 
                 print ('level: '+str(level))
@@ -761,7 +880,9 @@ def wd_instance_of_subclass_of_property_crawling():
                     sample = level_qitems[:increment] # sample we take
                     level_qitems = level_qitems[increment:] # remaining
 
+
                     print (len(sample),len(level_qitems))
+
 
                     if level > 0:
                         page_asstring = ','.join( ['?'] * len(sample) )
@@ -778,11 +899,15 @@ def wd_instance_of_subclass_of_property_crawling():
                         wdproperty=row[1]
                         qitem2=row[2]
 
-                        if i < -1:
-                            try:
-                                print (qitems_page_titles[qitem]+'\t'+qitem+'\t'+qitem2+'\tlevel '+str(level)+'\t'+str(list_qitems[x])+'\t'+qitems_page_titles[qitem2])
-                            except:
-                                print ('not in english.'+'\t'+qitem+'\t'+qitem2+'\tlevel '+str(level)+'\t'+str(list_qitems[x]))
+
+                        # if i > -1:
+                        #     try:
+                        #         print (qitems_page_titles[qitem]+'\t'+qitem+'\t'+qitem2+'\tlevel '+str(level)+'\t'+str(list_qitems[x])+'\t'+qitems_page_titles[qitem2])
+                        #     except:
+                        #         print ('not in english.'+'\t'+qitem+'\t'+qitem2+'\tlevel '+str(level)+'\t'+str(list_qitems[x]))
+
+
+
 
                         """
                         if qitem == 'Q16773055':
@@ -795,8 +920,10 @@ def wd_instance_of_subclass_of_property_crawling():
                             new_level_qitems.append(qitem)
                             topic_dict_all[qitem]=[wdproperty,qitem2]
 
-#                    print ('end of iteration')
-#                    print (len(level_qitems[:increment])) # next sample we would take
+
+
+                    print ('end of iteration')
+                    print (len(level_qitems[:increment])) # next sample we would take
 
 
                 print ('*** At level '+str(level)+', the number of search results is '+str(i)+' and NEW elements gathered is '+str(len(new_level_qitems))+' and the total number of accumulated elements is '+str(len(topic_dict_all)))
@@ -826,17 +953,27 @@ def wd_instance_of_subclass_of_property_crawling():
 def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
 
     function_name = 'insert_page_ids_page_titles_qitems_wikipedia_diversity_db'
-#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
 
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
 
+    try: os.remove(databases_path + wikipedia_namespace_db)
+    except: pass
+    conn3 = sqlite3.connect(databases_path + wikipedia_namespace_db); cursor3 = conn3.cursor()
+
+ 
+
+
     for languagecode in wikilanguagecodes:
 
         print (languagecode)
-        
+
+        cursor3.execute("CREATE TABLE IF NOT EXISTS "+languagecode+"wiki_wikipedia_namespace (page_id text, page_title text, ccc_keyword_title text, PRIMARY KEY (page_id));")       
+        conn3.commit()
+
         # # get all the articles from the last month version of the db
         # (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
         # page_ids_qitems = {}
@@ -860,7 +997,7 @@ def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
         wikilanguages_utils.check_dump(dumps_path, script_name)
 
         dump_in = gzip.open(dumps_path, 'r')
-        parameters = []; parameters2 = []
+        parameters = []; parameters2 = []; parameters3 = []
         print ('Iterating the dump.')
         iter = 0
         while True:
@@ -885,6 +1022,13 @@ def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
                     page_namespace = int(row[1])
                     page_title = str(row[2]) #.decode('utf-8')
                     page_is_redirect = int(row[4])
+
+                    if page_namespace == 4 or page_namespace == 100: # wikipedia namespace: https://en.wikipedia.org/wiki/Wikipedia:Namespace
+
+                    # Wikipedia for Wikiprojects (4) and Portals (100)
+
+                        parameters3.append((page_title,page_id))
+
                     if page_namespace != 0 or page_is_redirect!=0: continue
                     page_len = int(row[10])
 
@@ -918,6 +1062,10 @@ def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
         cursor2.executemany(query,parameters2)
         conn2.commit()
 
+        query = 'INSERT OR IGNORE INTO '+languagecode+'wiki_wikipedia_namespace (page_title, page_id) VALUES (?,?);'
+        cursor3.executemany(query,parameters3)
+        conn3.commit()
+
         # # Delete articles that are not in the dump
         # parameters_purge = []
         # for page_id in page_ids:
@@ -931,6 +1079,7 @@ def insert_page_ids_page_titles_qitems_wikipedia_diversity_db():
 
         print (len(parameters))
         print (len(parameters2))
+        print (len(parameters3))
         print ('articles for this language are in and updated: '+languagecode+'\n')
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
@@ -1220,14 +1369,16 @@ if __name__ == '__main__':
     wikilanguagecodeswiki = []
     for a in wikilanguagecodes: wikilanguagecodeswiki.append(a+'wiki')
 
-    allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties = wd_properties()
+    allproperties, geolocated_property, language_strong_properties, country_properties, location_properties, created_by_properties, part_of_properties, language_weak_properties, has_part_properties, affiliation_properties, people_properties, industry_properties, medicine_properties, occupation_and_field_properties, instance_of_subclasses_of_properties,sexual_orientation_properties,religious_group_properties,ethnic_group_properties,time_properties = wd_properties()
 
-    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+#    if wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'check', '') == 1: exit()
+
     main()
 #    main_with_exception_email()
 #    main_loop_retry()
     duration = str(datetime.timedelta(seconds=time.time() - startTime))
-    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
+
+#    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
     
 
     print ('* Done with the WIKIPEDIA DIVERSITY OBSERVATORY CYCLE completed successfuly after: ' + str(duration))

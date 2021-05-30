@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+update_pull_missing_ccc_wikipedia_diversity# -*- coding: utf-8 -*-
 
 # script
 import wikilanguages_utils
@@ -1725,37 +1725,40 @@ def update_push_missing_ccc_wikipedia_diversity():
     # if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     functionstartTime = time.time()
-    conn2 = sqlite3.connect(databases_path + missing_ccc_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + missing_ccc_production_db); cursor2 = conn2.cursor()
 
     for languagecode1 in wikilanguagecodes:
+
         qitems_langs = {} 
         for languagecode2 in wikilanguagecodes:
 
-            query = 'SELECT qitem, page_id, page_title FROM '+languagecode2+'wiki WHERE languagecode = "'+languagecode1+'"'
+            if languagecode1 == languagecode2: continue
+
+            if cursor2.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='"+languagecode2+"wiki';").fetchone() == None: continue
+
+            query = 'SELECT qitem, page_id, page_title FROM '+languagecode2+'wiki WHERE languagecode = "'+languagecode1+'"' # languagecode2 is the target we want to bridge; languagecode1 is the source.
 
             for row in cursor2.execute(query): 
-                i+=1
                 qitem = row[0]
-                try:
-                    langs = qitems_langs[qitem]
-                    qitems_langs[qitem] = langs + ';' + languagecode2
-                except:
-                    qitems_langs[qitem] = languagecode2
-
+                try: qitems_langs[qitem] = qitems_langs[qitem] + ';' + languagecode2
+                except: qitems_langs[qitem] = languagecode2
 
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode1)
         qitems_page_ids = {v: page_titles_page_ids[k] for k, v in page_titles_qitems.items()}
 
-
         params = []
         for qitem, langs in qitems_langs.items():
-            params.append((langs, qitem, qitems_page_ids[qitem]))
+            try:
+                params.append((langs, qitems_page_ids[qitem], qitem))
+            except:
+                pass
 
         conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-        query = 'UPDATE '+languagecode2+'wiki SET missing_ccc = ? WHERE page_id = ? AND qitem = ?;'
+        query = 'UPDATE '+languagecode1+'wiki SET missing_ccc = ? WHERE page_id = ? AND qitem = ?;'
         cursor.executemany(query,params)
         conn.commit()
 
+        print (languagecode1, str(len(params)))
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     # wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)

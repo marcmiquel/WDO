@@ -42,11 +42,23 @@ import gc
 # MAIN
 def main():
 
-    # languagecode = 'ca'
-    # (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-    # label_start_and_end_time_wd(languagecode, page_titles_page_ids, page_titles_qitems)
-    # print ('content retrieval aquí.')
-    # input('')
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+
+    for languagecode in wikilanguagecodes: 
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+
+        for topic in ['religious_group', 'religion', 'folk', 'monuments_and_buildings', 'earth', 'music_creations_and_organizations', 'sport_and_teams', 'food', 'paintings', 'glam', 'books', 'clothing_and_fashion','industry']:
+
+            query = 'UPDATE '+languagecode+'wiki SET '+topic+' = NULL;'
+            cursor2.execute(query)
+            conn2.commit()
+
+
+            label_diversity_categories_related_topics_wd (topic, languagecode,page_titles_page_ids, page_titles_qitems)
+    
+        print (languagecode)
+
+    return
 
     execution_block_diversity_categories_features()
     execution_block_ccc_features()
@@ -61,20 +73,22 @@ def execution_block_diversity_categories_features():
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     label_geolocation_wd()
+    label_occupation_and_field_wd()
+
     for languagecode in wikilanguagecodes: 
         (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
 
-        for topic in ['gender', 'religious_group', 'religion', 'folk', 'monuments_and_buildings', 'earth', 'music_creations_and_organizations', 'sport_and_teams', 'food', 'paintings', 'glam', 'books', 'clothing_and_fashion','industry', 'time_interval']:
+        for topic in ['gender', 'religious_group', 'religion', 'folk', 'monuments_and_buildings', 'earth', 'music_creations_and_organizations', 'sport_and_teams', 'food', 'paintings', 'glam', 'books', 'clothing_and_fashion','industry', 'time_interval','medicine','medicine_instances','geographical_location','territorial_entity']:
             label_diversity_categories_related_topics_wd (topic, languagecode,page_titles_page_ids, page_titles_qitems)
 
         label_sexual_orientation_wd(languagecode, page_titles_page_ids, page_titles_qitems)
         label_ethnic_supra_ethnic_wd(languagecode, page_titles_page_ids, page_titles_qitems)
         label_start_and_end_time_wd(languagecode, page_titles_page_ids, page_titles_qitems)
 
+    wikilanguages_utils.get_store_diversity_categories_labels(wikilanguagecodes)
 
-    wikilanguages_utils.store_group_identities_labels(wikilanguagecodes)
-    # label_previous_database_lgbt_topic()
-    # label_previous_database_ethnic_groups_topics()
+    label_previous_database_lgbt_topic()
+    label_previous_database_ethnic_groups_topics()
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -152,12 +166,97 @@ def label_geolocation_wd():
 
 
 
+# Extends the Articles table with the topic (e.g. professions) from wikidata and at the same time it assigns some articles to specific topics.
+def label_occupation_and_field_wd():
+
+    functionstartTime = time.time()
+    function_name = 'label_occupation_and_field_wd'
+    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+
+
+    # folk_occupation_area = {}
+    # earth_occupation_area = {}
+    # monuments_and_buildings_occupation_area = {}
+    # music_creations_and_organizations_occupation_area = {}
+    # sports_and_teams_occupation_area = {}
+    # food_occupation_area = {}
+    # paintings_occupation_area = {}
+    # glam_occupation_area = {}
+    # books_occupation_area = {}
+    # clothing_and_fashion_occupation = {}
+    # industry_occupation_area = {}
+    # religion_occupation_area = {}
+    # medicine_occupation_area = {} # physician (Q39631)-virologist (Q15634281)-immunologist (Q15634285)-psychiatrist (Q211346)-...., > aquesta última potser no.
+
+    # occupations_area_dicts = {'folk':folk_occupation_area, 'earth':earth_occupation_area,'monuments_and_buildings': monuments_and_buildings_occupation_area, 'music_creations_and_organizations':music_creations_and_organizations_occupation_area, 'sport_and_teams':sports_and_teams_occupation_area,'food': food_occupation_area, 'paintings':paintings_occupation_area, 'glam':glam_occupation_area, 'books':books_occupation_area, 'clothing_and_fashion':clothing_and_fashion_occupation, 'industry':industry_occupation_area, 'religion':religion_occupation_area, 'medicine':medicine_occupation_area}
+
+
+    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()  
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()  
+
+
+    query = "SELECT qitem, property, qitem2 FROM occupation_and_field_properties;"  
+    qitem_properties = {}
+    for row in cursor.execute(query):
+        qitem=row[0]
+        wdproperty = row[1]
+        qitem2 = row[2]
+
+        try:
+            qitem_properties[qitem] = qitem_properties[qitem] + ';' + wdproperty+':'+qitem2
+        except:
+            qitem_properties[qitem] = wdproperty+':'+qitem2
+
+        old_qitem = qitem
+
+
+    for languagecode in wikilanguagecodes:
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+
+        parameters=[]
+        for page_title, qitem in page_titles_qitems.items():
+            try:
+                parameters.append((qitem_properties[qitem],qitem,page_titles_page_ids[page_title]))
+            except:
+                pass
+
+        cursor2.executemany("UPDATE "+languagecode+"wiki SET occupation_and_field = ? WHERE qitem = ? AND page_id = ?", parameters)
+        conn2.commit()
+        print (languagecode,len(parameters))
+
+
+
+        # qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+        # for topic, qitems in occupations_area_dicts.items():
+        #     list_qitems = list(qitems.keys())
+
+        #     page_asstring = ','.join( ['?'] * len(list_qitems) )
+        #     query = "SELECT qitem, qitem2 FROM occupation_and_field_properties WHERE qitem2 IN (%s);" % page_asstring
+        #     for row in cursor.execute(query):
+        #         qitem=row[0]
+        #         qitem2=row[0]
+        #         try:
+        #             parameters.append((qitem2,qitem,page_titles_page_ids[qitems_page_titles[qitem]]))
+        #         except:
+        #             pass
+
+        #     cursor2.executemany("UPDATE "+languagecode+"wiki SET "+topic+" = ? WHERE qitem = ? AND page_id = ?", parameters)
+        #     conn2.commit()
+
+
+    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
+    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+
+
+
+
 # Extends the Articles table with the topic (e.g. gender) from wikidata.
 def label_diversity_categories_related_topics_wd(topic, languagecode, page_titles_page_ids, page_titles_qitems):
 
     functionstartTime = time.time()
     function_name = 'label_diversity_categories_related_topics_wd '+languagecode+' '+topic
-    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
+#    if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
@@ -169,10 +268,11 @@ def label_diversity_categories_related_topics_wd(topic, languagecode, page_title
     if topic == 'gender':
         query = "SELECT people_properties.qitem, people_properties.qitem2 FROM people_properties WHERE people_properties.property = 'P21' AND people_properties.qitem IN (SELECT people_properties.qitem FROM people_properties INNER JOIN sitelinks ON sitelinks.qitem = people_properties.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki' AND people_properties.qitem2 = 'Q5');"
 
-    elif topic == 'industry' or topic == 'religious_group':
+    elif topic == 'industry' or topic == 'religious_group' or topic == 'medicine':
         query = "SELECT "+topic+"_properties.qitem, "+topic+"_properties.qitem2 FROM "+topic+"_properties INNER JOIN sitelinks ON sitelinks.qitem = "+topic+"_properties.qitem WHERE sitelinks.langcode = '"+languagecode+"wiki';"
 
     else:
+        if topic == 'medicine_instances': topic = 'medicine'
         query = "SELECT "+topic+".qitem, "+topic+".qitem2 FROM "+topic+" INNER JOIN sitelinks ON sitelinks.qitem = "+topic+".qitem WHERE sitelinks.langcode = '"+languagecode+"wiki';"
 
 
@@ -186,6 +286,7 @@ def label_diversity_categories_related_topics_wd(topic, languagecode, page_title
         except:
             pass
 
+
     query = 'UPDATE '+languagecode+'wiki SET '+topic+'=? WHERE page_id = ? AND qitem = ?;'
     cursor2.executemany(query,updated)
     conn2.commit()
@@ -193,7 +294,8 @@ def label_diversity_categories_related_topics_wd(topic, languagecode, page_title
     print (len(updated))
     print (topic+' properties updated.')
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+#    wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
 
 
 
@@ -318,7 +420,7 @@ def label_sexual_orientation_wd(languagecode, page_titles_page_ids, page_titles_
     except:
         pass
 
-    query = 'UPDATE '+languagecode+'wiki SET sexual_orientation=? WHERE page_id = ? AND qitem = ?;'
+    query = 'UPDATE '+languagecode+'wiki SET sexual_orientation_partner=? WHERE page_id = ? AND qitem = ?;'
     cursor2.executemany(query,updated)
     conn2.commit()
 
@@ -338,7 +440,7 @@ def label_sexual_orientation_wd(languagecode, page_titles_page_ids, page_titles_
         except:
             pass
 
-    query = 'UPDATE '+languagecode+'wiki SET sexual_orientation=? WHERE page_id = ? AND qitem = ?;'
+    query = 'UPDATE '+languagecode+'wiki SET sexual_orientation_property=? WHERE page_id = ? AND qitem = ?;'
     cursor2.executemany(query,updated)
     conn2.commit()
 
@@ -758,6 +860,12 @@ def label_ccc_articles_country_wd(languagecode,page_titles_page_ids):
     ccc_regional_countries = ccc_regional_countries + list(set(wikilanguages_utils.get_old_current_countries_pairs(languagecode,'').keys()))
 
 
+    all_countries = set()
+    conn = sqlite3.connect(databases_path + diversity_categories_production_db); cursor = conn.cursor()
+    for row in cursor.execute('SELECT DISTINCT Qitem FROM all_countries_wikidata;'):
+        all_countries.add(row[0])
+
+
     # get Articles
     qitem_properties = {}
     qitem_page_titles = {}
@@ -766,6 +874,12 @@ def label_ccc_articles_country_wd(languagecode,page_titles_page_ids):
     qitem_properties_other = {}
     qitem_page_titles_other = {}
     other_ccc_country_items = []
+
+
+    qitem_properties_all = {}
+    qitem_page_titles_all = {}
+    all_countries_items = []
+
 
     query = 'SELECT country_properties.qitem, country_properties.property, country_properties.qitem2, sitelinks.page_title FROM country_properties INNER JOIN sitelinks ON sitelinks.qitem = country_properties.qitem WHERE sitelinks.langcode ="'+languagecode+'wiki"'
     conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
@@ -788,6 +902,15 @@ def label_ccc_articles_country_wd(languagecode,page_titles_page_ids):
             else: qitem_properties_other[qitem]=qitem_properties_other[qitem]+1
             qitem_page_titles_other[qitem]=page_title
 
+        if qitem2 in all_countries:
+            value = wdproperty+':'+qitem2
+            if qitem not in qitem_properties_all: qitem_properties_all[qitem]=value
+            else: qitem_properties_all[qitem]=qitem_properties_all[qitem]+';'+value
+            qitem_page_titles_all[qitem]=page_title
+
+
+
+
 
     # Get the tuple ready to insert.
     for qitem, values in qitem_properties_other.items():
@@ -806,6 +929,15 @@ def label_ccc_articles_country_wd(languagecode,page_titles_page_ids):
         except: 
             continue
 
+    for qitem, values in qitem_properties_all.items():
+        try:
+            page_title = qitem_page_titles_all[qitem]
+            page_id=page_titles_page_ids[page_title]
+            all_countries_items.append((values,page_title,qitem,page_id))
+        except: 
+            continue
+
+
 
 
     # Insert to the corresponding CCC database.
@@ -817,6 +949,12 @@ def label_ccc_articles_country_wd(languagecode,page_titles_page_ids):
     query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,country_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor2.executemany(query,ccc_country_items)
     conn2.commit()
+
+    query = 'UPDATE '+languagecode+'wiki SET country_qitem = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
+    cursor2.executemany(query,all_countries_items)
+    conn2.commit()
+
+
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -918,6 +1056,26 @@ def label_ccc_articles_location_wd(languagecode,page_titles_page_ids):
             else: other_ccc_qitems[qitem]=other_ccc_qitems[qitem]+1
 
 
+
+
+
+    # Get the tuple ready to insert.
+    other_ccc_located_items = []
+    for qitem in other_ccc_qitems:
+        try:
+            page_title = qitem_page_titles[qitem]
+            page_id = page_titles_page_ids[page_title]
+            other_ccc_located_items.append((other_ccc_qitems[qitem],page_title,qitem,page_id))
+        except:
+            pass
+
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+    query = 'UPDATE '+languagecode+'wiki SET other_ccc_location_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
+    cursor2.executemany(query,other_ccc_located_items)
+    conn2.commit()
+
+
+
     # Get the tuple ready to insert the CCC Located Items.
     ccc_located_items = []
     for qitem, values in selected_qitems.items():
@@ -931,20 +1089,6 @@ def label_ccc_articles_location_wd(languagecode,page_titles_page_ids):
         ccc_located_items.append((1,value,page_title,qitem,page_id))
 
 
-    # Get the tuple ready to insert.
-    other_ccc_located_items = []
-    for qitem in other_ccc_qitems:
-        try:
-            page_title = qitem_page_titles[qitem]
-            page_id = page_titles_page_ids[page_title]
-            other_ccc_located_items.append((0,other_ccc_qitems[qitem],page_title,qitem,page_id))
-        except:
-            pass
-
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
-    query = 'UPDATE '+languagecode+'wiki SET ccc_binary = ?, other_ccc_location_wd = ? WHERE page_title = ? AND qitem = ? AND page_id = ?;'
-    cursor2.executemany(query,other_ccc_located_items)
-    conn2.commit()
 
     query = 'UPDATE '+languagecode+'wiki SET (ccc_binary,location_wd) = (?,?) WHERE page_title = ? AND qitem = ? AND page_id = ?;'
     cursor2.executemany(query,ccc_located_items)
@@ -1196,6 +1340,16 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
     function_name = 'label_ccc_articles_keywords '+languagecode
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
+    # LOADING WIKIPEDIA NAMESPACE
+    conn2 = sqlite3.connect(databases_path + wikipedia_namespace_db); cursor2 = conn2.cursor()
+    page_titles_page_ids_namespace = {}
+    query = 'SELECT page_title, page_id FROM '+languagecode+'wiki_wikipedia_namespace;'
+#            query = 'SELECT page_title, qitem, page_id FROM ccc_'+languagecode+'wiki;'
+    for row in cursor2.execute(query):
+        page_title=row[0].replace(' ','_')
+        page_titles_page_ids_namespace[page_title]=row[1]
+
+
     # CREATING KEYWORDS DICTIONARY
     keywordsdictionary = {}
     if languagecode not in languageswithoutterritory:
@@ -1221,6 +1375,7 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
     keywordsdictionary[qitemresult]=languagenames
 
     selectedarticles = {}
+    selectedarticles_wp_namespace = {}
     for item, keywords in keywordsdictionary.items():
 #        print (item)
         for keyword in keywords:
@@ -1228,6 +1383,20 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
             keyword_rect = unidecode.unidecode(keyword).lower().replace('_',' ')
 
             kw_compiled = re.compile(r'\b({0})\b'.format(keyword_rect), flags=re.IGNORECASE).search
+
+
+            for page_title, page_id in page_titles_page_ids_namespace.items():
+                page_title_rect = unidecode.unidecode(page_title).lower().replace('_',' ')
+
+                if kw_compiled(page_title_rect) == None: continue
+                try:
+                    selectedarticles_wp_namespace[page_id].add(item)
+                except:
+                    va = set()
+                    va.add(page_title)
+                    va.add(item)
+                    selectedarticles_wp_namespace[page_id] = va
+
 
             for page_title,page_id in page_titles_page_ids.items():
                 page_title_rect = unidecode.unidecode(page_title).lower().replace('_',' ')
@@ -1248,6 +1417,14 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
                     selectedarticles[page_id] = va
 
 
+    insertedarticles_wp_namespace = []
+    for page_id, value in selectedarticles_wp_namespace.items():
+        value=list(value)
+        page_title = str(value.pop(0))
+        keyword_title = str(';'.join(value))
+        insertedarticles_wp_namespace.append((keyword_title,page_id,page_title))
+
+
     insertedarticles = []
     for page_id, value in selectedarticles.items():
         value=list(value)
@@ -1255,9 +1432,16 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
         keyword_title = str(';'.join(value))
         try: 
             qitem=page_titles_qitems[page_title]
+            insertedarticles.append((1,keyword_title,page_title,page_id,qitem))
+
         except: 
             qitem=None
-        insertedarticles.append((1,keyword_title,page_title,page_id,qitem))
+
+
+    conn2 = sqlite3.connect(databases_path + wikipedia_namespace_db); cursor2 = conn2.cursor()
+    query = 'UPDATE '+languagecode+'wiki_wikipedia_namespace SET ccc_keyword_title = ? WHERE page_id = ? and page_title = ?;'
+    cursor2.executemany(query,insertedarticles_wp_namespace)
+    conn2.commit()
 
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
@@ -1273,6 +1457,8 @@ def label_ccc_articles_keywords(languagecode,page_titles_qitems,page_titles_page
 
 
 
+
+
 def label_previous_database_lgbt_topic():
 
     functionstartTime = time.time()
@@ -1280,15 +1466,23 @@ def label_previous_database_lgbt_topic():
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor2 = conn2.cursor()
+
+    # wikilanguagecodes
+    # wikilanguagecodes[wikilanguagecodes.index('smn'):]
 
     for languagecode in wikilanguagecodes:
-        params = []
-        for row in cursor2.execute('SELECT lgbt_topic_binary, page_id, qitem FROM '+languagecode+'wiki;'):
-            params.append((row[0],row[1],row[2]))
+        print(languagecode)
 
-        cursor.executemany('UPDATE '+languagecode+'wiki SET (lgbt_topic) = (?) WHERE page_id = ? AND qitem = ?', params)
-        conn.commit()
+        params = []
+        try:
+            for row in cursor2.execute('SELECT lgbt_topic, lgbt_keyword_title, page_id, qitem FROM '+languagecode+'wiki;'):
+                params.append((row[0],row[1],row[2],row[3]))
+            cursor.executemany('UPDATE '+languagecode+'wiki SET (lgbt_topic,lgbt_keyword_title) = (?,?) WHERE page_id = ? AND qitem = ?', params)
+            conn.commit()
+        except:
+            pass
+
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -1302,15 +1496,19 @@ def label_previous_database_ethnic_groups_topics():
     if wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'check','')==1: return
 
     conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
-    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+    conn2 = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor2 = conn2.cursor()
 
     for languagecode in wikilanguagecodes:
-        params = []
-        for row in cursor2.execute('SELECT ethnic_group_topic, page_id, qitem FROM '+languagecode+'wiki;'):
-            params.append((row[0],row[1],row[2]))
+        print(languagecode)
 
-        cursor.executemany('UPDATE '+languagecode+'wiki SET (ethnic_group_topic) = (?) WHERE page_id = ? AND qitem = ?', params)
-        conn.commit()
+        params = []
+        try:
+            for row in cursor2.execute('SELECT ethnic_group_topic, page_id, qitem FROM '+languagecode+'wiki;'):
+                params.append((row[0],row[1],row[2]))
+            cursor.executemany('UPDATE '+languagecode+'wiki SET (ethnic_group_topic) = (?) WHERE page_id = ? AND qitem = ?', params)
+            conn.commit()
+        except:
+            pass
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
@@ -1412,7 +1610,8 @@ if __name__ == '__main__':
 #    main_with_exception_email()
 #    main_loop_retry()
     duration = str(datetime.timedelta(seconds=time.time() - startTime))
-    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
+
+#    wikilanguages_utils.verify_script_run(cycle_year_month, script_name, 'mark', duration)
 
     wikilanguages_utils.finish_email(startTime,'content_retrieval.out','Content Retrieval')
 

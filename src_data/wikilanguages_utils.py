@@ -41,7 +41,7 @@ top_diversity_db = 'top_diversity_articles.db'
 top_diversity_production_db = 'top_diversity_articles_production.db'
 
 missing_ccc_db = 'missing_ccc.db'
-missing_ccc_db = 'missing_ccc.db'
+missing_ccc_production_db = 'missing_ccc_production.db'
 
 ethnic_groups_content_db = 'ethnic_groups_content.db'
 ethnic_groups_content_production_db = 'ethnic_groups_content_production.db'
@@ -55,7 +55,7 @@ images_production_db = 'images_production.db'
 revision_db = 'revision.db'
 imageslinks_db = 'imagelinks.db'
 
-
+wikipedia_namespace_db = 'wikipedia_namespace.db'
 
 community_health_metrics_db = 'community_health_metrics.db'
 
@@ -271,6 +271,29 @@ def load_iso_31662_to_subdivisions():
             del subdivisions_ISO31662_dict[subdivision]
 
     return ISO31662_subdivisions_dict, subdivisions_ISO31662_dict
+
+
+def load_iso_31662_to_subdivisions_names():
+
+    conn = sqlite3.connect(databases_path+diversity_categories_db); cursor = conn.cursor();
+    query = 'SELECT subdivision_name as territoryname, subdivision_code as ISO31662 FROM ISO3166_2_subdivisions;'
+    subdivisions = pd.read_sql_query(query, conn)
+
+    subdivisions2 = subdivisions.set_index(['ISO31662'])
+    ISO31662_subdivisions_dict = subdivisions2.territoryname.to_dict()
+    for isocode in list(ISO31662_subdivisions_dict.keys()):
+        subdivision = ISO31662_subdivisions_dict[isocode]
+        if subdivision == None or subdivision == '':
+            del ISO31662_subdivisions_dict[isocode]
+
+    subdivisions3 = subdivisions.set_index(['territoryname'])
+    subdivisions_ISO31662_dict = subdivisions3.ISO31662.to_dict()
+    for subdivision in list(subdivisions_ISO31662_dict.keys()):
+        isocode = subdivisions_ISO31662_dict[subdivision]
+        if isocode == None or isocode == '':
+            del subdivisions_ISO31662_dict[subdivision]
+
+    return subdivisions_ISO31662_dict, ISO31662_subdivisions_dict
 
 
 def load_world_subdivisions():
@@ -755,58 +778,224 @@ def obtain_region_wikipedia_language_list(languages, region, subregion, intermed
 
 
 
-def store_group_identities_labels(wikilanguagecodes):
+def get_store_diversity_categories_labels(wikilanguagecodes):
 
     functionstartTime = time.time()
-    conn3 = sqlite3.connect(databases_path + diversity_categories_db); cursor3 = conn3.cursor()
+    conn = sqlite3.connect(databases_path + wikidata_db); cursor = conn.cursor()
     conn2 = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor2 = conn2.cursor()
+    conn3 = sqlite3.connect(databases_path + diversity_categories_db); cursor3 = conn3.cursor()
 
-    cursor3.execute("DROP TABLE IF EXISTS groups_labels;")
+    cursor3.execute("DROP TABLE IF EXISTS diversity_categories_labels_production;")
     conn3.commit()
-    cursor3.execute("CREATE TABLE IF NOT EXISTS groups_labels (qitem text, label integer, lang text, group_label text, PRIMARY KEY (qitem, label, lang, group_label));")
+    cursor3.execute("CREATE TABLE IF NOT EXISTS diversity_categories_labels_production (qitem text, label text, page_title text, code text, english_title text, lang text, category_label text, PRIMARY KEY (qitem, label, lang, category_label));")
     conn3.commit()
 
-    group_labels = ['ethnic_group', 'sexual_orientation', 'religious_group']
+
+    category_labels = ['gender', 'ethnic_groups', 'LGBT', 'sexual_orientation', 'religious_groups', 'regions', 'subregions', 'countries', 'country_subdivision', 'languages']
+
+
+    all_languages = pd.read_sql_query('SELECT Qitem, englishLabel, languageISO3 FROM all_languages_wikidata;', conn3)
+
+    countries = pd.read_sql_query('SELECT Qitem, territoryLabel, ISO3166 FROM all_countries_wikidata;', conn3)
+
+    country_subdivisions = pd.read_sql_query('SELECT Qitem, territoryLabel, ISO31662 FROM all_countries_subdivisions_wikidata;', conn3)
+
+    subregions_dict = {"Q771405": "Southern Asia", "Q27479": "Northern Europe", "Q27449":"Southern Europe", "Q27381" : "Northern Africa", "Q35942":"Polynesia", "Q132959":"Sub-Saharan Africa", "Q72829598":"Latin America and the Caribbean", "Q1555938":"Antarctic", "Q7204":"Western Asia", "Q45256":"Australia and New Zealand", "Q27496":"Western Europe", "Q27468":"Eastern Europe", "Q2017699":"Northern America", "Q99929155":"South-eastern Asia", "Q27231":"Eastern Asia", "Q37394":"Melanesia", "Q702":"Micronesia", "Q27275":"Central Asia"}
+
+    regions_dict = {"Q48" : "Asia", "Q46" : "Europe", "Q15" : "Africa", "Q538" : "Oceania", "Q828" : "Americas", "Q51" : "Antarctica"}
+
+    religious_groups = pd.read_sql_query('SELECT religious_group_qitem, religious_group_page_title FROM religious_groups;', conn3).set_index('religious_group_qitem').to_dict()['religious_group_page_title']
+
+    indigenous_groups = pd.read_sql_query('SELECT qitem, page_title_en FROM ethnic_groups WHERE minoritized_language = "1.0";', conn3).set_index('qitem').to_dict()['page_title_en']
+
+    ethnic_groups = pd.read_sql_query('SELECT qitem, page_title_en FROM ethnic_groups;', conn3).set_index('qitem').to_dict()['page_title_en']
+
+    lgbtq_dict = {'Q17884' : 'LGBT'}
+
+    sexual_orientation = ["Q1035954", "Q6636", "Q43200", "Q339014", "Q724351", "Q271534", "Q93771184", "Q23912283", "Q51415", "Q52746927"]
+
+    gender = ["Q6581097", "Q6581072", "Q1052281", "Q2449503", "Q1097630", "Q48270", "Q27679684", "Q18116794", "Q12964198", "Q301702", "Q189125", "Q505371", "Q859614", "Q1289754", "Q207959", "Q48279", "Q52261234", "Q15145779", "Q93954933", "Q179294"]
+
+    qitems = all_languages.Qitem.tolist() + countries.Qitem.tolist() + country_subdivisions.Qitem.tolist() + list(subregions_dict.keys()) + list(regions_dict.keys()) + list(religious_groups.keys()) + list(indigenous_groups.keys()) + list(ethnic_groups.keys()) + list(lgbtq_dict.keys()) + sexual_orientation + gender
+
 
     for languagecode in wikilanguagecodes:
-        (page_titles_qitems, page_titles_page_ids)=load_dicts_page_ids_qitems(0,languagecode)
-        qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
 
-        for group_label in group_labels:
-            query = 'SELECT DISTINCT '+group_label+' FROM '+languagecode+'wiki WHERE ethnic_group IS NOT NULL;'
-            parameters = []
-            unique_qs = set()
-            for row in cursor2.execute(query):
-                value = row[0]
+        qitems_page_titles = {}
+        query = 'SELECT page_title, qitem FROM '+languagecode+'wiki;'
+        for row in cursor2.execute(query):
+            page_title=row[0].replace(' ','_')
+            qitems_page_titles[row[1]]=page_title
 
-                if value != None:
-                    qs = value.split(';')
-                else: continue
-                for x in qs:
-                    try:
-                        page_title = qitems_page_titles[x]
-                        if x not in unique_qs:
-                            parameters.append((x,page_title,languagecode,group_label))
-                        unique_qs.add(x)
-                    except:
-                        continue
-                
-            # print (parameters)
-            query = 'INSERT OR IGNORE INTO groups_labels (qitem, label, lang, group_label) values (?,?,?,?)'
-            cursor3.executemany(query, parameters)
-            conn3.commit()
+        qitems_labels = {}
+        page_asstring = ','.join( ['?'] * (len(qitems)) ) # total 
+        query = 'SELECT qitem, label FROM labels WHERE langcode = "'+languagecode+'wiki" AND qitem IN (%s);' % page_asstring
+        for row in cursor.execute(query, qitems):
+            qitems_labels[row[0]]=row[1]
 
-        print (languagecode)
+        print (languagecode, str(len(qitems_labels)))
 
-    duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
-    print (duration)
+        params = []
+
+        for index, row in all_languages.iterrows():
+            qitem = row['Qitem']
+            code = row['languageISO3']
+            english_title = row['englishLabel']
+
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'languages'))
 
 
+        for index, row in countries.iterrows():
+            qitem = row['Qitem']
+            code = row['ISO3166']
+            english_title = row['territoryLabel']
 
-def get_group_identities_labels():
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'countries'))
+
+
+        for index, row in country_subdivisions.iterrows():
+            qitem = row['Qitem']
+            code = row['ISO31662']
+            english_title = row['territoryLabel']
+
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'countries_subdivision'))
+
+        for qitem, english_title in subregions_dict.items():
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'subregions'))
+
+
+        for qitem, english_title in regions_dict.items():
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'regions'))
+
+
+        for qitem, english_title in religious_groups.items():
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'religious_groups'))
+
+        for qitem, english_title in indigenous_groups.items():
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'indigenous_groups'))
+
+        for qitem, english_title in ethnic_groups.items():
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'ethnic_groups'))
+
+        for qitem, english_title in ethnic_groups.items():
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'ethnic_groups'))
+
+        for qitem, english_title in lgbtq_dict.items():
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, english_title, languagecode, 'lgbtq'))
+
+        for qitem in sexual_orientation:
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, '', languagecode, 'sexual_orientation'))
+
+        for qitem in gender:
+            code = ''
+            try: label = qitems_labels[qitem]
+            except: label = ''
+            try: page_title = qitems_page_titles[qitem]
+            except: page_title = ''
+            if label == '' and page_title == '': continue
+            params.append((qitem, label, page_title, code, '', languagecode, 'gender'))
+
+
+        query = 'INSERT OR IGNORE INTO diversity_categories_labels_production (qitem, label, page_title, code, english_title, lang, category_label) VALUES (?, ?, ?, ?, ?, ?, ?);'
+        cursor3.executemany(query, params)
+        conn3.commit()
+
+        print (languagecode,str(len(params)))
+
+
+    print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
+
+
+
+def get_ethnic_groups_labels():
 
     conn3 = sqlite3.connect(databases_path + diversity_categories_db); cursor3 = conn3.cursor()
-    query = 'SELECT qitem, label, lang, group_label FROM groups_labels;'
+    query = 'SELECT qitem, label, lang FROM diversity_categories_labels_production WHERE category_label = "ethnic_groups";'
+    df = pd.read_sql_query(query, conn3)
+
+    # qitems = df.loc[(df["lang"].isin([langcode,'en'])) & (df["group_label"] == group_label)][['qitem','label','lang']]
+    # qitems['label'] = qitems['label'].str.replace('_',' ')
+    # qitems = qitems.set_index('qitem')
+
+
+    # qitem_df = qitems.loc['Q576065']
+    # try:
+    #     a = qitem_df.loc[qitem_df["lang"]==langcode]
+    # except:
+    #     a = qitem_df.loc[qitem_df["lang"]=="en"]
+    # label = qitems.loc['Q576065']["label"].values[0]
+
+    return df
+
+
+
+def get_diversity_categories_labels():
+
+    conn3 = sqlite3.connect(databases_path + diversity_categories_db); cursor3 = conn3.cursor()
+    query = 'SELECT qitem, REPLACE(label,"_"," ") as label, REPLACE(page_title,"_"," ") as page_title, lang, category_label, code FROM diversity_categories_labels_production;'
     df = pd.read_sql_query(query, conn3)
 
     # qitems = df.loc[(df["lang"].isin([langcode,'en'])) & (df["group_label"] == group_label)][['qitem','label','lang']]
@@ -1049,6 +1238,26 @@ def extract_check_new_wiki_projects():
 
 
 
+def extract_database_tables_to_files():
+
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
+
+    for languagecode in wikilanguagecodes:
+
+        c = csv.writer(open(path,'a'), lineterminator = '\n', delimiter='\t')
+        query = 'SELECT qitem, page_id, page_title, date_created, date_last_edit, first_timestamp_lang, geocoordinates, iso3166, iso3662, region, gender, ethnic_group, supra_ethnic_group, sexual_orientation, num_inlinks_from_women, num_outlinks_towomen, percent_inlinks_from_women, percent_outlinks_to_women, num_inlinks_from_men, num_outlinks_to_men, percent_inlinks_from_men, percent_outlinks_to_men, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt, ccc_binary, folk, earth, monument_and_buidings, music_creations_and_organizations, sports_and_teams, food, paintings, glam, books, clothing_and_fashion, industry, religion, time_interval, start_time, end_time, lgbt_topic, lgbt_keyword_title, num_bytes, num_references, num_images, num_inlinks, num_outlinks, num_edits, num_edits_last_month, num_editors, num_discussions, num_pageviews, num_interwiki, num_wd_property, featured_article, wikirank FROM '+languagecode+'wiki;'
+
+#        query = 'SELECT qitem, page_id, page_title, lgbt_biography, keyword, category_crawling_level, num_inlinks_from_lgbt, num_outlinks_to_lgbt, percent_inlinks_from_lgbt, percent_outlinks_to_lgbt, lgbt_binary FROM '+languagecode+'wiki;'
+
+        cursor.execute(query) # ->>>>>>> canviar * per les columnes. les de rellevància potser no cal.
+
+        i = 0
+        c.writerow([d[0] for d in cursor.description])
+        for result in cursor:
+            i+=1
+            c.writerow(result)
+
+
 
 # Creates a dataset from the Wikipedia Diversity database for a list of languages.
 # COMMAND LINE: sqlite3 -header -csv ccc_temp.db "SELECT * FROM ccc_cawiki;" > ccc_cawiki.csv
@@ -1076,6 +1285,7 @@ def extract_wikipedia_diversity_tables_to_files():
 
         # Here we prepare the streams.
         path_language_file = codecs.open(path_language, 'w', 'UTF-8')
+
         c = csv.writer(open(path_language,'w'), lineterminator = '\n', delimiter='\t')
 
         cursor.execute("SELECT * FROM "+languagecode+"wiki;") # ->>>>>>> canviar * per les columnes. les de rellevància potser no cal.
@@ -1165,6 +1375,34 @@ def extract_wikipedia_diversity_tables_to_files():
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     wikilanguages_utils.verify_function_run(cycle_year_month, script_name, function_name, 'mark', duration)
+
+
+
+# Get me the articles that are also in the wikipedia_diversity_production.db and the diversity categories it belongs to.
+def get_interwikilinks_articles(sourcelang, targetlangs, df, mysql_con_read):
+
+    page_ids = df.page_id.tolist()
+    params = page_ids + targetlangs
+
+    page_asstring = ','.join( ['%s'] * len(page_ids) ) 
+    query = 'SELECT ll_from as page_id, CONVERT(ll_title USING utf8mb4) as page_title, CONVERT(ll_lang USING utf8mb4) as lang FROM langlinks WHERE ll_from IN (%s) ' % page_asstring
+
+    page_asstring = ','.join( ['%s'] * len(targetlangs) )
+    query += 'AND ll_lang IN (%s);' % page_asstring
+
+    df_y = pd.read_sql_query(query, mysql_con_read, params = params);
+    df_y = df_y.set_index('page_id')
+
+    i = 0
+    for lang in targetlangs:
+        i += 1
+        df_z = df_y.loc[(df_y['lang']==lang)]
+        df_z = df_z.rename(columns={"page_title": "page_title_"+str(i)})
+        df = df.merge(df_z["page_title_"+str(i)], how='left', on='page_id')
+
+    return df
+
+
 
 
 def extract_ccc_count(languagecode, filename, message):
@@ -1389,6 +1627,9 @@ def backup_db():
 
 def verify_function_run(cycle_year_month, script_name, function_name, action, duration):
     function_name_string = function_name
+
+    # print ('\n\n',cycle_year_month, script_name, function_name, action, duration); return # comment this.
+
 
     conn = sqlite3.connect(databases_path + diversity_observatory_log); cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS function_account (script_name text, function_name text, year_month text, finish_time text, duration text, PRIMARY KEY (script_name, function_name, year_month));")

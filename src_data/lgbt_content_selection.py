@@ -273,7 +273,6 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
 
 
         print (str(datetime.timedelta(seconds=time.time() - functionstartTime)))
-        print (len(category_links_cat_art))
         print ('all category links loaded')
         # input('')
 
@@ -344,9 +343,9 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
                             selectedarticles_level[page_id] = level
 
                         if page_id in selectedarticles:
-                            selectedarticles[page_id].add(kw)
+                            selectedarticles[page_id] = level
                         else:
-                            selectedarticles[page_id] = {kw}
+                            selectedarticles[page_id] = level
 
                         i += 1
 
@@ -354,14 +353,15 @@ def store_articles_category_crawling_keywords_biographies_links(languagecode):
                     for page_id in category_links_cat_art_dict[cat_title]:
                         try:
                             cur_level = selectedarticles_level[page_id]
-                            if cur_level > level: selectedarticles_level[page_id] = level
+                            if cur_level > level: 
+                                selectedarticles_level[page_id] = level
                         except:
                             selectedarticles_level[page_id] = level
 
                         if page_id in selectedarticles:
-                            selectedarticles[page_id].add(kw)
+                            selectedarticles[page_id] = level
                         else:
-                            selectedarticles[page_id] = {kw}
+                            selectedarticles[page_id] = level
 
                         i += 1
 
@@ -731,51 +731,55 @@ def store_articles_lgbt_topic_binary_classifier(languagecode):
 
 def update_push_lgbt_topics_wikipedia_diversity():
 
-    conn = sqlite3.connect(databases_path + wikipedia_diversity_production_db); cursor = conn.cursor()
+
+    functionstartTime = time.time()
     conn2 = sqlite3.connect(databases_path + lgbt_content_db); cursor2 = conn2.cursor()
+    conn = sqlite3.connect(databases_path + wikipedia_diversity_db); cursor = conn.cursor()
 
     qitems = {}
+    keyword_title = {}
     for languagecode in wikilanguagecodes:
-        for row in cursor2.execute('SELECT qitem FROM '+languagecode+'wiki_lgbt WHERE lgbt_binary = 1;'):
-
+        for row in cursor2.execute('SELECT qitem, keyword FROM '+languagecode+'wiki_lgbt WHERE lgbt_binary = 1;'):
             try:
                 qitems[row[0]]+=1
             except:
                 qitems[row[0]]=1
-    print ('All in.')
+
+            keyword = row[1]
+            if keyword!='' and keyword!=None:
+                keyword_title[row[0]]=row[1]
+
+
+
 
     for languagecode in wikilanguagecodes:
         print (languagecode)
-        params = []
-
-        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
-        qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
-
-        for q,v in qitems.items():
-
-            try:
-                page_title = qitems_page_titles[q]
-                page_id = page_titles_page_ids[page_title]
-                params.append((v, q, page_title, page_id))
-            except:
-                pass
-
-        # try:
-        #     query = 'ALTER TABLE '+languagecode+'wiki ADD COLUMN lgbt_topic integer;'
-        #     cursor.execute(query)
-        # except:
-        #     pass
-
         try:
             query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = NULL;'
             cursor.execute(query)
+            conn.commit()
         except:
             continue
 
-        query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = ? WHERE qitem = ? AND page_title = ? and page_id = ?;'
+        params = []
+        (page_titles_qitems, page_titles_page_ids)=wikilanguages_utils.load_dicts_page_ids_qitems(0,languagecode)
+        qitems_page_titles = {v: k for k, v in page_titles_qitems.items()}
+
+        for qitem,value in qitems.items():
+            try:
+                keyword = keyword_title[qitem]
+            except:
+                keyword = None
+            try:
+                page_title = qitems_page_titles[qitem]
+                page_id = page_titles_page_ids[page_title]
+                params.append((value, keyword, qitem, page_title, page_id))
+            except:
+                pass
+
+        query = 'UPDATE '+languagecode+'wiki SET lgbt_topic = ?, lgbt_keyword_title = ? WHERE qitem = ? AND page_title = ? and page_id = ?;'
         cursor.executemany(query,params)
         conn.commit()            
-
 
     duration = str(datetime.timedelta(seconds=time.time() - functionstartTime))
     print (duration)
