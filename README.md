@@ -14,7 +14,7 @@ Instead, the relationship from an article as belonging to the language’s relat
 The method is build with:
 - [Python 3](https://www.python.org/download/releases/3.0/) - To manage the data.
 - [Sqlite 3](https://www.sqlite.org/) - To store the data.
-- [Scikit-learn](https://scikit-learn.org) - To process the data.
+- [Scikit-learn](https://scikit-learn.org) - To classify the data.
 
 The datasets/database tables are generated on a monthly basis at wcdo.wmflabs.org in CSV and SQLite3. You can download the last version in [datasets](http://wcdo.wmflabs.org/datasets/) or [databases](http://wcdo.wmflabs.org/databases/).
 
