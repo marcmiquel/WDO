@@ -54,17 +54,6 @@ class Logger(object): # this prints both the output to a file and to the termina
 ######################## STATS GENERATION SCRIPT ##################### 
 def main():
 
-
-
-    print ('fet.')
-
-
-
-
-    input('')
-    input('')
-    input('')
-
     create_intersections_db()
 
     # RUN ONCE AND THEN IT IS DONE FOREVER

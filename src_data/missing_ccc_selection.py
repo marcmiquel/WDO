@@ -1,4 +1,4 @@
-update_pull_missing_ccc_wikipedia_diversity# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # script
 import wikilanguages_utils
